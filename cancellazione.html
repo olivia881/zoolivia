@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoolivia — Cancellazione Abbonamento</title>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #60ad5e;
+            --primary-dark: #005005;
+            --accent: #ff7043;
+            --bg: #f5f7f5;
+            --card-bg: #ffffff;
+            --text: #263238;
+            --text-light: #546e7a;
+            --border: #e0e0e0;
+            --danger: #c62828;
+            --danger-light: #fce4ec;
+            --radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        header .logo {
+            font-size: 1.75rem;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        main {
+            max-width: 640px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .stepper {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stepper .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .stepper .dot.active {
+            background: var(--primary);
+            transform: scale(1.3);
+        }
+
+        .stepper .dot.completed {
+            background: var(--primary-light);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            animation: fadeIn 0.35s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card h2 {
+            font-size: 1.35rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .card p {
+            color: var(--text-light);
+            margin-bottom: 1.25rem;
+        }
+
+        .info-box {
+            background: #e8f5e9;
+            border-left: 4px solid var(--primary);
+            padding: 1rem 1.25rem;
+            border-radius: 0 var(--radius) var(--radius) 0;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .warning-box {
+            background: var(--danger-light);
+            border-left: 4px solid var(--danger);
+            padding: 1rem 1.25rem;
+            border-radius: 0 var(--radius) var(--radius) 0;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .warning-box strong {
+            color: var(--danger);
+        }
+
+        .plan-summary {
+            background: #f9fbe7;
+            border: 1px solid #e6ee9c;
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-summary .label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-light);
+            margin-bottom: 0.25rem;
+        }
+
+        .plan-summary .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .plan-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+
+        .plan-row + .plan-row {
+            border-top: 1px solid #f0f4c3;
+        }
+
+        .reasons-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .reasons-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .reasons-list input[type="radio"] {
+            accent-color: var(--primary);
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .reasons-list label {
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 80px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b71c1c;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: #e8f5e9;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-light);
+        }
+
+        .btn-ghost:hover {
+            background: #eceff1;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .success-icon {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .checklist {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .checklist li {
+            padding: 0.4rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .checklist li::before {
+            content: "✓";
+            color: var(--primary);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .card { padding: 1.25rem; }
+            .btn-group { flex-direction: column; }
+            .btn { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <span class="logo">🦁</span>
+    <h1>Zoolivia</h1>
+</header>
+
+<main>
+    <div class="stepper">
+        <span class="dot active" data-step="0"></span>
+        <span class="dot" data-step="1"></span>
+        <span class="dot" data-step="2"></span>
+        <span class="dot" data-step="3"></span>
+    </div>
+
+    <!-- Step 0: Riepilogo abbonamento -->
+    <section class="card" id="step-0">
+        <h2>Il tuo abbonamento</h2>
+        <p>Ecco il riepilogo del tuo piano attuale.</p>
+
+        <div class="plan-summary">
+            <div class="plan-row">
+                <div>
+                    <div class="label">Piano</div>
+                    <div class="value">Zoolivia Famiglia</div>
+                </div>
+                <div>
+                    <div class="label">Costo</div>
+                    <div class="value">€ 9,99/mese</div>
+                </div>
+            </div>
+            <div class="plan-row">
+                <div>
+                    <div class="label">Prossimo rinnovo</div>
+                    <div class="value" id="next-renewal"></div>
+                </div>
+                <div>
+                    <div class="label">Attivo dal</div>
+                    <div class="value">15 gen 2025</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            Hai accesso illimitato a tutte le aree del parco, eventi speciali e sconti del 20% al negozio e alla caffetteria.
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-danger" onclick="goTo(1)">Voglio cancellare</button>
+            <button class="btn btn-outline" onclick="keepSubscription()">Mantieni abbonamento</button>
+        </div>
+    </section>
+
+    <!-- Step 1: Motivo -->
+    <section class="card hidden" id="step-1">
+        <h2>Perché vuoi cancellare?</h2>
+        <p>Aiutaci a capire il motivo: il tuo feedback ci permette di migliorare.</p>
+
+        <ul class="reasons-list">
+            <li>
+                <input type="radio" name="reason" id="r1" value="costo">
+                <label for="r1">Il costo è troppo alto</label>
+            </li>
+            <li>
+                <input type="radio" name="reason" id="r2" value="poco-uso">
+                <label for="r2">Non lo uso abbastanza</label>
+            </li>
+            <li>
+                <input type="radio" name="reason" id="r3" value="trasferimento">
+                <label for="r3">Mi sto trasferendo</label>
+            </li>
+            <li>
+                <input type="radio" name="reason" id="r4" value="esperienza">
+                <label for="r4">L'esperienza non mi ha soddisfatto</label>
+            </li>
+            <li>
+                <input type="radio" name="reason" id="r5" value="altro">
+                <label for="r5">Altro motivo</label>
+            </li>
+        </ul>
+
+        <textarea id="feedback" placeholder="Raccontaci di più (facoltativo)…"></textarea>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="submitReason()">Continua</button>
+            <button class="btn btn-ghost" onclick="goTo(0)">Torna indietro</button>
+        </div>
+    </section>
+
+    <!-- Step 2: Conferma -->
+    <section class="card hidden" id="step-2">
+        <h2>Conferma cancellazione</h2>
+
+        <div class="warning-box">
+            <strong>Attenzione:</strong> cancellando l'abbonamento perderai accesso a tutti i vantaggi a partire dalla prossima data di rinnovo.
+        </div>
+
+        <p>Ecco cosa succederà:</p>
+        <ul class="checklist">
+            <li>L'abbonamento resterà attivo fino alla scadenza del periodo già pagato</li>
+            <li>Non verranno effettuati ulteriori addebiti</li>
+            <li>Potrai riattivare l'abbonamento in qualsiasi momento</li>
+            <li>I dati del tuo account saranno conservati per 12 mesi</li>
+        </ul>
+
+        <div class="btn-group">
+            <button class="btn btn-danger" onclick="confirmCancel()">Conferma cancellazione</button>
+            <button class="btn btn-outline" onclick="goTo(0)">Ci ho ripensato</button>
+        </div>
+    </section>
+
+    <!-- Step 3: Completato -->
+    <section class="card hidden" id="step-3">
+        <div class="success-icon">📨</div>
+        <h2 style="text-align:center;">Abbonamento cancellato</h2>
+        <p style="text-align:center;">Ti abbiamo inviato un'email di conferma. Ci mancherai!</p>
+
+        <div class="info-box">
+            Il tuo abbonamento resterà attivo fino al <strong id="end-date"></strong>. Puoi continuare a usufruire di tutti i vantaggi fino a quella data.
+        </div>
+
+        <div class="btn-group" style="justify-content:center;">
+            <button class="btn btn-primary" onclick="reactivate()">Riattiva abbonamento</button>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <p>Hai bisogno di aiuto? <a href="mailto:supporto@zoolivia.it">supporto@zoolivia.it</a></p>
+    <p style="margin-top:0.5rem;">&copy; 2026 Zoolivia — Tutti i diritti riservati</p>
+</footer>
+
+<script>
+    const steps = document.querySelectorAll('.card');
+    const dots = document.querySelectorAll('.dot');
+    let current = 0;
+
+    function setRenewalDate() {
+        const d = new Date();
+        d.setMonth(d.getMonth() + 1);
+        const options = { day: 'numeric', month: 'short', year: 'numeric' };
+        const formatted = d.toLocaleDateString('it-IT', options);
+        document.getElementById('next-renewal').textContent = formatted;
+        document.getElementById('end-date').textContent = formatted;
+    }
+
+    setRenewalDate();
+
+    function goTo(step) {
+        steps.forEach(s => s.classList.add('hidden'));
+        steps[step].classList.remove('hidden');
+
+        dots.forEach((d, i) => {
+            d.classList.remove('active', 'completed');
+            if (i < step) d.classList.add('completed');
+            if (i === step) d.classList.add('active');
+        });
+
+        current = step;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function submitReason() {
+        const selected = document.querySelector('input[name="reason"]:checked');
+        if (!selected) {
+            alert('Per favore, seleziona un motivo.');
+            return;
+        }
+        goTo(2);
+    }
+
+    function confirmCancel() {
+        goTo(3);
+    }
+
+    function keepSubscription() {
+        alert('Ottima scelta! Il tuo abbonamento resta attivo. 🎉');
+    }
+
+    function reactivate() {
+        alert('Abbonamento riattivato con successo! Bentornato! 🦁');
+        goTo(0);
+    }
+</script>
+
+</body>
+</html>
