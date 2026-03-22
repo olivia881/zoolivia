@@ -1,0 +1,25 @@
+:root {
+  --bg: #f5f2eb;
+  --card: #fffef9;
+  --text: #1a1a18;
+  --accent: #2d5a4a;
+  --accent-light: #3d7a65;
+  --border: #e8e4dc;
+  --muted: #6b6560;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}

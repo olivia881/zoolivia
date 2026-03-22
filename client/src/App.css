@@ -1,0 +1,258 @@
+.app {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 1rem;
+  padding-bottom: 3rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.header h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0;
+}
+
+.btn-anagrafica {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-anagrafica:hover {
+  background: var(--accent-light);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
+}
+
+.input-section {
+  padding: 1.5rem;
+}
+
+.results-section {
+  padding: 1.5rem;
+}
+
+/* Input form */
+.input-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-row label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.form-row input,
+.form-row select {
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+}
+
+/* Results panel */
+.results-panel {
+  margin-bottom: 1rem;
+}
+
+.results-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 0 1rem;
+}
+
+.results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  font-size: 0.95rem;
+}
+
+.result-row.highlight .val {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.result-row.total {
+  padding-top: 0.75rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  font-weight: 700;
+}
+
+.result-row.total .val {
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+
+/* PDF button */
+.pdf-button-wrap {
+  margin-top: 1rem;
+}
+
+.btn-pdf {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 600;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-pdf:hover:not(:disabled) {
+  background: var(--accent-light);
+}
+
+.btn-pdf:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.link-download {
+  display: block;
+  text-align: center;
+  margin-top: 0.75rem;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link-download:hover {
+  text-decoration: underline;
+}
+
+.pdf-error {
+  color: #c33;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 100;
+}
+
+.modal {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal h2 {
+  margin: 0 0 1.25rem;
+  font-size: 1.25rem;
+  color: var(--accent);
+}
+
+.modal section {
+  margin-bottom: 1.25rem;
+}
+
+.modal section h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: var(--text);
+}
+
+.modal .form-row {
+  margin-bottom: 0.75rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.btn-cancel {
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-save {
+  padding: 0.5rem 1.25rem;
+  font-family: inherit;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-save:hover {
+  background: var(--accent-light);
+}
+
+@media (min-width: 480px) {
+  .app {
+    padding: 1.5rem;
+  }
+  .header h1 {
+    font-size: 1.5rem;
+  }
+}
