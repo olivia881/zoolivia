@@ -40,6 +40,7 @@ export function buildEmployee(profile, input) {
     contractTypeLabel: contractLabel(input.contractType),
     level: input.level,
     weeklyHours: input.weeklyHours,
+    hourlyRate: input.hourlyRate,
   };
 }
 
@@ -84,6 +85,7 @@ export function buildDocumentData({ profile, input, calculation }) {
       contractTypeLabel: employee.contractTypeLabel,
       level: employee.level,
       weeklyHours: String(employee.weeklyHours),
+      hourlyRate: euro(employee.hourlyRate),
       month: String(payroll.month),
       monthName: payroll.monthName,
       year: String(payroll.year),

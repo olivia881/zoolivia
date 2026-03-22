@@ -3,7 +3,6 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { CONTRACT_TEMPLATE, CLAUSE_TEMPLATE } from "../templates/contractTemplate.js";
-import { generatePayslipHTML } from "../templates/payslipTemplate.js";
 import { RECEIPT_TEMPLATE } from "../templates/receiptTemplate.js";
 import { buildDocumentData } from "../models/entities.js";
 
@@ -18,6 +17,13 @@ const MARGIN_TOP = 56;
 const MARGIN_BOTTOM = 50;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_X * 2;
 const PAGE_BORDER_INSET = 28;
+const PAYSLIP_TABLE_ROW_HEIGHT = 18;
+const PAYSLIP_TABLE_SPLIT_X = 258;
+const PAYSLIP_TABLE_TEXT_SIZE = 8.6;
+const PAYSLIP_SECTION_BG = rgb(0.84, 0.87, 0.91);
+const PAYSLIP_TABLE_HEADER_BG = rgb(0.92, 0.93, 0.95);
+const PAYSLIP_ALT_ROW_BG = rgb(0.975, 0.978, 0.985);
+const PAYSLIP_TOTAL_ROW_BG = rgb(0.95, 0.955, 0.965);
 
 const FILE_PREFIX_BY_TYPE = {
   contract: "Contratto",
@@ -50,41 +56,15 @@ function renderTemplate(template, placeholders) {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => String(placeholders[key] ?? ""));
 }
 
-function formatAmountWithoutSymbol(value) {
-  return Number(value ?? 0).toFixed(2).replace(".", ",");
+function euro(value) {
+  return new Intl.NumberFormat("it-IT", {
+    style: "currency",
+    currency: "EUR",
+  }).format(Number(value) || 0);
 }
 
-function htmlToPlainText(html) {
-  return html
-    .replace(/<\s*\/h[1-6]\s*>/gi, "\n")
-    .replace(/<\s*h[1-6][^>]*>/gi, "")
-    .replace(/<\s*\/p\s*>/gi, "\n")
-    .replace(/<\s*p[^>]*>/gi, "")
-    .replace(/<\s*hr\s*\/?>/gi, "\n----------------------------------------\n")
-    .replace(/<\s*strong\s*>/gi, "")
-    .replace(/<\s*\/strong\s*>/gi, "")
-    .replace(/<[^>]+>/g, "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .join("\n");
-}
-
-function buildPayslipHtmlData(data) {
-  return {
-    month: data.payroll.monthName,
-    year: data.payroll.year,
-    employer: {
-      name: data.employer.name,
-    },
-    employee: {
-      name: data.employee.name,
-    },
-    grossSalary: formatAmountWithoutSymbol(data.payroll.grossSalary),
-    netSalary: formatAmountWithoutSymbol(data.payroll.netSalary),
-    tfr: formatAmountWithoutSymbol(data.payroll.tfr),
-    thirteenth: formatAmountWithoutSymbol(data.payroll.thirteenth),
-  };
+function formatDate(date) {
+  return new Intl.DateTimeFormat("it-IT").format(date);
 }
 
 function wrapLine(line, font, fontSize, maxWidth) {
@@ -115,19 +95,19 @@ function wrapLine(line, font, fontSize, maxWidth) {
   return lines;
 }
 
-function drawPageFrame(page) {
+function drawPageFrame(page, { topInset = PAGE_BORDER_INSET, bottomInset = PAGE_BORDER_INSET, sideInset = PAGE_BORDER_INSET } = {}) {
   page.drawRectangle({
-    x: PAGE_BORDER_INSET,
-    y: PAGE_BORDER_INSET,
-    width: PAGE_WIDTH - PAGE_BORDER_INSET * 2,
-    height: PAGE_HEIGHT - PAGE_BORDER_INSET * 2,
+    x: sideInset,
+    y: bottomInset,
+    width: PAGE_WIDTH - sideInset * 2,
+    height: PAGE_HEIGHT - topInset - bottomInset,
     borderWidth: 1,
     borderColor: rgb(0.5, 0.52, 0.56),
   });
 }
 
 function drawHeader(page, title, titleFont, bodyFont) {
-  drawPageFrame(page);
+  drawPageFrame(page, { topInset: 34, bottomInset: PAGE_BORDER_INSET, sideInset: PAGE_BORDER_INSET });
 
   const titleSize = 15;
   const subtitleSize = 8.5;
@@ -212,13 +192,335 @@ function getTemplate(documentType) {
 }
 
 function buildBodyText(documentType, data) {
-  if (documentType === "payslip") {
-    const html = generatePayslipHTML(buildPayslipHtmlData(data));
-    return htmlToPlainText(html);
-  }
-
   const template = getTemplate(documentType);
   return renderTemplate(template, data.placeholders);
+}
+
+function drawCenteredText(page, text, y, font, size, color = rgb(0.14, 0.14, 0.14)) {
+  const width = font.widthOfTextAtSize(text, size);
+  const x = (PAGE_WIDTH - width) / 2;
+  page.drawText(text, { x, y, size, font, color });
+}
+
+function drawPayslipSectionTitle(page, y, title, titleFont) {
+  const width = PAGE_WIDTH - MARGIN_X * 2;
+  const height = 16;
+  page.drawRectangle({
+    x: MARGIN_X,
+    y: y - height,
+    width,
+    height,
+    color: PAYSLIP_SECTION_BG,
+    borderWidth: 0.7,
+    borderColor: rgb(0.5, 0.52, 0.56),
+  });
+  page.drawText(title, {
+    x: MARGIN_X + 6,
+    y: y - 11.5,
+    size: 9,
+    font: titleFont,
+    color: rgb(0.14, 0.14, 0.14),
+  });
+  return y - height;
+}
+
+function drawPayslipTableHeader(page, y, bodyFont, rightHeader = "Importo") {
+  const width = PAGE_WIDTH - MARGIN_X * 2;
+  page.drawRectangle({
+    x: MARGIN_X,
+    y: y - PAYSLIP_TABLE_ROW_HEIGHT,
+    width,
+    height: PAYSLIP_TABLE_ROW_HEIGHT,
+    color: PAYSLIP_TABLE_HEADER_BG,
+    borderWidth: 0.7,
+    borderColor: rgb(0.5, 0.52, 0.56),
+  });
+  page.drawLine({
+    start: { x: MARGIN_X + PAYSLIP_TABLE_SPLIT_X, y: y - PAYSLIP_TABLE_ROW_HEIGHT },
+    end: { x: MARGIN_X + PAYSLIP_TABLE_SPLIT_X, y },
+    thickness: 0.7,
+    color: rgb(0.5, 0.52, 0.56),
+  });
+  page.drawText("Descrizione", {
+    x: MARGIN_X + 6,
+    y: y - 12.2,
+    size: PAYSLIP_TABLE_TEXT_SIZE,
+    font: bodyFont,
+    color: rgb(0.14, 0.14, 0.14),
+  });
+  page.drawText(rightHeader, {
+    x: MARGIN_X + PAYSLIP_TABLE_SPLIT_X + 6,
+    y: y - 12.2,
+    size: PAYSLIP_TABLE_TEXT_SIZE,
+    font: bodyFont,
+    color: rgb(0.14, 0.14, 0.14),
+  });
+  return y - PAYSLIP_TABLE_ROW_HEIGHT;
+}
+
+function drawPayslipTableRows(page, y, rows, bodyFont, titleFont, { rightAlign = true, rightLabel = "Importo" } = {}) {
+  let cursorY = drawPayslipTableHeader(page, y, bodyFont, rightLabel);
+  const width = PAGE_WIDTH - MARGIN_X * 2;
+  const amountColumnWidth = width - PAYSLIP_TABLE_SPLIT_X;
+
+  rows.forEach((row, index) => {
+    const hasBackground = row.bold || index % 2 === 1;
+    if (hasBackground) {
+      page.drawRectangle({
+        x: MARGIN_X,
+        y: cursorY - PAYSLIP_TABLE_ROW_HEIGHT,
+        width,
+        height: PAYSLIP_TABLE_ROW_HEIGHT,
+        color: row.bold ? PAYSLIP_TOTAL_ROW_BG : PAYSLIP_ALT_ROW_BG,
+      });
+    }
+
+    page.drawRectangle({
+      x: MARGIN_X,
+      y: cursorY - PAYSLIP_TABLE_ROW_HEIGHT,
+      width,
+      height: PAYSLIP_TABLE_ROW_HEIGHT,
+      borderWidth: 0.7,
+      borderColor: rgb(0.5, 0.52, 0.56),
+    });
+    page.drawLine({
+      start: { x: MARGIN_X + PAYSLIP_TABLE_SPLIT_X, y: cursorY - PAYSLIP_TABLE_ROW_HEIGHT },
+      end: { x: MARGIN_X + PAYSLIP_TABLE_SPLIT_X, y: cursorY },
+      thickness: 0.7,
+      color: rgb(0.5, 0.52, 0.56),
+    });
+
+    const font = row.bold ? titleFont : bodyFont;
+    page.drawText(row.label, {
+      x: MARGIN_X + 6,
+      y: cursorY - 12.2,
+      size: PAYSLIP_TABLE_TEXT_SIZE,
+      font,
+      color: rgb(0.14, 0.14, 0.14),
+      maxWidth: PAYSLIP_TABLE_SPLIT_X - 12,
+    });
+
+    const valueText = String(row.value);
+    const valueWidth = font.widthOfTextAtSize(valueText, PAYSLIP_TABLE_TEXT_SIZE);
+    const valueX = rightAlign
+      ? MARGIN_X + PAYSLIP_TABLE_SPLIT_X + amountColumnWidth - valueWidth - 6
+      : MARGIN_X + PAYSLIP_TABLE_SPLIT_X + 6;
+    page.drawText(valueText, {
+      x: valueX,
+      y: cursorY - 12.2,
+      size: PAYSLIP_TABLE_TEXT_SIZE,
+      font,
+      color: rgb(0.14, 0.14, 0.14),
+      maxWidth: amountColumnWidth - 12,
+    });
+
+    cursorY -= PAYSLIP_TABLE_ROW_HEIGHT;
+  });
+
+  return cursorY;
+}
+
+async function generateProfessionalPayslipPdf(data, meta) {
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  const titleFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const bodyFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+  drawPageFrame(page, { topInset: 42, bottomInset: 30, sideInset: 24 });
+
+  let y = PAGE_HEIGHT - 78;
+  drawCenteredText(page, `BUSTA PAGA - ${data.payroll.monthName.toUpperCase()} ${data.payroll.year}`, y, titleFont, 16.5, rgb(0.12, 0.2, 0.4));
+  y -= 18;
+  drawCenteredText(
+    page,
+    `Lavoratrice domestica - CCNL Lavoro Domestico - Livello ${data.employee.level} - ${data.employee.contractTypeLabel}`,
+    y,
+    bodyFont,
+    8.3,
+    rgb(0.35, 0.35, 0.35),
+  );
+  y -= 12;
+  page.drawLine({
+    start: { x: MARGIN_X, y },
+    end: { x: PAGE_WIDTH - MARGIN_X, y },
+    thickness: 0.8,
+    color: rgb(0.62, 0.64, 0.68),
+  });
+  y -= 12;
+
+  y = drawPayslipSectionTitle(page, y, "DATI DEL RAPPORTO DI LAVORO", titleFont);
+  y = drawPayslipTableRows(
+    page,
+    y,
+    [
+      { label: "Datore di lavoro", value: data.employer.name },
+      { label: "Codice fiscale datore", value: data.employer.taxCode },
+      { label: "Indirizzo datore", value: data.employer.address },
+      { label: "Lavoratrice", value: data.employee.name },
+      { label: "Codice fiscale lavoratrice", value: data.employee.taxCode },
+      { label: "Mese di riferimento", value: `${data.payroll.monthName} ${data.payroll.year}` },
+      { label: "Data emissione cedolino", value: formatDate(new Date()) },
+      { label: "Livello CCNL", value: data.employee.level },
+      { label: "Ore settimanali", value: String(data.employee.weeklyHours) },
+      { label: "Tipologia", value: data.employee.contractTypeLabel },
+      {
+        label: "Retribuzione oraria",
+        value: data.employee.contractType === "non_convivente" ? data.placeholders.hourlyRate : "Non applicabile (stipendio CCNL fisso)",
+      },
+      { label: "Retribuzione mensile lorda", value: euro(data.payroll.grossSalary), bold: true },
+    ],
+    bodyFont,
+    titleFont,
+    { rightAlign: false, rightLabel: "Valore" },
+  );
+  y -= 11;
+
+  y = drawPayslipSectionTitle(page, y, "SEZIONE 1 - RETRIBUZIONE", titleFont);
+  y = drawPayslipTableRows(
+    page,
+    y,
+    [
+      { label: "Paga base + indennita", value: euro(data.payroll.grossSalary) },
+      { label: "Totale lordo", value: euro(data.payroll.grossSalary), bold: true },
+    ],
+    bodyFont,
+    titleFont,
+  );
+  y -= 9;
+
+  y = drawPayslipSectionTitle(page, y, "SEZIONE 2 - TRATTENUTE E NETTO", titleFont);
+  y = drawPayslipTableRows(
+    page,
+    y,
+    [
+      { label: "Contributi INPS lavoratrice", value: euro(data.payroll.employeeContributions) },
+      { label: "Totale trattenute", value: euro(data.payroll.employeeContributions) },
+      { label: "Netto da corrispondere", value: euro(data.payroll.netSalary), bold: true },
+    ],
+    bodyFont,
+    titleFont,
+  );
+  y -= 9;
+
+  y = drawPayslipSectionTitle(page, y, "SEZIONE 3 - ACCANTONAMENTI", titleFont);
+  y = drawPayslipTableRows(
+    page,
+    y,
+    [
+      { label: "TFR maturato", value: euro(data.payroll.tfr) },
+      { label: "Quota tredicesima", value: euro(data.payroll.thirteenth) },
+    ],
+    bodyFont,
+    titleFont,
+  );
+  y -= 9;
+
+  y = drawPayslipSectionTitle(page, y, "SEZIONE 4 - CONTRIBUTI DATORE", titleFont);
+  y = drawPayslipTableRows(
+    page,
+    y,
+    [
+      { label: "Contributi INPS datore", value: euro(data.payroll.employerContributions) },
+      { label: "Totale contributi datore", value: euro(data.payroll.employerContributions), bold: true },
+    ],
+    bodyFont,
+    titleFont,
+  );
+  y -= 9;
+
+  y = drawPayslipSectionTitle(page, y, "SEZIONE 5 - COSTO TOTALE DATORE", titleFont);
+  y = drawPayslipTableRows(
+    page,
+    y,
+    [{ label: "Totale costo datore", value: euro(data.payroll.totalCost), bold: true }],
+    bodyFont,
+    titleFont,
+  );
+  y -= 18;
+
+  if (y < 172) {
+    y = 172;
+  }
+
+  const noteHeight = 44;
+  page.drawRectangle({
+    x: MARGIN_X,
+    y: y - noteHeight,
+    width: PAGE_WIDTH - MARGIN_X * 2,
+    height: noteHeight,
+    color: rgb(0.97, 0.98, 0.99),
+    borderWidth: 0.7,
+    borderColor: rgb(0.7, 0.72, 0.75),
+  });
+  page.drawText("NOTA IN CALCE:", {
+    x: MARGIN_X + 6,
+    y: y - 13,
+    size: 8.8,
+    font: titleFont,
+    color: rgb(0.14, 0.14, 0.14),
+  });
+  page.drawText("TFR e tredicesima non sono corrisposti nel mese e restano accantonati.", {
+    x: MARGIN_X + 6,
+    y: y - 25.5,
+    size: 8.2,
+    font: bodyFont,
+    color: rgb(0.14, 0.14, 0.14),
+  });
+  page.drawText("La firma e valida esclusivamente per il netto mensile corrisposto.", {
+    x: MARGIN_X + 6,
+    y: y - 36.5,
+    size: 8.2,
+    font: bodyFont,
+    color: rgb(0.14, 0.14, 0.14),
+  });
+  y -= noteHeight + 24;
+
+  const signatureLineY = y + 10;
+  page.drawLine({
+    start: { x: MARGIN_X, y: signatureLineY },
+    end: { x: MARGIN_X + 180, y: signatureLineY },
+    thickness: 0.7,
+    color: rgb(0.35, 0.35, 0.35),
+  });
+  page.drawLine({
+    start: { x: MARGIN_X + 250, y: signatureLineY },
+    end: { x: MARGIN_X + 430, y: signatureLineY },
+    thickness: 0.7,
+    color: rgb(0.35, 0.35, 0.35),
+  });
+  page.drawText("Firma datore", {
+    x: MARGIN_X,
+    y: y - 2,
+    size: 8.4,
+    font: bodyFont,
+    color: rgb(0.14, 0.14, 0.14),
+  });
+  page.drawText("Firma lavoratrice", {
+    x: MARGIN_X + 250,
+    y: y - 2,
+    size: 8.4,
+    font: bodyFont,
+    color: rgb(0.14, 0.14, 0.14),
+  });
+  page.drawText("Documento personale ad uso privato - fac-simile", {
+    x: MARGIN_X,
+    y: MARGIN_BOTTOM - 10,
+    size: 7.4,
+    font: bodyFont,
+    color: rgb(0.45, 0.45, 0.45),
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  const yearDir = path.join(ARCHIVE_ROOT, meta.year);
+  await mkdir(yearDir, { recursive: true });
+  const absolutePath = path.join(yearDir, meta.fileName);
+  await writeFile(absolutePath, pdfBytes);
+
+  return {
+    fileName: meta.fileName,
+    absolutePath,
+    relativePath: `/documenti/${meta.year}/${meta.fileName}`,
+  };
 }
 
 function getDocumentMeta(documentType, data) {
@@ -237,10 +539,13 @@ function getDocumentMeta(documentType, data) {
 }
 
 export async function generatePDF(documentType, data) {
+  const meta = getDocumentMeta(documentType, data);
+  if (documentType === "payslip") {
+    return generateProfessionalPayslipPdf(data, meta);
+  }
+
   const bodyText = buildBodyText(documentType, data);
   const pdfDoc = await PDFDocument.create();
-  const meta = getDocumentMeta(documentType, data);
-
   await drawBodyLines(pdfDoc, meta.title, bodyText);
 
   const pdfBytes = await pdfDoc.save();
