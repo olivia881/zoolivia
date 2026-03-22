@@ -5,7 +5,7 @@ import PDFButton from "./components/PDFButton";
 import { calculatePayroll } from "./utils/payrollCalculator";
 import { validateInput, validateProfile } from "./utils/validation";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 function currentMonth() {
   return new Date().getMonth() + 1;

@@ -16,6 +16,7 @@ app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const archivePath = path.resolve(__dirname, "../buste");
+const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
 app.use("/buste", express.static(archivePath));
 
 const db = await initDb();
@@ -103,6 +104,12 @@ app.post("/api/payroll/pdf", async (req, res) => {
     filePath: pdf.relativePath,
     calculation,
   });
+});
+
+// Serve il frontend buildato dalla stessa origin (utile su mobile/tunnel singolo).
+app.use(express.static(frontendDistPath));
+app.get("/", (_req, res) => {
+  res.sendFile(path.join(frontendDistPath, "index.html"));
 });
 
 app.listen(PORT, () => {
