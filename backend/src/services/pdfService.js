@@ -27,9 +27,12 @@ const MARGIN_BOTTOM = 36;
 const TABLE_ROW_HEIGHT = 18;
 const TABLE_SPLIT_X = 255;
 const TABLE_TEXT_SIZE = 8.6;
-const SECTION_BG = rgb(0.88, 0.9, 0.93);
-const TABLE_HEADER_BG = rgb(0.94, 0.94, 0.95);
-const BORDER_COLOR = rgb(0.5, 0.5, 0.5);
+const PAGE_BORDER_INSET = 24;
+const SECTION_BG = rgb(0.84, 0.87, 0.91);
+const TABLE_HEADER_BG = rgb(0.92, 0.93, 0.95);
+const ALT_ROW_BG = rgb(0.975, 0.978, 0.985);
+const TOTAL_ROW_BG = rgb(0.95, 0.955, 0.965);
+const BORDER_COLOR = rgb(0.5, 0.52, 0.56);
 const TEXT_COLOR = rgb(0.14, 0.14, 0.14);
 
 function euro(value) {
@@ -46,10 +49,34 @@ function safeName(value) {
     .replace(/[^\w-]/g, "");
 }
 
+function formatDate(date) {
+  return new Intl.DateTimeFormat("it-IT").format(date);
+}
+
 function drawCenteredText(page, text, y, font, size, color = TEXT_COLOR) {
   const textWidth = font.widthOfTextAtSize(text, size);
   const x = (page.getWidth() - textWidth) / 2;
   page.drawText(text, { x, y, size, font, color });
+}
+
+function drawPageFrame(page) {
+  page.drawRectangle({
+    x: PAGE_BORDER_INSET,
+    y: PAGE_BORDER_INSET,
+    width: page.getWidth() - PAGE_BORDER_INSET * 2,
+    height: page.getHeight() - PAGE_BORDER_INSET * 2,
+    borderWidth: 1,
+    borderColor: BORDER_COLOR,
+  });
+}
+
+function drawHorizontalRule(page, y) {
+  page.drawLine({
+    start: { x: MARGIN_X, y },
+    end: { x: page.getWidth() - MARGIN_X, y },
+    thickness: 0.8,
+    color: BORDER_COLOR,
+  });
 }
 
 function drawSectionTitle(page, y, title, titleFont) {
@@ -114,7 +141,18 @@ function drawTableRows(page, y, rows, bodyFont, titleFont, { rightAlign = true, 
   const width = page.getWidth() - MARGIN_X * 2;
   const amountColumnWidth = width - TABLE_SPLIT_X;
 
-  for (const row of rows) {
+  rows.forEach((row, index) => {
+    const hasBackground = row.bold || index % 2 === 1;
+    if (hasBackground) {
+      page.drawRectangle({
+        x: MARGIN_X,
+        y: cursorY - TABLE_ROW_HEIGHT,
+        width,
+        height: TABLE_ROW_HEIGHT,
+        color: row.bold ? TOTAL_ROW_BG : ALT_ROW_BG,
+      });
+    }
+
     page.drawRectangle({
       x: MARGIN_X,
       y: cursorY - TABLE_ROW_HEIGHT,
@@ -156,7 +194,7 @@ function drawTableRows(page, y, rows, bodyFont, titleFont, { rightAlign = true, 
     });
 
     cursorY -= TABLE_ROW_HEIGHT;
-  }
+  });
 
   return cursorY;
 }
@@ -169,9 +207,11 @@ export async function generatePayslipPdf({ profile, input, calculation }) {
   const bodyFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const contractLabel = input.contractType === "convivente" ? "Convivente" : "Non convivente";
   const monthName = MONTH_NAMES[input.month - 1];
+  const issueDate = formatDate(new Date());
 
+  drawPageFrame(page);
   let y = height - MARGIN_TOP;
-  drawCenteredText(page, `BUSTA PAGA - ${monthName.toUpperCase()} ${input.year}`, y, titleFont, 17);
+  drawCenteredText(page, `BUSTA PAGA - ${monthName.toUpperCase()} ${input.year}`, y, titleFont, 16.5);
   y -= 18;
   drawCenteredText(
     page,
@@ -181,7 +221,9 @@ export async function generatePayslipPdf({ profile, input, calculation }) {
     8.3,
     rgb(0.35, 0.35, 0.35),
   );
-  y -= 18;
+  y -= 12;
+  drawHorizontalRule(page, y);
+  y -= 12;
 
   y = drawSectionTitle(page, y, "DATI DEL RAPPORTO DI LAVORO", titleFont);
   y = drawTableRows(
@@ -194,6 +236,7 @@ export async function generatePayslipPdf({ profile, input, calculation }) {
       { label: "Lavoratrice", value: profile.workerName },
       { label: "Codice fiscale lavoratrice", value: profile.workerCf },
       { label: "Mese di riferimento", value: `${monthName} ${input.year}` },
+      { label: "Data emissione cedolino", value: issueDate },
       { label: "Livello CCNL", value: input.level },
       { label: "Ore settimanali", value: String(input.weeklyHours) },
       { label: "Tipologia", value: contractLabel },
@@ -276,6 +319,7 @@ export async function generatePayslipPdf({ profile, input, calculation }) {
     y = MARGIN_BOTTOM + 30;
   }
 
+  drawHorizontalRule(page, y + 10);
   page.drawText("Firma datore ____________________________", {
     x: MARGIN_X,
     y,
@@ -290,7 +334,7 @@ export async function generatePayslipPdf({ profile, input, calculation }) {
     font: bodyFont,
     color: TEXT_COLOR,
   });
-  page.drawText("Documento generato automaticamente - fac-simile", {
+  page.drawText("Documento personale ad uso privato - fac-simile", {
     x: MARGIN_X,
     y: MARGIN_BOTTOM - 8,
     size: 7.5,
