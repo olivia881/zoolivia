@@ -118,7 +118,7 @@ function App() {
 
       const data = await response.json();
       const baseOrigin = API_BASE.replace("/api", "");
-      setDownloadUrl(`${baseOrigin}${data.filePath}`);
+      setDownloadUrl(`${baseOrigin}${data.filePath}?v=${Date.now()}`);
       setStatusMessage(`PDF creato: ${data.fileName}`);
     } catch (error) {
       setStatusMessage(error.message);
