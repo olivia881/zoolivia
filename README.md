@@ -4,8 +4,12 @@ Applicazione full-stack per:
 
 - calcolo stipendio badante (convivente / non convivente)
 - calcolo contributi INPS (quota lavoratrice e quota datore)
-- generazione PDF busta paga mensile
-- archivio automatico in `backend/buste/[anno]/`
+- generazione documenti PDF:
+  - contratto di assunzione
+  - clausola integrativa
+  - busta paga
+  - ricevuta pagamento
+- archivio automatico in `backend/documenti/[anno]/`
 
 ## Stack
 
@@ -51,13 +55,18 @@ Note importanti:
 - `GET /api/profile` - legge anagrafica salvata
 - `PUT /api/profile` - salva anagrafica
 - `POST /api/payroll/calculate` - calcola importi mensili
-- `POST /api/payroll/pdf` - genera e salva PDF
+- `POST /api/payroll/pdf` - genera busta paga (compatibilita)
+- `POST /api/documents/generate` - genera contratto, busta o ricevuta
 
 ## Struttura essenziale
 
 ```text
 backend/
   src/
+    models/entities.js
+    templates/contractTemplate.js
+    templates/payslipTemplate.js
+    templates/receiptTemplate.js
     services/payrollCalculator.js
     services/pdfService.js
     utils/validation.js
@@ -68,6 +77,7 @@ frontend/
     components/InputForm.jsx
     components/ResultsPanel.jsx
     components/PDFButton.jsx
+    components/DocumentsPanel.jsx
     utils/payrollCalculator.js
     App.jsx
 ```

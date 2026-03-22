@@ -4,6 +4,7 @@ backend/node_modules/
 frontend/dist/
 backend/data/
 backend/buste/
+backend/documenti/
 *.log
 .DS_Store
 buste/

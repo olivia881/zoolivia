@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 import { initDb } from "./db.js";
 import { validateMonthlyInput, validateProfile } from "./utils/validation.js";
 import { calculatePayroll } from "./services/payrollCalculator.js";
-import { generatePayslipPdf } from "./services/pdfService.js";
+import { generatePDF } from "./services/pdfService.js";
+import { buildDocumentData } from "./models/entities.js";
 
 const PORT = Number(process.env.PORT ?? 4000);
 const app = express();
@@ -15,9 +16,9 @@ app.use(express.json());
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const archivePath = path.resolve(__dirname, "../buste");
+const archivePath = path.resolve(__dirname, "../documenti");
 const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
-app.use("/buste", express.static(archivePath));
+app.use("/documenti", express.static(archivePath));
 
 const db = await initDb();
 
@@ -92,16 +93,65 @@ app.post("/api/payroll/pdf", async (req, res) => {
   }
 
   const calculation = calculatePayroll(inputValidation.sanitized);
-  const pdf = await generatePayslipPdf({
+  const data = buildDocumentData({
     profile: profileValidation.sanitized,
     input: inputValidation.sanitized,
     calculation,
   });
+  const pdf = await generatePDF("payslip", data);
 
   return res.json({
     message: "PDF generato correttamente",
     fileName: pdf.fileName,
     filePath: pdf.relativePath,
+    calculation,
+  });
+});
+
+app.post("/api/documents/generate", async (req, res) => {
+  const profileValidation = validateProfile(req.body?.profile ?? {});
+  const inputValidation = validateMonthlyInput(req.body?.input ?? {});
+  const documentType = String(req.body?.documentType ?? "").trim();
+
+  if (!profileValidation.isValid || !inputValidation.isValid) {
+    return res.status(400).json({
+      profileErrors: profileValidation.errors,
+      inputErrors: inputValidation.errors,
+    });
+  }
+
+  const allowedTypes = new Set(["contract", "payslip", "receipt"]);
+  if (!allowedTypes.has(documentType)) {
+    return res.status(400).json({ message: "Tipo documento non supportato." });
+  }
+
+  const calculation = calculatePayroll(inputValidation.sanitized);
+  const data = buildDocumentData({
+    profile: profileValidation.sanitized,
+    input: inputValidation.sanitized,
+    calculation,
+  });
+
+  let files = [];
+  if (documentType === "contract") {
+    const contractPdf = await generatePDF("contract", data);
+    const clausePdf = await generatePDF("clause", data);
+    files = [
+      { documentType: "contract", ...contractPdf },
+      { documentType: "clause", ...clausePdf },
+    ];
+  } else {
+    const pdf = await generatePDF(documentType, data);
+    files = [{ documentType, ...pdf }];
+  }
+
+  return res.json({
+    message: "Documenti generati correttamente",
+    files: files.map((file) => ({
+      documentType: file.documentType,
+      fileName: file.fileName,
+      filePath: file.relativePath,
+    })),
     calculation,
   });
 });

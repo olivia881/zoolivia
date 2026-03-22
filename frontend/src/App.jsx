@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import InputForm from "./components/InputForm";
 import ResultsPanel from "./components/ResultsPanel";
-import PDFButton from "./components/PDFButton";
+import DocumentsPanel from "./components/DocumentsPanel";
 import { calculatePayroll } from "./utils/payrollCalculator";
 import { validateInput, validateProfile } from "./utils/validation";
 
@@ -35,8 +35,8 @@ const DEFAULT_INPUT = {
 function App() {
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [input, setInput] = useState(DEFAULT_INPUT);
-  const [pdfLoading, setPdfLoading] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
+  const [loadingType, setLoadingType] = useState("");
+  const [documents, setDocuments] = useState([]);
   const [statusMessage, setStatusMessage] = useState("");
 
   useEffect(() => {
@@ -60,6 +60,7 @@ function App() {
   const profileErrors = useMemo(() => validateProfile(profile), [profile]);
   const inputErrors = useMemo(() => validateInput(input), [input]);
   const canCalculate = Object.keys(inputErrors).length === 0;
+  const canGenerateDocuments = Object.keys(profileErrors).length === 0 && canCalculate;
   const calculation = useMemo(() => (canCalculate ? calculatePayroll(input) : null), [canCalculate, input]);
 
   function onProfileChange(event) {
@@ -90,40 +91,47 @@ function App() {
     }
   }
 
-  async function handleGeneratePdf() {
+  async function handleGenerateDocument(documentType) {
     if (!calculation) {
-      setStatusMessage("Correggi i campi input prima di generare il PDF.");
+      setStatusMessage("Correggi i campi input prima di generare i documenti.");
       return;
     }
 
     if (Object.keys(profileErrors).length > 0) {
-      setStatusMessage("Compila l'anagrafica prima di generare il PDF.");
+      setStatusMessage("Compila l'anagrafica prima di generare i documenti.");
       return;
     }
 
-    setPdfLoading(true);
+    setLoadingType(documentType);
     setStatusMessage("");
     try {
       await saveProfile();
 
-      const response = await fetch(`${API_BASE}/payroll/pdf`, {
+      const response = await fetch(`${API_BASE}/documents/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile, input }),
+        body: JSON.stringify({ documentType, profile, input }),
       });
 
       if (!response.ok) {
-        throw new Error("Errore durante la generazione della busta.");
+        throw new Error("Errore durante la generazione dei documenti.");
       }
 
       const data = await response.json();
-      const baseOrigin = API_BASE.replace("/api", "");
-      setDownloadUrl(`${baseOrigin}${data.filePath}?v=${Date.now()}`);
-      setStatusMessage(`PDF creato: ${data.fileName}`);
+      const baseOrigin = API_BASE.startsWith("http") ? API_BASE.replace("/api", "") : "";
+      const cacheBuster = Date.now();
+      const generatedDocs = (data.files ?? []).map((file) => ({
+        documentType: file.documentType,
+        fileName: file.fileName,
+        url: `${baseOrigin}${file.filePath}?v=${cacheBuster}`,
+      }));
+
+      setDocuments(generatedDocs);
+      setStatusMessage(data.message ?? "Documenti generati correttamente.");
     } catch (error) {
       setStatusMessage(error.message);
     } finally {
-      setPdfLoading(false);
+      setLoadingType("");
     }
   }
 
@@ -144,11 +152,11 @@ function App() {
       />
 
       <ResultsPanel calculation={calculation} />
-      <PDFButton
-        onClick={handleGeneratePdf}
-        loading={pdfLoading}
-        disabled={!calculation || Object.keys(profileErrors).length > 0}
-        downloadUrl={downloadUrl}
+      <DocumentsPanel
+        onGenerate={handleGenerateDocument}
+        loadingType={loadingType}
+        disabled={!canGenerateDocuments}
+        documents={documents}
       />
 
       {statusMessage && <p className="status">{statusMessage}</p>}
