@@ -438,10 +438,6 @@ async function generateProfessionalPayslipPdf(data, meta) {
   );
   y -= 18;
 
-  if (y < 172) {
-    y = 172;
-  }
-
   const noteHeight = 44;
   page.drawRectangle({
     x: MARGIN_X,
