@@ -1,26 +1,28 @@
-export const PAYSLIP_TEMPLATE = `
-## BUSTA PAGA
-Mese di riferimento: {{monthName}} {{year}}
-Datore di lavoro: {{employerName}} (CF {{employerTaxCode}})
-Lavoratrice: {{employeeName}} (CF {{employeeTaxCode}})
-Tipologia contratto: {{contractTypeLabel}} - Livello {{level}}
+export function generatePayslipHTML(data) {
+  return `
+    <h1>BUSTA PAGA - ${data.month} ${data.year}</h1>
 
-## RIEPILOGO RETRIBUTIVO
-Lordo: {{grossSalary}}
-Contributi lavoratrice: {{employeeContributions}}
-Contributi datore: {{employerContributions}}
-Netto da corrispondere: {{netSalary}}
-TFR maturato: {{tfr}}
-Quota tredicesima maturata: {{thirteenth}}
-Costo totale datore: {{totalCost}}
+    <h3>Dati</h3>
+    <p>Datore: ${data.employer.name}</p>
+    <p>Lavoratrice: ${data.employee.name}</p>
 
-## NOTA MENSILE
-{{monthlySafetyNote}}
+    <h3>Retribuzione</h3>
+    <p>Lordo: EUR ${data.grossSalary}</p>
+    <p>Netto: EUR ${data.netSalary}</p>
 
-## CLAUSOLE OBBLIGATORIE
-{{mandatoryClauses}}
+    <h3>Accantonamenti</h3>
+    <p>TFR: EUR ${data.tfr}</p>
+    <p>Tredicesima: EUR ${data.thirteenth}</p>
 
-## FIRME
-Firma datore (solo per netto corrisposto): ______________________
-Firma lavoratrice (solo per netto ricevuto): ____________________
-`;
+    <hr/>
+
+    <p><strong>NOTE:</strong></p>
+    <p>
+    Gli importi relativi a TFR e tredicesima sono accantonati e non corrisposti nel mese.
+    </p>
+
+    <p>
+    Il lavoratore dichiara di aver ricevuto esclusivamente il netto mensile.
+    </p>
+  `;
+}

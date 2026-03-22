@@ -3,7 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { CONTRACT_TEMPLATE, CLAUSE_TEMPLATE } from "../templates/contractTemplate.js";
-import { PAYSLIP_TEMPLATE } from "../templates/payslipTemplate.js";
+import { generatePayslipHTML } from "../templates/payslipTemplate.js";
 import { RECEIPT_TEMPLATE } from "../templates/receiptTemplate.js";
 import { buildDocumentData } from "../models/entities.js";
 
@@ -36,7 +36,6 @@ const TITLE_BY_TYPE = {
 const TEMPLATE_BY_TYPE = {
   contract: CONTRACT_TEMPLATE,
   clause: CLAUSE_TEMPLATE,
-  payslip: PAYSLIP_TEMPLATE,
   receipt: RECEIPT_TEMPLATE,
 };
 
@@ -49,6 +48,43 @@ function safeName(value) {
 
 function renderTemplate(template, placeholders) {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => String(placeholders[key] ?? ""));
+}
+
+function formatAmountWithoutSymbol(value) {
+  return Number(value ?? 0).toFixed(2).replace(".", ",");
+}
+
+function htmlToPlainText(html) {
+  return html
+    .replace(/<\s*\/h[1-6]\s*>/gi, "\n")
+    .replace(/<\s*h[1-6][^>]*>/gi, "")
+    .replace(/<\s*\/p\s*>/gi, "\n")
+    .replace(/<\s*p[^>]*>/gi, "")
+    .replace(/<\s*hr\s*\/?>/gi, "\n----------------------------------------\n")
+    .replace(/<\s*strong\s*>/gi, "")
+    .replace(/<\s*\/strong\s*>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n");
+}
+
+function buildPayslipHtmlData(data) {
+  return {
+    month: data.payroll.monthName,
+    year: data.payroll.year,
+    employer: {
+      name: data.employer.name,
+    },
+    employee: {
+      name: data.employee.name,
+    },
+    grossSalary: formatAmountWithoutSymbol(data.payroll.grossSalary),
+    netSalary: formatAmountWithoutSymbol(data.payroll.netSalary),
+    tfr: formatAmountWithoutSymbol(data.payroll.tfr),
+    thirteenth: formatAmountWithoutSymbol(data.payroll.thirteenth),
+  };
 }
 
 function wrapLine(line, font, fontSize, maxWidth) {
@@ -175,6 +211,16 @@ function getTemplate(documentType) {
   return template;
 }
 
+function buildBodyText(documentType, data) {
+  if (documentType === "payslip") {
+    const html = generatePayslipHTML(buildPayslipHtmlData(data));
+    return htmlToPlainText(html);
+  }
+
+  const template = getTemplate(documentType);
+  return renderTemplate(template, data.placeholders);
+}
+
 function getDocumentMeta(documentType, data) {
   const title = TITLE_BY_TYPE[documentType];
   const prefix = FILE_PREFIX_BY_TYPE[documentType];
@@ -191,8 +237,7 @@ function getDocumentMeta(documentType, data) {
 }
 
 export async function generatePDF(documentType, data) {
-  const template = getTemplate(documentType);
-  const bodyText = renderTemplate(template, data.placeholders);
+  const bodyText = buildBodyText(documentType, data);
   const pdfDoc = await PDFDocument.create();
   const meta = getDocumentMeta(documentType, data);
 
