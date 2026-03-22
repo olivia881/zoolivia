@@ -1,5 +1,5 @@
-const APP_CACHE = "badante-app-v1";
-const RUNTIME_CACHE = "badante-runtime-v1";
+const APP_CACHE = "badante-app-v2";
+const RUNTIME_CACHE = "badante-runtime-v2";
 const APP_SHELL = ["/", "/index.html", "/manifest.webmanifest", "/favicon.svg", "/icon-192.svg", "/icon-512.svg"];
 
 self.addEventListener("install", (event) => {
@@ -31,6 +31,25 @@ self.addEventListener("fetch", (event) => {
   const isSameOrigin = requestUrl.origin === self.location.origin;
 
   if (!isSameOrigin) {
+    return;
+  }
+
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(async () => {
+          const cachedPage = await caches.match(event.request);
+          if (cachedPage) {
+            return cachedPage;
+          }
+          return caches.match("/index.html");
+        }),
+    );
     return;
   }
 
