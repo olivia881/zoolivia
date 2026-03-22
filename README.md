@@ -33,6 +33,19 @@ npm run dev
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:4000`
 
+## Installazione su telefono (PWA)
+
+L'app frontend e installabile come PWA (icona su Home del telefono):
+
+- Android (Chrome): apri il sito e scegli **Installa app** dal menu.
+- iPhone (Safari): **Condividi > Aggiungi a schermata Home**.
+
+Note importanti:
+
+- In locale funziona come PWA su `localhost`.
+- Per installazione reale da telefono con rete mobile, pubblica l'app su HTTPS.
+- L'app installata usa sempre il backend configurato (`VITE_API_BASE_URL`).
+
 ## API principali
 
 - `GET /api/profile` - legge anagrafica salvata
