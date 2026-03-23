@@ -1,5 +1,7 @@
 # Gestionale Buste Paga Badante
 
+[![Build APK](https://github.com/olivia881/zoolivia/actions/workflows/build-apk.yml/badge.svg)](https://github.com/olivia881/zoolivia/actions/workflows/build-apk.yml)
+
 Applicazione full-stack per:
 
 - calcolo stipendio badante (convivente / non convivente)
