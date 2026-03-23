@@ -1,0 +1,52 @@
+name: Build APK
+
+on:
+  push:
+    branches: [cursor/software-buste-paga-2a66, main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install and build
+        run: |
+          npm install
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            build-tools;35.0.0
+            platforms;android-36
+          accept-android-sdk-licenses: true
+
+      - name: Sync and build APK
+        run: |
+          cd frontend
+          npx cap sync android
+          cd android
+          ./gradlew assembleDebug --no-daemon -Pandroid.useAndroidX=true
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BustaBadante-APK
+          path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
