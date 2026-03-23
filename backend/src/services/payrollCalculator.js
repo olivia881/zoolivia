@@ -1,27 +1,27 @@
 /**
- * CCNL Lavoro Domestico - Minimi retributivi 2025
- * Fonte: tabelle ufficiali CCNL
+ * CCNL Lavoro Domestico - Minimi retributivi 2026
+ * Fonte: tabelle ufficiali CCNL (decorrenza 01-01-2026)
  */
 const CONVIVENTE_MONTHLY = {
-  A: 736.25,
-  AS: 870.13,
-  B: 937.06,
-  BS: 1003.99,
-  C: 1070.94,
-  CS: 1137.86,
-  D: 1536.6,
-  DS: 1603.53,
+  A: 908.1,
+  AS: 958.55,
+  B: 983.16,
+  BS: 1053.39,
+  C: 1123.63,
+  CS: 1193.84,
+  D: 1612.2,
+  DS: 1682.42,
 };
 
 const NON_CONVIVENTE_HOURLY = {
-  A: 5.35,
-  AS: 6.3,
-  B: 6.68,
-  BS: 7.1,
-  C: 7.49,
-  CS: 7.91,
-  D: 9.12,
-  DS: 9.5,
+  A: 6.51,
+  AS: 6.76,
+  B: 7.01,
+  BS: 7.45,
+  C: 7.86,
+  CS: 8.3,
+  D: 9.57,
+  DS: 9.97,
 };
 
 const EMPLOYEE_CONTRIBUTION_RATE = 0.07;
