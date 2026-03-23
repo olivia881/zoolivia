@@ -440,7 +440,7 @@ async function generateProfessionalPayslipPdf(data, meta) {
   );
   y -= 8;
 
-  const noteHeight = 36;
+  const noteHeight = 52;
 
   page.drawRectangle({
     x: MARGIN_X,
@@ -458,16 +458,16 @@ async function generateProfessionalPayslipPdf(data, meta) {
     font: titleFont,
     color: rgb(0.14, 0.14, 0.14),
   });
-  page.drawText("TFR e tredicesima non sono corrisposti nel mese e restano accantonati.", {
+  page.drawText("TFR e tredicesima maturano mensilmente; liquidazione alla cessazione o nei termini di legge. Non inclusi nel netto mensile.", {
     x: MARGIN_X + 6,
-    y: y - 24.2,
-    size: 8.0,
+    y: y - 23,
+    size: 7.6,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
-  page.drawText("La firma e valida esclusivamente per il netto mensile corrisposto.", {
+  page.drawText("La firma è valida esclusivamente per il solo importo netto mensile percepito.", {
     x: MARGIN_X + 6,
-    y: y - 32.8,
+    y: y - 35,
     size: 8.0,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),

@@ -65,10 +65,11 @@ export function buildDocumentData({ profile, input, calculation }) {
   const payroll = buildPayroll(input, calculation);
 
   const mandatoryClauses = [
-    "- TFR non pagato mensilmente, ma accantonato secondo normativa.",
-    "- Tredicesima non inclusa nel netto mensile.",
-    "- La firma e valida esclusivamente per l'importo netto corrisposto.",
-    "- L'eventuale residenza presso il datore non crea diritto abitativo.",
+    "- Il trattamento di fine rapporto (TFR) matura mensilmente ma verrà liquidato esclusivamente alla cessazione del rapporto di lavoro.",
+    "- La tredicesima mensilità matura mensilmente ma verrà corrisposta nei termini previsti dalla legge.",
+    "- Tali importi non sono inclusi nella retribuzione mensile corrisposta.",
+    "- La lavoratrice firma ricevuta del solo importo netto mensile percepito.",
+    "- L'eventuale residenza presso il datore non costituisce titolo di possesso o diritto di permanenza nell'immobile.",
   ].join("\n");
 
   const startDate = `1 ${payroll.monthName} ${payroll.year}`;
@@ -105,7 +106,7 @@ export function buildDocumentData({ profile, input, calculation }) {
       tfr: euro(payroll.tfr),
       thirteenth: euro(payroll.thirteenth),
       totalCost: euro(payroll.totalCost),
-      monthlySafetyNote: "TFR e tredicesima non sono corrisposti nel mese.",
+      monthlySafetyNote: "TFR e tredicesima maturano mensilmente ma verranno liquidati alla cessazione o nei termini di legge. Non inclusi nel netto mensile.",
       mandatoryClauses,
     },
   };
