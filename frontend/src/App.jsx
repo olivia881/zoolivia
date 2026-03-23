@@ -1,9 +1,16 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import InputForm from "./components/InputForm";
 import ResultsPanel from "./components/ResultsPanel";
 import DocumentsPanel from "./components/DocumentsPanel";
+import HistoryPanel from "./components/HistoryPanel";
 import { calculatePayroll } from "./utils/payrollCalculator";
 import { validateInput, validateProfile } from "./utils/validation";
+import {
+  getPayrollHistory,
+  addToPayrollHistory,
+  removeFromPayrollHistory,
+  resetPayrollHistory,
+} from "./utils/payrollStorage";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
@@ -38,8 +45,12 @@ function App() {
   const [loadingType, setLoadingType] = useState("");
   const [documents, setDocuments] = useState([]);
   const [statusMessage, setStatusMessage] = useState("");
+  const [history, setHistory] = useState([]);
+  const [historyFilterYear, setHistoryFilterYear] = useState(null);
 
-  // Non carica il profilo salvato: all'apertura i campi restano vuoti.
+  useEffect(() => {
+    setHistory(getPayrollHistory());
+  }, []);
 
   const profileErrors = useMemo(() => validateProfile(profile), [profile]);
   const inputErrors = useMemo(() => validateInput(input), [input]);
@@ -61,6 +72,15 @@ function App() {
       [name]: numericFields.has(name) ? Number(value) : value,
     }));
     setStatusMessage("");
+  }
+
+  function handleDeleteHistory(id) {
+    setHistory(removeFromPayrollHistory(id));
+  }
+
+  function handleResetHistory() {
+    resetPayrollHistory();
+    setHistory([]);
   }
 
   async function saveProfile() {
@@ -112,6 +132,27 @@ function App() {
 
       setDocuments(generatedDocs);
       setStatusMessage(data.message ?? "Documenti generati correttamente.");
+
+      if (documentType === "payslip" && calculation) {
+        const calc = data.calculation ?? calculation;
+        const entry = {
+          month: input.month,
+          year: input.year,
+          workerName: profile.workerName,
+          workerCf: profile.workerCf,
+          contractType: input.contractType,
+          level: input.level,
+          weeklyHours: input.weeklyHours,
+          gross: calc.gross,
+          net: calc.net,
+          employeeContributions: calc.employeeContributions,
+          employerContributions: calc.employerContributions,
+          tfr: calc.tfr,
+          thirteenth: calc.thirteenth,
+          totalCost: calc.totalCost,
+        };
+        setHistory(addToPayrollHistory(entry));
+      }
     } catch (error) {
       setStatusMessage(error.message);
     } finally {
@@ -141,6 +182,14 @@ function App() {
         loadingType={loadingType}
         disabled={!canGenerateDocuments}
         documents={documents}
+      />
+
+      <HistoryPanel
+        history={history}
+        filterYear={historyFilterYear}
+        onFilterYearChange={setHistoryFilterYear}
+        onDelete={handleDeleteHistory}
+        onReset={handleResetHistory}
       />
 
       {statusMessage && <p className="status">{statusMessage}</p>}
