@@ -36,50 +36,56 @@ export default function InputForm({
     <div className="form-grid">
       <section className="card">
         <h2>Anagrafica Datore</h2>
-        <InputField
-          label="Nome"
-          name="employerName"
-          value={profile.employerName}
-          onChange={onProfileChange}
-          error={profileErrors.employerName}
-          placeholder="Mario Rossi"
-        />
-        <InputField
-          label="Codice fiscale"
-          name="employerCf"
-          value={profile.employerCf}
-          onChange={onProfileChange}
-          error={profileErrors.employerCf}
-          placeholder="RSSMRA..."
-        />
-        <InputField
-          label="Indirizzo"
-          name="employerAddress"
-          value={profile.employerAddress}
-          onChange={onProfileChange}
-          error={profileErrors.employerAddress}
-          placeholder="Via Roma 1, Milano"
-        />
+        <div className="card-fields-grid">
+          <InputField
+            label="Nome"
+            name="employerName"
+            value={profile.employerName}
+            onChange={onProfileChange}
+            error={profileErrors.employerName}
+            placeholder="Mario Rossi"
+          />
+          <InputField
+            label="Codice fiscale"
+            name="employerCf"
+            value={profile.employerCf}
+            onChange={onProfileChange}
+            error={profileErrors.employerCf}
+            placeholder="RSSMRA..."
+          />
+          <div className="field-full-width">
+            <InputField
+              label="Indirizzo"
+              name="employerAddress"
+              value={profile.employerAddress}
+              onChange={onProfileChange}
+              error={profileErrors.employerAddress}
+              placeholder="Via Roma 1, Milano"
+            />
+          </div>
+        </div>
       </section>
 
       <section className="card">
         <h2>Anagrafica Lavoratrice</h2>
-        <InputField
-          label="Nome"
-          name="workerName"
-          value={profile.workerName}
-          onChange={onProfileChange}
-          error={profileErrors.workerName}
-          placeholder="Anna Bianchi"
-        />
-        <InputField
-          label="Codice fiscale"
-          name="workerCf"
-          value={profile.workerCf}
-          onChange={onProfileChange}
-          error={profileErrors.workerCf}
-          placeholder="BNCNNA..."
-        />
+        <div className="card-fields-grid">
+          <InputField
+            label="Nome"
+            name="workerName"
+            value={profile.workerName}
+            onChange={onProfileChange}
+            error={profileErrors.workerName}
+            placeholder="Anna Bianchi"
+          />
+          <InputField
+            label="Codice fiscale"
+            name="workerCf"
+            value={profile.workerCf}
+            onChange={onProfileChange}
+            error={profileErrors.workerCf}
+            placeholder="BNCNNA..."
+          />
+        </div>
       </section>
 
       <section className="card full-width">

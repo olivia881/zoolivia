@@ -3,7 +3,6 @@ import InputForm from "./components/InputForm";
 import ResultsPanel from "./components/ResultsPanel";
 import DocumentsPanel from "./components/DocumentsPanel";
 import HistoryPanel from "./components/HistoryPanel";
-import SwipeableDashboard from "./components/SwipeableDashboard";
 import { calculatePayroll } from "./utils/payrollCalculator";
 import { validateInput, validateProfile } from "./utils/validation";
 import {
@@ -225,91 +224,48 @@ function App() {
 
 
   return (
-    <main className="layout">
+    <main className={`layout ${forceDesktopLayout ? "layout-desktop" : ""}`}>
       <header className="hero">
         <h1>Gestionale Buste Paga Badante</h1>
         <p>Calcolo stipendio, contributi INPS e generazione PDF in un'unica schermata.</p>
       </header>
 
-      <div className="dashboard-wrapper">
-        <button
-          type="button"
-          className={`layout-toggle ${forceDesktopLayout ? "active" : ""}`}
-          onClick={() => setForceDesktopLayout((v) => !v)}
-          aria-pressed={forceDesktopLayout}
-          aria-label={forceDesktopLayout ? "Usa layout a scorrimento" : "Usa layout desktop"}
-          title={forceDesktopLayout ? "Torna al layout con swipe" : "Layout desktop (2 colonne)"}
-        >
-          <span className="layout-toggle-icon">⊞</span>
-          <span>{forceDesktopLayout ? "Layout swipe" : "Layout desktop"}</span>
-        </button>
+      <button
+        type="button"
+        className={`layout-toggle ${forceDesktopLayout ? "active" : ""}`}
+        onClick={() => setForceDesktopLayout((v) => !v)}
+        aria-pressed={forceDesktopLayout}
+        aria-label={forceDesktopLayout ? "Layout compatto" : "Layout desktop (2 colonne, pulsanti in riga)"}
+        title={forceDesktopLayout ? "Layout compatto" : "Layout desktop (2 colonne, pulsanti in riga)"}
+      >
+        <span className="layout-toggle-icon">⊞</span>
+        <span>{forceDesktopLayout ? "Layout compatto" : "Layout desktop"}</span>
+      </button>
 
-        <div className={`dashboard-desktop ${forceDesktopLayout ? "force-visible" : ""}`}>
-          <div className="dashboard-grid">
-            <div className="dashboard-col-left">
-              <InputForm
-                profile={profile}
-                input={input}
-                onProfileChange={onProfileChange}
-                onInputChange={onInputChange}
-                profileErrors={profileErrors}
-                inputErrors={inputErrors}
-              />
-              <ResultsPanel calculation={calculation} />
-            </div>
-            <div className="dashboard-col-right">
-              <DocumentsPanel
-                onGenerate={handleGenerateDocument}
-                loadingType={loadingType}
-                disabled={!canGenerateDocuments}
-                documents={documents}
-              />
-              <HistoryPanel
-                history={history}
-                filterYear={historyFilterYear}
-                onFilterYearChange={setHistoryFilterYear}
-                onDelete={handleDeleteHistory}
-                onReset={handleResetHistory}
-              />
-            </div>
-          </div>
-        </div>
+      <InputForm
+        profile={profile}
+        input={input}
+        onProfileChange={onProfileChange}
+        onInputChange={onInputChange}
+        profileErrors={profileErrors}
+        inputErrors={inputErrors}
+      />
 
-        <div className={`dashboard-mobile ${forceDesktopLayout ? "force-hidden" : ""}`}>
-          <SwipeableDashboard>
-            <div className="dashboard-slide dashboard-slide-form">
-              <InputForm
-                profile={profile}
-                input={input}
-                onProfileChange={onProfileChange}
-                onInputChange={onInputChange}
-                profileErrors={profileErrors}
-                inputErrors={inputErrors}
-              />
-            </div>
-            <div className="dashboard-slide dashboard-slide-results">
-              <ResultsPanel calculation={calculation} />
-            </div>
-            <div className="dashboard-slide dashboard-slide-documents">
-              <DocumentsPanel
-                onGenerate={handleGenerateDocument}
-                loadingType={loadingType}
-                disabled={!canGenerateDocuments}
-                documents={documents}
-              />
-            </div>
-            <div className="dashboard-slide dashboard-slide-history">
-              <HistoryPanel
-                history={history}
-                filterYear={historyFilterYear}
-                onFilterYearChange={setHistoryFilterYear}
-                onDelete={handleDeleteHistory}
-                onReset={handleResetHistory}
-              />
-            </div>
-          </SwipeableDashboard>
-        </div>
-      </div>
+      <ResultsPanel calculation={calculation} />
+      <DocumentsPanel
+        onGenerate={handleGenerateDocument}
+        loadingType={loadingType}
+        disabled={!canGenerateDocuments}
+        documents={documents}
+      />
+
+      <HistoryPanel
+        history={history}
+        filterYear={historyFilterYear}
+        onFilterYearChange={setHistoryFilterYear}
+        onDelete={handleDeleteHistory}
+        onReset={handleResetHistory}
+      />
 
       {statusMessage && <p className="status">{statusMessage}</p>}
     </main>
