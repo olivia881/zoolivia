@@ -43,7 +43,8 @@ Attività escluse:
 
 ## RETRIBUZIONE
 
-Retribuzione mensile lorda: € {{salary}}
+Retribuzione mensile lorda:
+{{grossSalary}}
 
 Vitto e alloggio sono forniti dal datore di lavoro.
 
