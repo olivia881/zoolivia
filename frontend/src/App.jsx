@@ -205,14 +205,17 @@ function App() {
         calculation,
       });
       const files = Array.isArray(result) ? result : [result];
+      const opened = [];
       for (const { blob, fileName } of files) {
-        await downloadOrOpenPdf(blob, fileName);
+        const res = await downloadOrOpenPdf(blob, fileName);
+        opened.push(res);
       }
       setDocuments(
         files.map((f, i) => ({
           documentType: documentType === "contract" ? (i === 0 ? "contract" : "clause") : documentType,
           fileName: f.fileName,
           url: URL.createObjectURL(f.blob),
+          localPath: opened[i]?.localPath,
         })),
       );
       setStatusMessage("Documenti generati e scaricati localmente.");

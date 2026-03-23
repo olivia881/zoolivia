@@ -1,4 +1,6 @@
+import { Capacitor } from "@capacitor/core";
 import PDFButton from "./PDFButton";
+import { openPdfByPath } from "../utils/fileDownload";
 
 const DOCUMENT_LABELS = {
   contract: "Genera contratto",
@@ -34,11 +36,21 @@ export default function DocumentsPanel({ onGenerate, loadingType, disabled, docu
       {documents.length > 0 && (
         <ul className="documents-list">
           {documents.map((document) => (
-            <li key={document.url}>
+            <li key={document.url || document.fileName}>
               <span>{FILE_LABELS[document.documentType] ?? document.documentType}</span>
-              <a href={document.url} target="_blank" rel="noreferrer" className="download-link">
-                Apri PDF
-              </a>
+              {Capacitor.isNativePlatform() && document.localPath ? (
+                <button
+                  type="button"
+                  className="download-link download-link-btn"
+                  onClick={() => openPdfByPath(document.localPath)}
+                >
+                  Apri PDF
+                </button>
+              ) : (
+                <a href={document.url} target="_blank" rel="noreferrer" className="download-link">
+                  Apri PDF
+                </a>
+              )}
             </li>
           ))}
         </ul>

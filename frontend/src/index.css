@@ -367,6 +367,18 @@ body {
   font-weight: 600;
 }
 
+.download-link-btn {
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.download-link-btn:hover {
+  text-decoration: underline;
+}
+
 .documents-list {
   width: 100%;
   list-style: none;
