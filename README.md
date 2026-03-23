@@ -72,21 +72,25 @@ Dopo l’installazione avrai un’icona sulla home che apre l’app a schermo in
 
 L'app funziona **offline** come APK: nessun deploy, nessun URL, nessun TunnelMole. Tutto avviene sul telefono.
 
-**Requisiti:** Android Studio (con Android SDK) installato sul PC.
+**Requisiti:** Node.js 22+, Android Studio (con Android SDK).
 
-**Passi:**
+#### Opzione A: GitHub Actions (automatico)
 
-1. Installa Android Studio da [developer.android.com](https://developer.android.com/studio)
-2. Apri il progetto e vai nella cartella `frontend`:
+Se il workflow va a buon fine, scarica l'APK da **Actions** → ultimo run → **Artifacts** → BustaBadante-APK.
+
+#### Opzione B: Build con Android Studio sul PC
+
+1. Installa **Node.js 22** da [nodejs.org](https://nodejs.org) (Capacitor lo richiede)
+2. Installa **Android Studio** da [developer.android.com/studio](https://developer.android.com/studio) e accetta di installare l'SDK
+3. Clona il repo e apri il terminale nella cartella del progetto
+4. Dalla root del progetto (dove c'è package.json), esegui:
    ```bash
-   cd frontend
+   npm install
+   cd frontend && npm install && npm run build
+   npx cap sync android
+   npx cap open android
    ```
-3. Sincronizza e apri il progetto Android:
-   ```bash
-   npm run cap:sync
-   npm run cap:open
-   ```
-4. In Android Studio: **Build → Build Bundle(s) / APK(s) → Build APK(s)**
+5. In Android Studio: **Build** → **Build Bundle(s) / APK(s)** → **Build APK(s)**
 5. L’APK sarà in `frontend/android/app/build/outputs/apk/debug/app-debug.apk`
 6. Trasferisci l’APK sul telefono (cavo USB, email, cloud) e installalo
 
