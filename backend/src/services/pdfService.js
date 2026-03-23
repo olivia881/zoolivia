@@ -17,9 +17,11 @@ const MARGIN_TOP = 56;
 const MARGIN_BOTTOM = 50;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_X * 2;
 const PAGE_BORDER_INSET = 28;
-const PAYSLIP_TABLE_ROW_HEIGHT = 18;
+const PAYSLIP_TABLE_ROW_HEIGHT = 15;
 const PAYSLIP_TABLE_SPLIT_X = 258;
-const PAYSLIP_TABLE_TEXT_SIZE = 8.6;
+const PAYSLIP_TABLE_TEXT_SIZE = 8.2;
+const PAYSLIP_SECTION_TITLE_HEIGHT = 14;
+const PAYSLIP_TEXT_BASELINE_OFFSET = 10.2;
 const PAYSLIP_SECTION_BG = rgb(0.84, 0.87, 0.91);
 const PAYSLIP_TABLE_HEADER_BG = rgb(0.92, 0.93, 0.95);
 const PAYSLIP_ALT_ROW_BG = rgb(0.975, 0.978, 0.985);
@@ -204,7 +206,7 @@ function drawCenteredText(page, text, y, font, size, color = rgb(0.14, 0.14, 0.1
 
 function drawPayslipSectionTitle(page, y, title, titleFont) {
   const width = PAGE_WIDTH - MARGIN_X * 2;
-  const height = 16;
+  const height = PAYSLIP_SECTION_TITLE_HEIGHT;
   page.drawRectangle({
     x: MARGIN_X,
     y: y - height,
@@ -216,7 +218,7 @@ function drawPayslipSectionTitle(page, y, title, titleFont) {
   });
   page.drawText(title, {
     x: MARGIN_X + 6,
-    y: y - 11.5,
+    y: y - 10.4,
     size: 9,
     font: titleFont,
     color: rgb(0.14, 0.14, 0.14),
@@ -243,14 +245,14 @@ function drawPayslipTableHeader(page, y, bodyFont, rightHeader = "Importo") {
   });
   page.drawText("Descrizione", {
     x: MARGIN_X + 6,
-    y: y - 12.2,
+    y: y - PAYSLIP_TEXT_BASELINE_OFFSET,
     size: PAYSLIP_TABLE_TEXT_SIZE,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
   page.drawText(rightHeader, {
     x: MARGIN_X + PAYSLIP_TABLE_SPLIT_X + 6,
-    y: y - 12.2,
+    y: y - PAYSLIP_TEXT_BASELINE_OFFSET,
     size: PAYSLIP_TABLE_TEXT_SIZE,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
@@ -293,7 +295,7 @@ function drawPayslipTableRows(page, y, rows, bodyFont, titleFont, { rightAlign =
     const font = row.bold ? titleFont : bodyFont;
     page.drawText(row.label, {
       x: MARGIN_X + 6,
-      y: cursorY - 12.2,
+      y: cursorY - PAYSLIP_TEXT_BASELINE_OFFSET,
       size: PAYSLIP_TABLE_TEXT_SIZE,
       font,
       color: rgb(0.14, 0.14, 0.14),
@@ -307,7 +309,7 @@ function drawPayslipTableRows(page, y, rows, bodyFont, titleFont, { rightAlign =
       : MARGIN_X + PAYSLIP_TABLE_SPLIT_X + 6;
     page.drawText(valueText, {
       x: valueX,
-      y: cursorY - 12.2,
+      y: cursorY - PAYSLIP_TEXT_BASELINE_OFFSET,
       size: PAYSLIP_TABLE_TEXT_SIZE,
       font,
       color: rgb(0.14, 0.14, 0.14),
@@ -322,37 +324,31 @@ function drawPayslipTableRows(page, y, rows, bodyFont, titleFont, { rightAlign =
 
 async function generateProfessionalPayslipPdf(data, meta) {
   const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   const titleFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const bodyFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  let page;
-  let y;
 
-  function startPayslipPage({ continuation = false } = {}) {
-    page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    drawPageFrame(page, { topInset: 42, bottomInset: 30, sideInset: 24 });
+  drawPageFrame(page, { topInset: 42, bottomInset: 30, sideInset: 24 });
 
-    y = PAGE_HEIGHT - 78;
-    const title = continuation
-      ? "BUSTA PAGA - CONTINUAZIONE"
-      : `BUSTA PAGA - ${data.payroll.monthName.toUpperCase()} ${data.payroll.year}`;
-    const subtitle = continuation
-      ? `${data.employee.name} - ${data.payroll.monthName} ${data.payroll.year}`
-      : `Lavoratrice domestica - CCNL Lavoro Domestico - Livello ${data.employee.level} - ${data.employee.contractTypeLabel}`;
-
-    drawCenteredText(page, title, y, titleFont, 16.5, rgb(0.12, 0.2, 0.4));
-    y -= 18;
-    drawCenteredText(page, subtitle, y, bodyFont, 8.3, rgb(0.35, 0.35, 0.35));
-    y -= 12;
-    page.drawLine({
-      start: { x: MARGIN_X, y },
-      end: { x: PAGE_WIDTH - MARGIN_X, y },
-      thickness: 0.8,
-      color: rgb(0.62, 0.64, 0.68),
-    });
-    y -= 12;
-  }
-
-  startPayslipPage();
+  let y = PAGE_HEIGHT - 78;
+  drawCenteredText(page, `BUSTA PAGA - ${data.payroll.monthName.toUpperCase()} ${data.payroll.year}`, y, titleFont, 16.5, rgb(0.12, 0.2, 0.4));
+  y -= 18;
+  drawCenteredText(
+    page,
+    `Lavoratrice domestica - CCNL Lavoro Domestico - Livello ${data.employee.level} - ${data.employee.contractTypeLabel}`,
+    y,
+    bodyFont,
+    8.3,
+    rgb(0.35, 0.35, 0.35),
+  );
+  y -= 12;
+  page.drawLine({
+    start: { x: MARGIN_X, y },
+    end: { x: PAGE_WIDTH - MARGIN_X, y },
+    thickness: 0.8,
+    color: rgb(0.62, 0.64, 0.68),
+  });
+  y -= 10;
 
   y = drawPayslipSectionTitle(page, y, "DATI DEL RAPPORTO DI LAVORO", titleFont);
   y = drawPayslipTableRows(
@@ -379,7 +375,7 @@ async function generateProfessionalPayslipPdf(data, meta) {
     titleFont,
     { rightAlign: false, rightLabel: "Valore" },
   );
-  y -= 11;
+  y -= 7;
 
   y = drawPayslipSectionTitle(page, y, "SEZIONE 1 - RETRIBUZIONE", titleFont);
   y = drawPayslipTableRows(
@@ -392,7 +388,7 @@ async function generateProfessionalPayslipPdf(data, meta) {
     bodyFont,
     titleFont,
   );
-  y -= 9;
+  y -= 6;
 
   y = drawPayslipSectionTitle(page, y, "SEZIONE 2 - TRATTENUTE E NETTO", titleFont);
   y = drawPayslipTableRows(
@@ -406,7 +402,7 @@ async function generateProfessionalPayslipPdf(data, meta) {
     bodyFont,
     titleFont,
   );
-  y -= 9;
+  y -= 6;
 
   y = drawPayslipSectionTitle(page, y, "SEZIONE 3 - ACCANTONAMENTI", titleFont);
   y = drawPayslipTableRows(
@@ -432,17 +428,7 @@ async function generateProfessionalPayslipPdf(data, meta) {
     bodyFont,
     titleFont,
   );
-  y -= 9;
-
-  // Sposta il blocco finale su nuova pagina se lo spazio rimanente non e sufficiente.
-  const noteTopY = 146;
-  const noteHeight = 44;
-  const signatureLineY = 78;
-  const signatureLabelY = 66;
-  const footerY = MARGIN_BOTTOM - 10;
-
-  // Il blocco finale viene sempre spostato su nuova pagina per evitare sovrapposizioni.
-  startPayslipPage({ continuation: true });
+  y -= 6;
 
   y = drawPayslipSectionTitle(page, y, "SEZIONE 5 - COSTO TOTALE DATORE", titleFont);
   y = drawPayslipTableRows(
@@ -452,11 +438,13 @@ async function generateProfessionalPayslipPdf(data, meta) {
     bodyFont,
     titleFont,
   );
-  y = Math.min(y - 10, noteTopY + 6);
+  y -= 8;
+
+  const noteHeight = 40;
 
   page.drawRectangle({
     x: MARGIN_X,
-    y: noteTopY - noteHeight,
+    y: y - noteHeight,
     width: PAGE_WIDTH - MARGIN_X * 2,
     height: noteHeight,
     color: rgb(0.97, 0.98, 0.99),
@@ -465,26 +453,29 @@ async function generateProfessionalPayslipPdf(data, meta) {
   });
   page.drawText("NOTA IN CALCE:", {
     x: MARGIN_X + 6,
-    y: noteTopY - 13,
+    y: y - 12.8,
     size: 8.8,
     font: titleFont,
     color: rgb(0.14, 0.14, 0.14),
   });
   page.drawText("TFR e tredicesima non sono corrisposti nel mese e restano accantonati.", {
     x: MARGIN_X + 6,
-    y: noteTopY - 25.5,
-    size: 8.2,
+    y: y - 24.2,
+    size: 8.0,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
   page.drawText("La firma e valida esclusivamente per il netto mensile corrisposto.", {
     x: MARGIN_X + 6,
-    y: noteTopY - 36.5,
-    size: 8.2,
+    y: y - 34.4,
+    size: 8.0,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
 
+  y -= noteHeight + 14;
+
+  const signatureLineY = y + 8;
   page.drawLine({
     start: { x: MARGIN_X, y: signatureLineY },
     end: { x: MARGIN_X + 180, y: signatureLineY },
@@ -499,21 +490,21 @@ async function generateProfessionalPayslipPdf(data, meta) {
   });
   page.drawText("Firma datore", {
     x: MARGIN_X,
-    y: signatureLabelY,
+    y: y - 1,
     size: 8.4,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
   page.drawText("Firma lavoratrice", {
     x: MARGIN_X + 250,
-    y: signatureLabelY,
+    y: y - 1,
     size: 8.4,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
   page.drawText("Documento personale ad uso privato - fac-simile", {
     x: MARGIN_X,
-    y: footerY,
+    y: Math.max(MARGIN_BOTTOM - 10, y - 18),
     size: 7.4,
     font: bodyFont,
     color: rgb(0.45, 0.45, 0.45),
