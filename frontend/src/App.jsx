@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import InputForm from "./components/InputForm";
 import ResultsPanel from "./components/ResultsPanel";
 import DocumentsPanel from "./components/DocumentsPanel";
@@ -39,23 +39,7 @@ function App() {
   const [documents, setDocuments] = useState([]);
   const [statusMessage, setStatusMessage] = useState("");
 
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        const response = await fetch(`${API_BASE}/profile`);
-        if (!response.ok) {
-          return;
-        }
-
-        const data = await response.json();
-        setProfile((prev) => ({ ...prev, ...data }));
-      } catch (_error) {
-        setStatusMessage("Backend non raggiungibile: dati locali attivi.");
-      }
-    }
-
-    loadProfile();
-  }, []);
+  // Non carica il profilo salvato: all'apertura i campi restano vuoti.
 
   const profileErrors = useMemo(() => validateProfile(profile), [profile]);
   const inputErrors = useMemo(() => validateInput(input), [input]);
