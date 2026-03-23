@@ -322,31 +322,37 @@ function drawPayslipTableRows(page, y, rows, bodyFont, titleFont, { rightAlign =
 
 async function generateProfessionalPayslipPdf(data, meta) {
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   const titleFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const bodyFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  let page;
+  let y;
 
-  drawPageFrame(page, { topInset: 42, bottomInset: 30, sideInset: 24 });
+  function startPayslipPage({ continuation = false } = {}) {
+    page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    drawPageFrame(page, { topInset: 42, bottomInset: 30, sideInset: 24 });
 
-  let y = PAGE_HEIGHT - 78;
-  drawCenteredText(page, `BUSTA PAGA - ${data.payroll.monthName.toUpperCase()} ${data.payroll.year}`, y, titleFont, 16.5, rgb(0.12, 0.2, 0.4));
-  y -= 18;
-  drawCenteredText(
-    page,
-    `Lavoratrice domestica - CCNL Lavoro Domestico - Livello ${data.employee.level} - ${data.employee.contractTypeLabel}`,
-    y,
-    bodyFont,
-    8.3,
-    rgb(0.35, 0.35, 0.35),
-  );
-  y -= 12;
-  page.drawLine({
-    start: { x: MARGIN_X, y },
-    end: { x: PAGE_WIDTH - MARGIN_X, y },
-    thickness: 0.8,
-    color: rgb(0.62, 0.64, 0.68),
-  });
-  y -= 12;
+    y = PAGE_HEIGHT - 78;
+    const title = continuation
+      ? "BUSTA PAGA - CONTINUAZIONE"
+      : `BUSTA PAGA - ${data.payroll.monthName.toUpperCase()} ${data.payroll.year}`;
+    const subtitle = continuation
+      ? `${data.employee.name} - ${data.payroll.monthName} ${data.payroll.year}`
+      : `Lavoratrice domestica - CCNL Lavoro Domestico - Livello ${data.employee.level} - ${data.employee.contractTypeLabel}`;
+
+    drawCenteredText(page, title, y, titleFont, 16.5, rgb(0.12, 0.2, 0.4));
+    y -= 18;
+    drawCenteredText(page, subtitle, y, bodyFont, 8.3, rgb(0.35, 0.35, 0.35));
+    y -= 12;
+    page.drawLine({
+      start: { x: MARGIN_X, y },
+      end: { x: PAGE_WIDTH - MARGIN_X, y },
+      thickness: 0.8,
+      color: rgb(0.62, 0.64, 0.68),
+    });
+    y -= 12;
+  }
+
+  startPayslipPage();
 
   y = drawPayslipSectionTitle(page, y, "DATI DEL RAPPORTO DI LAVORO", titleFont);
   y = drawPayslipTableRows(
@@ -428,6 +434,16 @@ async function generateProfessionalPayslipPdf(data, meta) {
   );
   y -= 9;
 
+  // Sposta il blocco finale su nuova pagina se lo spazio rimanente non e sufficiente.
+  const noteTopY = 146;
+  const noteHeight = 44;
+  const signatureLineY = 78;
+  const signatureLabelY = 66;
+  const footerY = MARGIN_BOTTOM - 10;
+
+  // Il blocco finale viene sempre spostato su nuova pagina per evitare sovrapposizioni.
+  startPayslipPage({ continuation: true });
+
   y = drawPayslipSectionTitle(page, y, "SEZIONE 5 - COSTO TOTALE DATORE", titleFont);
   y = drawPayslipTableRows(
     page,
@@ -436,12 +452,11 @@ async function generateProfessionalPayslipPdf(data, meta) {
     bodyFont,
     titleFont,
   );
-  y -= 18;
+  y = Math.min(y - 10, noteTopY + 6);
 
-  const noteHeight = 44;
   page.drawRectangle({
     x: MARGIN_X,
-    y: y - noteHeight,
+    y: noteTopY - noteHeight,
     width: PAGE_WIDTH - MARGIN_X * 2,
     height: noteHeight,
     color: rgb(0.97, 0.98, 0.99),
@@ -450,28 +465,26 @@ async function generateProfessionalPayslipPdf(data, meta) {
   });
   page.drawText("NOTA IN CALCE:", {
     x: MARGIN_X + 6,
-    y: y - 13,
+    y: noteTopY - 13,
     size: 8.8,
     font: titleFont,
     color: rgb(0.14, 0.14, 0.14),
   });
   page.drawText("TFR e tredicesima non sono corrisposti nel mese e restano accantonati.", {
     x: MARGIN_X + 6,
-    y: y - 25.5,
+    y: noteTopY - 25.5,
     size: 8.2,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
   page.drawText("La firma e valida esclusivamente per il netto mensile corrisposto.", {
     x: MARGIN_X + 6,
-    y: y - 36.5,
+    y: noteTopY - 36.5,
     size: 8.2,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
-  y -= noteHeight + 24;
 
-  const signatureLineY = y + 10;
   page.drawLine({
     start: { x: MARGIN_X, y: signatureLineY },
     end: { x: MARGIN_X + 180, y: signatureLineY },
@@ -486,21 +499,21 @@ async function generateProfessionalPayslipPdf(data, meta) {
   });
   page.drawText("Firma datore", {
     x: MARGIN_X,
-    y: y - 2,
+    y: signatureLabelY,
     size: 8.4,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
   page.drawText("Firma lavoratrice", {
     x: MARGIN_X + 250,
-    y: y - 2,
+    y: signatureLabelY,
     size: 8.4,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
   page.drawText("Documento personale ad uso privato - fac-simile", {
     x: MARGIN_X,
-    y: MARGIN_BOTTOM - 10,
+    y: footerY,
     size: 7.4,
     font: bodyFont,
     color: rgb(0.45, 0.45, 0.45),
