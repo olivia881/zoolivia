@@ -161,7 +161,7 @@ body {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 1rem;
 }
 
@@ -169,25 +169,48 @@ body {
   grid-column: 1 / -1;
 }
 
-/* Campi in 2 colonne (modalità desktop) */
+/* Desktop: Datore | Lavoratrice affiancate, poi il resto */
+@media (min-width: 900px) {
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  .form-grid .card.full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+.layout-desktop .form-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.layout-desktop .form-grid .card.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Card: contenuto contenuto, niente overflow */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Campi: 2 colonne in desktop, 1 in mobile */
 .card-fields-grid {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .field-full-width {
-  width: 100%;
-}
-
-.layout-desktop .card-fields-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
-
-.layout-desktop .field-full-width {
-  grid-column: 1 / -1;
+  min-width: 0;
 }
 
 @media (min-width: 900px) {
@@ -202,12 +225,14 @@ body {
   }
 }
 
-.card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.25rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+.layout-desktop .card-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.layout-desktop .field-full-width {
+  grid-column: 1 / -1;
 }
 
 @media (min-width: 900px) {
@@ -226,16 +251,25 @@ body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.8rem;
+  min-width: 0;
+}
+
+.inline-grid .field {
+  min-width: 0;
 }
 
 .field {
   display: grid;
   gap: 0.3rem;
   font-size: 0.9rem;
+  min-width: 0;
 }
 
 .field input,
 .field select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   padding: 0.58rem 0.65rem;
