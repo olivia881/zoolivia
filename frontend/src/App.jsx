@@ -13,6 +13,7 @@ import {
 } from "./utils/payrollStorage";
 import { loadProfile as loadProfileLocal, saveProfile as saveProfileLocal } from "./utils/profileStorage";
 import { generatePDFClient } from "./lib/pdfGenerator";
+import { downloadOrOpenPdf } from "./utils/fileDownload";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
@@ -114,14 +115,6 @@ function App() {
     saveProfileLocal(profile);
   }
 
-  function downloadBlob(blob, fileName) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 
   async function handleGenerateDocument(documentType) {
     if (!calculation) {
@@ -191,7 +184,9 @@ function App() {
         calculation,
       });
       const files = Array.isArray(result) ? result : [result];
-      files.forEach(({ blob, fileName }) => downloadBlob(blob, fileName));
+      for (const { blob, fileName } of files) {
+        await downloadOrOpenPdf(blob, fileName);
+      }
       setDocuments(
         files.map((f, i) => ({
           documentType: documentType === "contract" ? (i === 0 ? "contract" : "clause") : documentType,
