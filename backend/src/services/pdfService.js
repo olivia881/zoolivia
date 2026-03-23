@@ -473,12 +473,10 @@ async function generateProfessionalPayslipPdf(data, meta) {
     color: rgb(0.14, 0.14, 0.14),
   });
 
-  // Abbassa ulteriormente la zona firme rispetto alla nota in calce.
-  y -= noteHeight + 34;
-
-  const signatureTitleY = y;
-  const signatureBoxY = signatureTitleY - 28;
-  const signatureBoxHeight = 22;
+  // Area firme con molto spazio, ancorata in basso pagina.
+  const signatureTitleY = 78;
+  const signatureBoxY = 40;
+  const signatureBoxHeight = 28;
   const signatureBoxWidth = 182;
 
   page.drawText("Firma datore", {
@@ -511,14 +509,6 @@ async function generateProfessionalPayslipPdf(data, meta) {
     height: signatureBoxHeight,
     borderWidth: 0.7,
     borderColor: rgb(0.35, 0.35, 0.35),
-  });
-
-  page.drawText("Documento personale ad uso privato - fac-simile", {
-    x: MARGIN_X,
-    y: 36,
-    size: 7.4,
-    font: bodyFont,
-    color: rgb(0.45, 0.45, 0.45),
   });
 
   const pdfBytes = await pdfDoc.save();
