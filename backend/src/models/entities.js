@@ -71,6 +71,8 @@ export function buildDocumentData({ profile, input, calculation }) {
     "- L'eventuale residenza presso il datore non crea diritto abitativo.",
   ].join("\n");
 
+  const startDate = `1 ${payroll.monthName} ${payroll.year}`;
+
   return {
     employer,
     employee,
@@ -89,6 +91,7 @@ export function buildDocumentData({ profile, input, calculation }) {
       month: String(payroll.month),
       monthName: payroll.monthName,
       year: String(payroll.year),
+      startDate,
       grossSalary: euro(payroll.grossSalary),
       netSalary: euro(payroll.netSalary),
       employerContributions: euro(payroll.employerContributions),
