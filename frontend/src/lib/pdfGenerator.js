@@ -529,6 +529,40 @@ async function generateSinglePdf(documentType, data) {
   return { blob: new Blob([pdfBytes], { type: "application/pdf" }), fileName: meta.fileName };
 }
 
+const MANUAL_BODY = `## 1. Anagrafica
+Compila i dati del datore (nome, codice fiscale, indirizzo) e della lavoratrice (nome, codice fiscale). I campi obbligatori sono evidenziati in rosso.
+
+## 2. Input mensile
+Seleziona tipo contratto (convivente/non convivente), livello CCNL, ore settimanali, mese e anno. Per non convivente puoi impostare la paga oraria. I minimi CCNL 2026 sono applicati automaticamente.
+
+## 3. Risultati
+I calcoli (lordo, contributi, netto, TFR, tredicesima, costo totale) compaiono automaticamente dopo aver compilato correttamente i dati.
+
+## 4. Documenti
+Genera contratto, busta paga e ricevuta. Su mobile i PDF si aprono tramite il menu Condividi (es. visualizzatore PDF).
+
+## 5. Layout e zoom
+- Layout desktop: campi in 2 colonne e pulsanti in una riga.
+- Layout compatto: vista verticale.
+- Pulsanti +/− in basso a destra: rimpicciolisci o ingrandisci la schermata (30%–150%).
+
+## 6. Storico
+Le buste paga generate vengono salvate nello storico. Puoi filtrare per anno, consultare i dettagli ed eliminare singole voci.`;
+
+/**
+ * Genera il manuale di istruzioni in PDF.
+ * @returns {Promise<{blob: Blob, fileName: string}>}
+ */
+export async function generateManualPdf() {
+  const pdfDoc = await PDFDocument.create();
+  await drawBodyLines(pdfDoc, "Manuale d'uso - Gestionale Buste Paga Badante", MANUAL_BODY);
+  const pdfBytes = await pdfDoc.save();
+  return {
+    blob: new Blob([pdfBytes], { type: "application/pdf" }),
+    fileName: "Manuale_Busta_Badante.pdf",
+  };
+}
+
 /**
  * Generates PDF(s) for the given document type.
  * @param {string} documentType - "contract" | "clause" | "payslip" | "receipt"

@@ -12,7 +12,7 @@ import {
   resetPayrollHistory,
 } from "./utils/payrollStorage";
 import { loadProfile as loadProfileLocal, saveProfile as saveProfileLocal } from "./utils/profileStorage";
-import { generatePDFClient } from "./lib/pdfGenerator";
+import { generatePDFClient, generateManualPdf } from "./lib/pdfGenerator";
 import { downloadOrOpenPdf } from "./utils/fileDownload";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
@@ -51,6 +51,7 @@ function App() {
   const [history, setHistory] = useState([]);
   const [historyFilterYear, setHistoryFilterYear] = useState(null);
   const [forceDesktopLayout, setForceDesktopLayout] = useState(false);
+  const [manualLoading, setManualLoading] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(() => {
     try {
       const s = localStorage.getItem("bustabadante-zoom");
@@ -241,6 +242,16 @@ function App() {
     setLoadingType("");
   }
 
+  async function handleDownloadManual() {
+    setManualLoading(true);
+    try {
+      const { blob, fileName } = await generateManualPdf();
+      await downloadOrOpenPdf(blob, fileName);
+    } catch (e) {
+      setStatusMessage(e.message ?? "Errore nella generazione del manuale.");
+    }
+    setManualLoading(false);
+  }
 
   return (
     <div className="app-root">
@@ -252,6 +263,14 @@ function App() {
           <header className="hero">
         <h1>Gestionale Buste Paga Badante</h1>
         <p>Calcolo stipendio, contributi INPS e generazione PDF in un'unica schermata.</p>
+        <button
+          type="button"
+          className="hero-manual-link"
+          onClick={handleDownloadManual}
+          disabled={manualLoading}
+        >
+          {manualLoading ? "Generazione…" : "Scarica manuale PDF"}
+        </button>
       </header>
 
       <button
