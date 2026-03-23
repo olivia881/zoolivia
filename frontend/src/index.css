@@ -16,10 +16,69 @@ body {
   min-height: 100vh;
 }
 
+/* Controllo zoom integrato */
+.app-root {
+  position: relative;
+  min-height: 100vh;
+}
+
+.zoom-container {
+  zoom: var(--zoom, 1);
+}
+
+.zoom-controls {
+  position: fixed;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  right: max(1rem, env(safe-area-inset-right));
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.5rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+}
+
+.zoom-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  background: #1d4ed8;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoom-btn:hover:not(:disabled) {
+  background: #1e40af;
+}
+
+.zoom-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.zoom-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  min-width: 2.5rem;
+  text-align: center;
+}
+
 .layout {
   max-width: 1200px;
   margin: 0 auto;
   padding: 1rem;
+  padding-bottom: 4rem;
   display: grid;
   gap: 1rem;
 }

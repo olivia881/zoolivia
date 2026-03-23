@@ -51,6 +51,25 @@ function App() {
   const [history, setHistory] = useState([]);
   const [historyFilterYear, setHistoryFilterYear] = useState(null);
   const [forceDesktopLayout, setForceDesktopLayout] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(() => {
+    try {
+      const s = localStorage.getItem("bustabadante-zoom");
+      const n = s ? Number(s) : 100;
+      return Math.max(30, Math.min(150, n)) || 100;
+    } catch {
+      return 100;
+    }
+  });
+
+  function setZoom(delta) {
+    setZoomLevel((z) => {
+      const next = Math.max(30, Math.min(150, z + delta));
+      try {
+        localStorage.setItem("bustabadante-zoom", String(next));
+      } catch {}
+      return next;
+    });
+  }
 
   useEffect(() => {
     setHistory(getPayrollHistory());
@@ -224,8 +243,13 @@ function App() {
 
 
   return (
-    <main className={`layout ${forceDesktopLayout ? "layout-desktop" : ""}`}>
-      <header className="hero">
+    <div className="app-root">
+      <div
+        className="zoom-container"
+        style={{ "--zoom": zoomLevel / 100 }}
+      >
+        <main className={`layout ${forceDesktopLayout ? "layout-desktop" : ""}`}>
+          <header className="hero">
         <h1>Gestionale Buste Paga Badante</h1>
         <p>Calcolo stipendio, contributi INPS e generazione PDF in un'unica schermata.</p>
       </header>
@@ -268,7 +292,31 @@ function App() {
       />
 
       {statusMessage && <p className="status">{statusMessage}</p>}
-    </main>
+        </main>
+      </div>
+
+      <div className="zoom-controls" aria-label="Controllo zoom">
+        <button
+          type="button"
+          className="zoom-btn"
+          onClick={() => setZoom(-10)}
+          disabled={zoomLevel <= 30}
+          aria-label="Rimpicciolisci"
+        >
+          −
+        </button>
+        <span className="zoom-label">{zoomLevel}%</span>
+        <button
+          type="button"
+          className="zoom-btn"
+          onClick={() => setZoom(10)}
+          disabled={zoomLevel >= 150}
+          aria-label="Ingrandisci"
+        >
+          +
+        </button>
+      </div>
+    </div>
   );
 }
 
