@@ -440,7 +440,7 @@ async function generateProfessionalPayslipPdf(data, meta) {
   );
   y -= 8;
 
-  const noteHeight = 40;
+  const noteHeight = 36;
 
   page.drawRectangle({
     x: MARGIN_X,
@@ -467,44 +467,54 @@ async function generateProfessionalPayslipPdf(data, meta) {
   });
   page.drawText("La firma e valida esclusivamente per il netto mensile corrisposto.", {
     x: MARGIN_X + 6,
-    y: y - 34.4,
+    y: y - 32.8,
     size: 8.0,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
 
-  y -= noteHeight + 14;
+  y -= noteHeight + 10;
 
-  const signatureLineY = y + 8;
-  page.drawLine({
-    start: { x: MARGIN_X, y: signatureLineY },
-    end: { x: MARGIN_X + 180, y: signatureLineY },
-    thickness: 0.7,
-    color: rgb(0.35, 0.35, 0.35),
-  });
-  page.drawLine({
-    start: { x: MARGIN_X + 250, y: signatureLineY },
-    end: { x: MARGIN_X + 430, y: signatureLineY },
-    thickness: 0.7,
-    color: rgb(0.35, 0.35, 0.35),
-  });
+  const signatureTitleY = y;
+  const signatureBoxY = signatureTitleY - 28;
+  const signatureBoxHeight = 22;
+  const signatureBoxWidth = 182;
+
   page.drawText("Firma datore", {
     x: MARGIN_X,
-    y: y - 1,
+    y: signatureTitleY,
     size: 8.4,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
   page.drawText("Firma lavoratrice", {
     x: MARGIN_X + 250,
-    y: y - 1,
+    y: signatureTitleY,
     size: 8.4,
     font: bodyFont,
     color: rgb(0.14, 0.14, 0.14),
   });
+
+  page.drawRectangle({
+    x: MARGIN_X,
+    y: signatureBoxY,
+    width: signatureBoxWidth,
+    height: signatureBoxHeight,
+    borderWidth: 0.7,
+    borderColor: rgb(0.35, 0.35, 0.35),
+  });
+  page.drawRectangle({
+    x: MARGIN_X + 250,
+    y: signatureBoxY,
+    width: signatureBoxWidth,
+    height: signatureBoxHeight,
+    borderWidth: 0.7,
+    borderColor: rgb(0.35, 0.35, 0.35),
+  });
+
   page.drawText("Documento personale ad uso privato - fac-simile", {
     x: MARGIN_X,
-    y: Math.max(MARGIN_BOTTOM - 10, y - 18),
+    y: 36,
     size: 7.4,
     font: bodyFont,
     color: rgb(0.45, 0.45, 0.45),
