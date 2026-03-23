@@ -72,6 +72,9 @@ export function buildDocumentData({ profile, input, calculation }) {
   ].join("\n");
 
   const startDate = `1 ${payroll.monthName} ${payroll.year}`;
+  const salaryFormatted = new Intl.NumberFormat("it-IT", { minimumFractionDigits: 2 }).format(
+    Number(payroll.grossSalary) || 0,
+  );
 
   return {
     employer,
@@ -80,9 +83,11 @@ export function buildDocumentData({ profile, input, calculation }) {
     placeholders: {
       employerName: employer.name,
       employerTaxCode: employer.taxCode,
+      employerCF: employer.taxCode,
       employerAddress: employer.address,
       employeeName: employee.name,
       employeeTaxCode: employee.taxCode,
+      employeeCF: employee.taxCode,
       contractType: employee.contractType,
       contractTypeLabel: employee.contractTypeLabel,
       level: employee.level,
@@ -92,6 +97,7 @@ export function buildDocumentData({ profile, input, calculation }) {
       monthName: payroll.monthName,
       year: String(payroll.year),
       startDate,
+      salary: salaryFormatted,
       grossSalary: euro(payroll.grossSalary),
       netSalary: euro(payroll.netSalary),
       employerContributions: euro(payroll.employerContributions),
