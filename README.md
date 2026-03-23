@@ -41,14 +41,33 @@ npm run dev
 
 L'app frontend e installabile come PWA (icona su Home del telefono):
 
-- Android (Chrome): apri il sito e scegli **Installa app** dal menu.
-- iPhone (Safari): **Condividi > Aggiungi a schermata Home**.
+- **Android (Chrome):** apri il sito e scegli **Installa app** dal menu.
+- **iPhone (Safari):** **Condividi > Aggiungi a schermata Home**.
 
 Note importanti:
 
 - In locale funziona come PWA su `localhost`.
 - Per installazione reale da telefono con rete mobile, pubblica l'app su HTTPS.
 - L'app installata usa sempre il backend configurato (`VITE_API_BASE_URL`).
+
+## Android + TunnelMole (accesso da telefono in rete locale)
+
+Per usare l'app da uno smartphone Android tramite tunnel pubblico:
+
+1. **Builda e avvia** (in un terminale):
+   ```bash
+   npm run tunnel
+   ```
+   Oppure: `npm run build` seguito da `npm start`.
+
+2. **Esponi con TunnelMole** (installa con `npm install -g tunnelmole`) in un altro terminale:
+   ```bash
+   tmole 4000
+   ```
+
+3. **Sul telefono Android:** apri l'URL HTTPS fornito (es. `https://xxx.tunnelmole.com`), usa l'app e installala come PWA se desideri.
+
+Il backend serve il frontend dalla stessa origin, quindi con un solo tunnel (porta 4000) funzionano sia l'interfaccia che le API. Non serve `VITE_API_BASE_URL`.
 
 ## API principali
 
