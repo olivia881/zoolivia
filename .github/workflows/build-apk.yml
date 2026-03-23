@@ -30,20 +30,17 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            build-tools;35.0.0
-            platforms;android-36
-          accept-android-sdk-licenses: true
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > frontend/android/local.properties
+          echo "ANDROID_HOME=$ANDROID_HOME"
 
       - name: Sync and build APK
         run: |
           cd frontend
           npx cap sync android
           cd android
-          ./gradlew assembleDebug --no-daemon -Pandroid.useAndroidX=true
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
