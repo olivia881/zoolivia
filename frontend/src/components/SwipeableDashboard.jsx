@@ -38,18 +38,6 @@ export default function SwipeableDashboard({ children }) {
 
   return (
     <div className="swipeable-dashboard">
-      <div
-        ref={containerRef}
-        className="swipeable-container"
-        onScroll={handleScroll}
-      >
-        {PANELS.map((key, i) => (
-          <div key={key} className="swipeable-panel" data-panel={key}>
-            {children[i]}
-          </div>
-        ))}
-      </div>
-
       <nav className="swipeable-nav" aria-label="Navigazione sezioni">
         <button
           type="button"
@@ -74,6 +62,7 @@ export default function SwipeableDashboard({ children }) {
             </button>
           ))}
         </div>
+        <span className="swipeable-current">{PANEL_LABELS[PANELS[activeIndex]]}</span>
         <button
           type="button"
           className="swipeable-arrow swipeable-next"
@@ -84,6 +73,20 @@ export default function SwipeableDashboard({ children }) {
           ›
         </button>
       </nav>
+
+      <p className="swipeable-hint">Scorri ← → oppure usa le frecce per cambiare sezione</p>
+
+      <div
+        ref={containerRef}
+        className="swipeable-container"
+        onScroll={handleScroll}
+      >
+        {PANELS.map((key, i) => (
+          <div key={key} className="swipeable-panel" data-panel={key}>
+            {children[i]}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
