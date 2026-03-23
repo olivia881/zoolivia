@@ -473,7 +473,7 @@ async function generateProfessionalPayslipPdf(data, meta) {
     color: rgb(0.14, 0.14, 0.14),
   });
 
-  y -= noteHeight + 10;
+  y -= noteHeight + 18;
 
   const signatureTitleY = y;
   const signatureBoxY = signatureTitleY - 28;
