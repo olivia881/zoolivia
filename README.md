@@ -37,18 +37,34 @@ npm run dev
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:4000`
 
-## Installazione su telefono (PWA)
+## App installabile sul cellulare
 
-L'app frontend e installabile come PWA (icona su Home del telefono):
+L'app è una **PWA** (Progressive Web App): una volta pubblicata online, puoi installarla come un'app nativa (icona sulla home, schermo intero, nessuna barra del browser).
 
-- **Android (Chrome):** apri il sito e scegli **Installa app** dal menu.
-- **iPhone (Safari):** **Condividi > Aggiungi a schermata Home**.
+### 1. Pubblica l'app (URL permanente)
 
-Note importanti:
+**Opzione A – Render (gratuito):**
 
-- In locale funziona come PWA su `localhost`.
-- Per installazione reale da telefono con rete mobile, pubblica l'app su HTTPS.
-- L'app installata usa sempre il backend configurato (`VITE_API_BASE_URL`).
+1. Vai su [dashboard.render.com](https://dashboard.render.com) e crea un account
+2. **New → Blueprint** e collega il repository GitHub `zoolivia`
+3. Render legge `render.yaml` e crea il servizio
+4. Al termine del deploy otterrai un URL tipo `https://busta-badante-xxx.onrender.com`
+
+**Opzione B – Railway:**
+
+1. Vai su [railway.app](https://railway.app) e collega il repository
+2. Imposta **Build:** `npm install && npm install --prefix backend && npm install --prefix frontend && npm run build`
+3. Imposta **Start:** `npm run start --prefix backend`
+4. Ottieni l'URL pubblico del servizio
+
+### 2. Installa sul telefono
+
+- **Android (Chrome):** apri l’URL dell’app → menu (⋮) → **Installa app** oppure **Aggiungi a schermata Home**
+- **iPhone (Safari):** apri l’URL → **Condividi** → **Aggiungi a schermata Home**
+
+Dopo l’installazione avrai un’icona sulla home che apre l’app a schermo intero, senza dipendere da TunnelMole.
+
+**Nota:** Sul piano free di Render il servizio si sospende dopo 15 minuti di inattività; il primo avvio dopo la sospensione può richiedere circa 1 minuto.
 
 ## Android + TunnelMole (accesso da telefono in rete locale)
 

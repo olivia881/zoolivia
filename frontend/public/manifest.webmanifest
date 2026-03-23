@@ -1,13 +1,16 @@
 {
   "name": "Gestionale Buste Paga Badante",
   "short_name": "Busta Badante",
-  "description": "Calcolo stipendio, contributi INPS e generazione buste paga PDF.",
+  "description": "Calcolo stipendio, contributi INPS e generazione buste paga PDF per colf e badanti.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "portrait-primary",
   "background_color": "#f3f4f6",
   "theme_color": "#1d4ed8",
   "lang": "it-IT",
+  "categories": ["business", "finance", "productivity"],
   "icons": [
     {
       "src": "/icon-192.svg",
