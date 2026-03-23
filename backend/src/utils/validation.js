@@ -1,5 +1,5 @@
 const CONTRACT_TYPES = new Set(["convivente", "non_convivente"]);
-const LEVELS = new Set(["BS", "CS"]);
+const LEVELS = new Set(["A", "AS", "B", "BS", "C", "CS", "D", "DS"]);
 
 function isNotEmpty(value) {
   return typeof value === "string" && value.trim().length > 0;
@@ -69,7 +69,7 @@ export function validateMonthlyInput(input) {
   }
 
   if (!LEVELS.has(level)) {
-    errors.level = "Livello non valido (BS o CS).";
+    errors.level = "Livello non valido (A, AS, B, BS, C, CS, D, DS).";
   }
 
   if (!Number.isFinite(weeklyHours) || weeklyHours <= 0) {

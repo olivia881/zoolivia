@@ -21,7 +21,7 @@ Rapporto di lavoro in regime di convivenza.
 
 ## ORARIO DI LAVORO
 
-54 ore settimanali, con riposo domenicale e mezza giornata settimanale.
+{{weeklyHours}} ore settimanali, con riposo domenicale e mezza giornata settimanale.
 
 ## MANSIONI
 

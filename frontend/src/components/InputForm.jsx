@@ -1,16 +1,9 @@
+import { LEVEL_ORDER, LEVEL_LABELS } from "../utils/levelLabels";
+import { getNonConviventeHourlyMinimum } from "../utils/payrollCalculator";
+
 const MONTHS = [
-  "Gennaio",
-  "Febbraio",
-  "Marzo",
-  "Aprile",
-  "Maggio",
-  "Giugno",
-  "Luglio",
-  "Agosto",
-  "Settembre",
-  "Ottobre",
-  "Novembre",
-  "Dicembre",
+  "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+  "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
 ];
 
 function InputField({ label, name, value, onChange, error, placeholder, type = "text", disabled = false }) {
@@ -94,7 +87,21 @@ export default function InputForm({
         <div className="inline-grid">
           <label className="field">
             <span>Tipo contratto</span>
-            <select name="contractType" value={input.contractType} onChange={onInputChange}>
+            <select
+              name="contractType"
+              value={input.contractType}
+              onChange={(e) => {
+                onInputChange(e);
+                if (e.target.value === "non_convivente") {
+                  onInputChange({
+                    target: {
+                      name: "hourlyRate",
+                      value: String(getNonConviventeHourlyMinimum(input.level)),
+                    },
+                  });
+                }
+              }}
+            >
               <option value="convivente">Convivente</option>
               <option value="non_convivente">Non convivente</option>
             </select>
@@ -102,9 +109,27 @@ export default function InputForm({
 
           <label className="field">
             <span>Livello</span>
-            <select name="level" value={input.level} onChange={onInputChange}>
-              <option value="BS">BS</option>
-              <option value="CS">CS</option>
+            <select
+              name="level"
+              value={input.level}
+              onChange={(e) => {
+                const newLevel = e.target.value;
+                onInputChange(e);
+                if (input.contractType === "non_convivente") {
+                  onInputChange({
+                    target: {
+                      name: "hourlyRate",
+                      value: String(getNonConviventeHourlyMinimum(newLevel)),
+                    },
+                  });
+                }
+              }}
+            >
+              {LEVEL_ORDER.map((lv) => (
+                <option key={lv} value={lv}>
+                  {LEVEL_LABELS[lv]}
+                </option>
+              ))}
             </select>
           </label>
 
@@ -118,13 +143,14 @@ export default function InputForm({
           />
 
           <InputField
-            label="Paga oraria"
+            label="Paga oraria (min. CCNL)"
             name="hourlyRate"
             value={input.hourlyRate}
             onChange={onInputChange}
             error={inputErrors.hourlyRate}
             type="number"
             disabled={input.contractType === "convivente"}
+            placeholder={input.contractType === "non_convivente" ? getNonConviventeHourlyMinimum(input.level).toString() : ""}
           />
 
           <label className="field">

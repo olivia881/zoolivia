@@ -34,7 +34,7 @@ const DEFAULT_INPUT = {
   contractType: "convivente",
   level: "BS",
   weeklyHours: 54,
-  hourlyRate: 7.5,
+  hourlyRate: 7.1,
   month: currentMonth(),
   year: currentYear(),
 };

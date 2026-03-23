@@ -1,6 +1,27 @@
-const CONVIVENTE_BASE_SALARY = {
-  BS: 1053,
-  CS: 1120,
+/**
+ * CCNL Lavoro Domestico - Minimi retributivi 2025
+ * Fonte: tabelle ufficiali CCNL
+ */
+const CONVIVENTE_MONTHLY = {
+  A: 736.25,
+  AS: 870.13,
+  B: 937.06,
+  BS: 1003.99,
+  C: 1070.94,
+  CS: 1137.86,
+  D: 1536.6,
+  DS: 1603.53,
+};
+
+const NON_CONVIVENTE_HOURLY = {
+  A: 5.35,
+  AS: 6.3,
+  B: 6.68,
+  BS: 7.1,
+  C: 7.49,
+  CS: 7.91,
+  D: 9.12,
+  DS: 9.5,
 };
 
 const EMPLOYEE_CONTRIBUTION_RATE = 0.07;
@@ -14,9 +35,13 @@ function roundCurrency(value) {
 
 export function calculatePayroll(input) {
   const isConvivente = input.contractType === "convivente";
-  const gross = isConvivente
-    ? CONVIVENTE_BASE_SALARY[input.level] ?? CONVIVENTE_BASE_SALARY.BS
-    : Number(input.hourlyRate || 0) * Number(input.weeklyHours || 0) * WEEK_FACTOR;
+  let gross;
+  if (isConvivente) {
+    gross = CONVIVENTE_MONTHLY[input.level] ?? CONVIVENTE_MONTHLY.BS;
+  } else {
+    const rate = Number(input.hourlyRate) || (NON_CONVIVENTE_HOURLY[input.level] ?? NON_CONVIVENTE_HOURLY.BS);
+    gross = rate * Number(input.weeklyHours || 0) * WEEK_FACTOR;
+  }
 
   const employeeContributions = gross * EMPLOYEE_CONTRIBUTION_RATE;
   const employerContributions = gross * EMPLOYER_CONTRIBUTION_RATE;
@@ -34,4 +59,8 @@ export function calculatePayroll(input) {
     thirteenth: roundCurrency(thirteenth),
     totalCost: roundCurrency(totalCost),
   };
+}
+
+export function getNonConviventeHourlyMinimum(level) {
+  return NON_CONVIVENTE_HOURLY[level] ?? NON_CONVIVENTE_HOURLY.BS;
 }

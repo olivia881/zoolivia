@@ -1,6 +1,27 @@
-const CONVIVENTE_BASE_SALARY = {
-  BS: 1053,
-  CS: 1120,
+/**
+ * CCNL Lavoro Domestico - Minimi retributivi 2025
+ * Fonte: tabelle ufficiali CCNL
+ */
+const CONVIVENTE_MONTHLY = {
+  A: 736.25,
+  AS: 870.13,
+  B: 937.06,
+  BS: 1003.99,
+  C: 1070.94,
+  CS: 1137.86,
+  D: 1536.6,
+  DS: 1603.53,
+};
+
+const NON_CONVIVENTE_HOURLY = {
+  A: 5.35,
+  AS: 6.3,
+  B: 6.68,
+  BS: 7.1,
+  C: 7.49,
+  CS: 7.91,
+  D: 9.12,
+  DS: 9.5,
 };
 
 const EMPLOYEE_CONTRIBUTION_RATE = 0.07;
@@ -17,9 +38,10 @@ export function calculatePayroll(input) {
 
   let gross = 0;
   if (contractType === "convivente") {
-    gross = CONVIVENTE_BASE_SALARY[level] ?? CONVIVENTE_BASE_SALARY.BS;
+    gross = CONVIVENTE_MONTHLY[level] ?? CONVIVENTE_MONTHLY.BS;
   } else {
-    gross = Number(hourlyRate) * Number(weeklyHours) * WEEK_FACTOR;
+    const rate = Number(hourlyRate) || (NON_CONVIVENTE_HOURLY[level] ?? NON_CONVIVENTE_HOURLY.BS);
+    gross = rate * Number(weeklyHours) * WEEK_FACTOR;
   }
 
   const employeeContributions = gross * EMPLOYEE_CONTRIBUTION_RATE;
@@ -43,4 +65,16 @@ export function calculatePayroll(input) {
       tfrRate: TFR_RATE,
     },
   };
+}
+
+export function getLevels() {
+  return Object.keys(CONVIVENTE_MONTHLY);
+}
+
+export function getConviventeMinimum(level) {
+  return CONVIVENTE_MONTHLY[level] ?? CONVIVENTE_MONTHLY.BS;
+}
+
+export function getNonConviventeHourlyMinimum(level) {
+  return NON_CONVIVENTE_HOURLY[level] ?? NON_CONVIVENTE_HOURLY.BS;
 }
