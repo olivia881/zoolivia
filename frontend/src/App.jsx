@@ -11,6 +11,8 @@ import {
   removeFromPayrollHistory,
   resetPayrollHistory,
 } from "./utils/payrollStorage";
+import { loadProfile as loadProfileLocal, saveProfile as saveProfileLocal } from "./utils/profileStorage";
+import { generatePDFClient } from "./lib/pdfGenerator";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
@@ -50,6 +52,21 @@ function App() {
 
   useEffect(() => {
     setHistory(getPayrollHistory());
+    async function initProfile() {
+      try {
+        const res = await fetch(`${API_BASE}/profile`);
+        if (res.ok) {
+          const data = await res.json();
+          setProfile((p) => ({ ...p, ...data }));
+          return;
+        }
+      } catch {
+        /* backend non raggiungibile */
+      }
+      const stored = loadProfileLocal();
+      if (stored) setProfile((p) => ({ ...p, ...stored }));
+    }
+    initProfile();
   }, []);
 
   const profileErrors = useMemo(() => validateProfile(profile), [profile]);
@@ -84,15 +101,26 @@ function App() {
   }
 
   async function saveProfile() {
-    const response = await fetch(`${API_BASE}/profile`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(profile),
-    });
-
-    if (!response.ok) {
-      throw new Error("Impossibile salvare l'anagrafica.");
+    try {
+      const response = await fetch(`${API_BASE}/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+      if (response.ok) return;
+    } catch {
+      /* standalone mode */
     }
+    saveProfileLocal(profile);
+  }
+
+  function downloadBlob(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   async function handleGenerateDocument(documentType) {
@@ -111,54 +139,93 @@ function App() {
     try {
       await saveProfile();
 
-      const response = await fetch(`${API_BASE}/documents/generate`, {
+        const response = await fetch(`${API_BASE}/documents/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documentType, profile, input }),
       });
 
-      if (!response.ok) {
-        throw new Error("Errore durante la generazione dei documenti.");
+      if (response.ok) {
+        const data = await response.json();
+        const baseOrigin = API_BASE.startsWith("http") ? API_BASE.replace("/api", "") : "";
+        const cacheBuster = Date.now();
+        const generatedDocs = (data.files ?? []).map((file) => ({
+          documentType: file.documentType,
+          fileName: file.fileName,
+          url: `${baseOrigin}${file.filePath}?v=${cacheBuster}`,
+        }));
+        setDocuments(generatedDocs);
+        setStatusMessage(data.message ?? "Documenti generati correttamente.");
+        if (documentType === "payslip") {
+          const calc = data.calculation ?? calculation;
+          setHistory(
+            addToPayrollHistory({
+              month: input.month,
+              year: input.year,
+              workerName: profile.workerName,
+              workerCf: profile.workerCf,
+              contractType: input.contractType,
+              level: input.level,
+              weeklyHours: input.weeklyHours,
+              gross: calc.gross,
+              net: calc.net,
+              employeeContributions: calc.employeeContributions,
+              employerContributions: calc.employerContributions,
+              tfr: calc.tfr,
+              thirteenth: calc.thirteenth,
+              totalCost: calc.totalCost,
+            }),
+          );
+        }
+        setLoadingType("");
+        return;
       }
+    } catch {
+      /* API non disponibile, usa generazione locale */
+    }
 
-      const data = await response.json();
-      const baseOrigin = API_BASE.startsWith("http") ? API_BASE.replace("/api", "") : "";
-      const cacheBuster = Date.now();
-      const generatedDocs = (data.files ?? []).map((file) => ({
-        documentType: file.documentType,
-        fileName: file.fileName,
-        url: `${baseOrigin}${file.filePath}?v=${cacheBuster}`,
-      }));
-
-      setDocuments(generatedDocs);
-      setStatusMessage(data.message ?? "Documenti generati correttamente.");
-
-      if (documentType === "payslip" && calculation) {
-        const calc = data.calculation ?? calculation;
-        const entry = {
-          month: input.month,
-          year: input.year,
-          workerName: profile.workerName,
-          workerCf: profile.workerCf,
-          contractType: input.contractType,
-          level: input.level,
-          weeklyHours: input.weeklyHours,
-          gross: calc.gross,
-          net: calc.net,
-          employeeContributions: calc.employeeContributions,
-          employerContributions: calc.employerContributions,
-          tfr: calc.tfr,
-          thirteenth: calc.thirteenth,
-          totalCost: calc.totalCost,
-        };
-        setHistory(addToPayrollHistory(entry));
+    try {
+      const result = await generatePDFClient(documentType, {
+        profile,
+        input,
+        calculation,
+      });
+      const files = Array.isArray(result) ? result : [result];
+      files.forEach(({ blob, fileName }) => downloadBlob(blob, fileName));
+      setDocuments(
+        files.map((f, i) => ({
+          documentType: documentType === "contract" ? (i === 0 ? "contract" : "clause") : documentType,
+          fileName: f.fileName,
+          url: URL.createObjectURL(f.blob),
+        })),
+      );
+      setStatusMessage("Documenti generati e scaricati localmente.");
+      if (documentType === "payslip") {
+        setHistory(
+          addToPayrollHistory({
+            month: input.month,
+            year: input.year,
+            workerName: profile.workerName,
+            workerCf: profile.workerCf,
+            contractType: input.contractType,
+            level: input.level,
+            weeklyHours: input.weeklyHours,
+            gross: calculation.gross,
+            net: calculation.net,
+            employeeContributions: calculation.employeeContributions,
+            employerContributions: calculation.employerContributions,
+            tfr: calculation.tfr,
+            thirteenth: calculation.thirteenth,
+            totalCost: calculation.totalCost,
+          }),
+        );
       }
     } catch (error) {
-      setStatusMessage(error.message);
-    } finally {
-      setLoadingType("");
+      setStatusMessage(error.message ?? "Errore nella generazione.");
     }
+    setLoadingType("");
   }
+
 
   return (
     <main className="layout">

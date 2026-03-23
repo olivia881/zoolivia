@@ -66,6 +66,30 @@ Dopo l’installazione avrai un’icona sulla home che apre l’app a schermo in
 
 **Nota:** Sul piano free di Render il servizio si sospende dopo 15 minuti di inattività; il primo avvio dopo la sospensione può richiedere circa 1 minuto.
 
+### 3. APK standalone (senza server)
+
+L'app funziona **offline** come APK: nessun deploy, nessun URL, nessun TunnelMole. Tutto avviene sul telefono.
+
+**Requisiti:** Android Studio (con Android SDK) installato sul PC.
+
+**Passi:**
+
+1. Installa Android Studio da [developer.android.com](https://developer.android.com/studio)
+2. Apri il progetto e vai nella cartella `frontend`:
+   ```bash
+   cd frontend
+   ```
+3. Sincronizza e apri il progetto Android:
+   ```bash
+   npm run cap:sync
+   npm run cap:open
+   ```
+4. In Android Studio: **Build → Build Bundle(s) / APK(s) → Build APK(s)**
+5. L’APK sarà in `frontend/android/app/build/outputs/apk/debug/app-debug.apk`
+6. Trasferisci l’APK sul telefono (cavo USB, email, cloud) e installalo
+
+L’app APK usa generazione PDF locale e salva anagrafica e storico in memoria sul dispositivo. Non serve connessione internet.
+
 ## Android + TunnelMole (accesso da telefono in rete locale)
 
 Per usare l'app da uno smartphone Android tramite tunnel pubblico:

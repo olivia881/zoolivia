@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Busta Badante</string>
+    <string name="title_activity_main">Busta Badante</string>
+    <string name="package_name">com.zoolivia.bustabadante</string>
+    <string name="custom_url_scheme">com.zoolivia.bustabadante</string>
+</resources>
