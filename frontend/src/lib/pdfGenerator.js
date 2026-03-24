@@ -539,7 +539,7 @@ Seleziona tipo contratto (convivente/non convivente), livello CCNL, ore settiman
 I calcoli (lordo, contributi, netto, TFR, tredicesima, costo totale) compaiono automaticamente dopo aver compilato correttamente i dati.
 
 ## 4. Documenti
-Genera contratto, busta paga e ricevuta. Su mobile i PDF si aprono tramite il menu Condividi (es. visualizzatore PDF).
+Genera contratto, busta paga e ricevuta. Su app mobile i PDF si aprono direttamente nel visualizzatore di sistema.
 
 ## 5. Layout e zoom
 - Layout desktop: campi in 2 colonne e pulsanti in una riga.

@@ -61,8 +61,11 @@ export async function downloadOrOpenPdf(blob, fileName) {
   const a = document.createElement("a");
   a.href = url;
   a.download = fileName;
+  a.style.display = "none";
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
   return { url };
 }
 

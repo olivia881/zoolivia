@@ -1,3 +1,5 @@
+import { getMansioniForContract, getInquadramentoText } from "../lib/ccnlLevels.js";
+
 const MONTH_NAMES = [
   "Gennaio",
   "Febbraio",
@@ -77,6 +79,10 @@ export function buildDocumentData({ profile, input, calculation }) {
     Number(payroll.grossSalary) || 0,
   );
 
+  const level = employee.level || "BS";
+  const { intro: mansioniIntro, mansioni: mansioniList, esclusioni: esclusioniList } = getMansioniForContract(level);
+  const levelInquadramento = getInquadramentoText(level);
+
   return {
     employer,
     employee,
@@ -108,6 +114,10 @@ export function buildDocumentData({ profile, input, calculation }) {
       totalCost: euro(payroll.totalCost),
       monthlySafetyNote: "TFR e tredicesima maturano mensilmente ma verranno liquidati alla cessazione o nei termini di legge. Non inclusi nel netto mensile.",
       mandatoryClauses,
+      levelInquadramento,
+      mansioniIntro,
+      mansioniList,
+      esclusioniList,
     },
   };
 }

@@ -247,13 +247,16 @@ function App() {
 
   async function handleDownloadManual() {
     setManualLoading(true);
+    setStatusMessage("");
     try {
       const { blob, fileName } = await generateManualPdf();
       await downloadOrOpenPdf(blob, fileName);
+      setStatusMessage("Manuale generato.");
     } catch (e) {
-      setStatusMessage(e.message ?? "Errore nella generazione del manuale.");
+      setStatusMessage(e?.message ?? "Errore nella generazione del manuale.");
+    } finally {
+      setManualLoading(false);
     }
-    setManualLoading(false);
   }
 
   return (

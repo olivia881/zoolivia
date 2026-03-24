@@ -12,12 +12,11 @@ Data inizio rapporto: {{startDate}}
 
 ## INQUADRAMENTO
 
-La lavoratrice è assunta con livello {{level}} (CCNL lavoro domestico),
-con mansioni di assistenza alla persona.
+La lavoratrice è assunta con livello {{level}} (CCNL lavoro domestico), {{levelInquadramento}}.
 
 ## TIPOLOGIA
 
-Rapporto di lavoro in regime di convivenza.
+Rapporto di lavoro in regime {{contractTypeLabel}}.
 
 ## ORARIO DI LAVORO
 
@@ -25,21 +24,13 @@ Rapporto di lavoro in regime di convivenza.
 
 ## MANSIONI
 
-La lavoratrice svolgerà attività di assistenza alla persona e di supporto domestico non sanitario, in particolare:
+{{mansioniIntro}}
 
-- supporto alla mobilità leggera
-- aiuto nella vestizione e cura personale di base
-- preparazione dei pasti
-- compagnia e sorveglianza
-- pulizia ordinaria degli ambienti
-- lavaggio e gestione della biancheria
-- piccole commissioni quotidiane
+{{mansioniList}}
 
 Attività escluse:
 
-- prestazioni di natura sanitaria o infermieristica
-- somministrazione di farmaci invasivi
-- movimentazioni complesse o assistenza specialistica
+{{esclusioniList}}
 
 ## RETRIBUZIONE
 

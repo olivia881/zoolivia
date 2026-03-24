@@ -1,3 +1,5 @@
+import { getMansioniForContract, getInquadramentoText } from "./ccnlLevels";
+
 const MONTH_NAMES = [
   "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
   "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
@@ -55,6 +57,10 @@ export function buildDocumentData({ profile, input, calculation }) {
     Number(payroll.grossSalary) || 0,
   );
 
+  const level = employee.level || "BS";
+  const { intro: mansioniIntro, mansioni: mansioniList, esclusioni: esclusioniList } = getMansioniForContract(level);
+  const levelInquadramento = getInquadramentoText(level);
+
   return {
     employer,
     employee,
@@ -65,6 +71,7 @@ export function buildDocumentData({ profile, input, calculation }) {
       employerAddress: employer.address,
       employeeName: employee.name,
       employeeCF: employee.taxCode,
+      contractTypeLabel: employee.contractTypeLabel,
       level: employee.level,
       weeklyHours: String(employee.weeklyHours),
       hourlyRate: euro(employee.hourlyRate),
@@ -80,6 +87,10 @@ export function buildDocumentData({ profile, input, calculation }) {
       thirteenth: euro(payroll.thirteenth),
       totalCost: euro(payroll.totalCost),
       mandatoryClauses,
+      levelInquadramento,
+      mansioniIntro,
+      mansioniList,
+      esclusioniList,
     },
   };
 }
