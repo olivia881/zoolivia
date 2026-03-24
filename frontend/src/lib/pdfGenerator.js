@@ -61,6 +61,16 @@ function formatDate(date) {
   return new Intl.DateTimeFormat("it-IT").format(date);
 }
 
+/** Sostituisce caratteri Unicode non WinAnsi con equivalenti ASCII per pdf-lib */
+function toWinAnsi(text) {
+  return String(text ?? "")
+    .replace(/\u2212/g, "-")   // MINUS SIGN
+    .replace(/\u2013/g, "-")   // EN DASH
+    .replace(/\u2014/g, "-")   // EM DASH
+    .replace(/\u2018|\u2019/g, "'")  // curly quotes
+    .replace(/\u201C|\u201D/g, '"');
+}
+
 function wrapLine(line, font, fontSize, maxWidth) {
   if (!line.trim()) {
     return [""];
@@ -105,11 +115,12 @@ function drawHeader(page, title, titleFont, bodyFont) {
 
   const titleSize = 15;
   const subtitleSize = 8.5;
-  const titleWidth = titleFont.widthOfTextAtSize(title, titleSize);
+  const safeTitle = toWinAnsi(title);
+  const titleWidth = titleFont.widthOfTextAtSize(safeTitle, titleSize);
   const titleX = (PAGE_WIDTH - titleWidth) / 2;
   const y = PAGE_HEIGHT - MARGIN_TOP;
 
-  page.drawText(title, {
+  page.drawText(safeTitle, {
     x: titleX,
     y,
     size: titleSize,
@@ -161,7 +172,7 @@ async function drawBodyLines(pdfDoc, title, bodyText) {
         y = drawHeader(page, title, titleFont, bodyFont);
       }
 
-      page.drawText(segment, {
+      page.drawText(toWinAnsi(segment), {
         x: MARGIN_X,
         y,
         size: fontSize,
@@ -544,7 +555,7 @@ Genera contratto, busta paga e ricevuta. Su app mobile i PDF si aprono direttame
 ## 5. Layout e zoom
 - Layout desktop: campi in 2 colonne e pulsanti in una riga.
 - Layout compatto: vista verticale.
-- Pulsanti +/− in basso a destra: rimpicciolisci o ingrandisci la schermata (30%–150%).
+- Pulsanti +/- in basso a destra: rimpicciolisci o ingrandisci la schermata (30%-150%).
 
 ## 6. Storico
 Le buste paga generate vengono salvate nello storico. Puoi filtrare per anno, consultare i dettagli ed eliminare singole voci.`;
@@ -555,7 +566,7 @@ Le buste paga generate vengono salvate nello storico. Puoi filtrare per anno, co
  */
 export async function generateManualPdf() {
   const pdfDoc = await PDFDocument.create();
-  await drawBodyLines(pdfDoc, "Manuale d'uso - Gestionale Buste Paga Badante", MANUAL_BODY);
+  await drawBodyLines(pdfDoc, toWinAnsi("Manuale d'uso - Gestionale Buste Paga Badante"), toWinAnsi(MANUAL_BODY));
   const pdfBytes = await pdfDoc.save();
   return {
     blob: new Blob([pdfBytes], { type: "application/pdf" }),
