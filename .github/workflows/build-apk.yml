@@ -1,7 +1,7 @@
 name: Build APK
 
-# APK scaricabile da GitHub: dopo il run verde, vai su Release "Ultimo APK"
-# oppure Azioni → questo workflow → Artifacts.
+# APK: dopo un run verde → Release «Ultimo APK» oppure tab Artifacts.
+# Dal branch di sviluppo: Azioni → Build APK → «Run workflow» → scegli il branch.
 
 on:
   workflow_dispatch:
@@ -46,12 +46,12 @@ jobs:
 
       - name: Rinomina APK per il download
         run: |
-          cp android/app/build/outputs/apk/debug/app-debug.apk promemoria-rifiuti.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk turni-servizio.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: promemoria-rifiuti-apk
-          path: promemoria-rifiuti.apk
+          name: turni-servizio-apk
+          path: turni-servizio.apk
 
       # Stesso tag = stesso URL di release; eliminiamo tag/release vecchi e li ricreiamo su questo commit.
       - name: Rimuovi release/tag apk-ultimo precedenti
@@ -65,12 +65,12 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: apk-ultimo
-          name: Ultimo APK — Promemoria rifiuti
+          name: Ultimo APK — Turni di servizio
           body: |
-            APK debug generato automaticamente da GitHub Actions (commit `${{ github.sha }}`).
+            APK debug generato automaticamente da GitHub Actions (commit `${{ github.sha }}`, branch `${{ github.ref_name }}`).
 
-            **Installazione:** scarica **promemoria-rifiuti.apk**, aprilo sul telefono e consenti l’installazione da origini sconosciute se richiesto.
+            **Installazione:** scarica **turni-servizio.apk**, aprilo sul telefono e consenti l’installazione da origini sconosciute se richiesto.
 
             Per aggiornare: torna su questa pagina dopo un nuovo build verde in **Actions** e scarica di nuovo l’APK.
-          artifacts: promemoria-rifiuti.apk
+          artifacts: turni-servizio.apk
           token: ${{ secrets.GITHUB_TOKEN }}

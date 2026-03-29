@@ -1,8 +1,10 @@
-# Promemoria rifiuti
+# Turni di servizio
 
-App **solo per uso personale** sul telefono (come per busta badante): la installi tu, **non** è un sito da condividere. Icona dedicata (**cestino + riciclo** su sfondo verde/teal), diversa da un’icona “documento / busta”.
+App **solo per uso personale** sul telefono: calendario **lun–ven** con turno **a scalare** (ciclo di 5 settimane), fasce **8–14 / 14:30–17:30** oppure **9–15 / 15:30–18:30**, promemoria giornaliero opzionale.
 
-## Installazione sul telefono (consigliato)
+L’**applicationId** Android è ancora `it.promemoria.rifiuti` (stesso pacchetto del progetto precedente): se avevi installato la vecchia app, questa **la aggiorna** al posto di crearne un’altra affiancata.
+
+## Installazione sul telefono (consigliato: Android Studio)
 
 Serve un PC con **Android Studio** (almeno la prima volta).
 
@@ -16,80 +18,55 @@ Serve un PC con **Android Studio** (almeno la prima volta).
 
 3. Si apre **Android Studio** sulla cartella `android`.
 4. Collega il telefono in **USB** (debug USB attivo) o usa un emulatore.
-5. **Run** (triangolo verde): l’app viene installata solo sul dispositivo collegato.
+5. **Run** (triangolo verde): l’app viene installata sul dispositivo.
 
-I dati restano sul telefono (nessun account obbligatorio). Il repo su GitHub può essere **privato**.
+I dati restano sul telefono (localStorage / WebView). Il repo può essere **privato**.
 
 ### Notifiche e promemoria vocale (Android)
 
 1. **Notifiche** — attive per l’app; priorità / suono se disponibili.
 2. **Batteria** — “Senza restrizioni” / non ottimizzare, così le notifiche non arrivano in ritardo.
 3. **Allarmi esatti** (Android 12+) — consentiti per l’app, se richiesto.
-4. Dopo aver cambiato orario o calendario, **apri l’app** per aggiornare i promemoria programmati.
+4. Dopo aver cambiato orario o ciclo, **apri l’app** per aggiornare i promemoria programmati.
 
 La **voce** parte quando la notifica viene consegnata e il processo dell’app può eseguire il sintetizzatore (spesso con app aperta o appena in background); non è garantita con telefono a lungo inattivo o app forzata chiusa.
 
-## Scaricare l’APK da GitHub (come per busta badante)
+## Scaricare l’APK da GitHub
 
-A ogni push su **`main`** (e se lanci il workflow a mano) GitHub Actions compila un **APK debug** e lo mette a disposizione.
+Il workflow **Build APK** compila un **APK debug** e lo pubblica sulla release **apk-ultimo** e come artifact.
 
-1. Vai al repo **zoolivia** su GitHub.
-2. **Releases** → [Ultimo APK — Promemoria rifiuti](https://github.com/olivia881/zoolivia/releases/tag/apk-ultimo) → scarica **`promemoria-rifiuti.apk`**  
-   (link diretto: [promemoria-rifiuti.apk](https://github.com/olivia881/zoolivia/releases/download/apk-ultimo/promemoria-rifiuti.apk)).
-3. Sul telefono apri il file e installa (potrebbe servire consentire installazioni da origini sconosciute).
+- **Push su `main`:** il build parte automaticamente.
+- **Dal tuo branch di feature:** GitHub → **Actions** → **Build APK** → **Run workflow** → scegli il branch → al termine scarica l’artifact **turni-servizio-apk** (zip con `turni-servizio.apk`).
 
-In alternativa: tab **Actions** → workflow **Build APK** → ultimo run con segno verde → in basso **Artifacts** → scarica **promemoria-rifiuti-apk** (zip con l’APK dentro).
+Dopo il merge su `main`, la release [apk-ultimo](https://github.com/olivia881/zoolivia/releases/tag/apk-ultimo) conterrà **`turni-servizio.apk`** (nome aggiornato rispetto alle build vecchie).
 
-> Se il repository è **privato**, devi essere loggata su GitHub con l’account che ha accesso al repo.
+Sul telefono apri il file e installa (potrebbe servire consentire installazioni da origini sconosciute).
 
-## APK solo per te (senza Play Store)
+> Repository **privato:** devi essere loggata su GitHub con l’account che ha accesso.
 
-### Debug (più veloce, firma di sviluppo)
+## APK in locale (senza GitHub)
 
-Dalla cartella `android`:
+Dopo `npm run build` e `npx cap sync android`, dalla cartella `android`:
 
 ```bash
 ./gradlew assembleDebug
 ```
 
-APK: `android/app/build/outputs/apk/debug/app-debug.apk` — copialo sul telefono (Drive, USB, ecc.) e aprilo per installare.
+APK: `android/app/build/outputs/apk/debug/app-debug.apk` — copialo sul telefono (Drive, USB, ecc.) e aprilo.
 
-### Release con la tua firma (consigliato se vuoi “come un’app vera”)
-
-Così Android non tratta l’app come “solo debug” e puoi aggiornarla in futuro con la **stessa** chiave.
+### Release con la tua firma (opzionale)
 
 1. Nella cartella `android`, crea un keystore (una volta):
 
    ```bash
-   keytool -genkey -v -keystore release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias promemoria_rifiuti
+   keytool -genkey -v -keystore release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias turni_servizio
    ```
 
-2. Copia `keystore.properties.example` in `keystore.properties` e compila i campi (password, alias, percorso del `.jks`). **Non** committare `keystore.properties` né il file `.jks`.
+2. Copia `keystore.properties.example` in `keystore.properties` e compila i campi. **Non** committare `keystore.properties` né il `.jks`.
 
-3. Build:
+3. `./gradlew assembleRelease` → `android/app/build/outputs/apk/release/app-release.apk`
 
-   ```bash
-   ./gradlew assembleRelease
-   ```
-
-APK: `android/app/build/outputs/apk/release/app-release.apk`
-
-Se **non** crei `keystore.properties`, `./gradlew assembleRelease` usa comunque la firma **debug** (va bene per uso strettamente personale sul tuo telefono).
-
-## Come su Google Play ma solo per te (installazione interna)
-
-Se vuoi il flusso “da Play Store” **senza** renderla pubblica:
-
-1. Crea un account [Google Play Console](https://play.google.com/console) (c’è una quota di registrazione).
-2. Crea un’app e carica un **Android App Bundle** (AAB):
-
-   ```bash
-   ./gradlew bundleRelease
-   ```
-
-   File: `android/app/build/outputs/bundle/release/app-release.aab`
-
-3. Usa **test interni** (internal testing): aggiungi solo il tuo indirizzo Gmail; solo tu (e chi aggiungi tu) potete installarla da Play, **non** compare nel catalogo pubblico.
+Senza `keystore.properties`, `assembleRelease` usa la firma **debug** (ok per uso personale).
 
 ## Sviluppo web sul PC
 
@@ -98,7 +75,11 @@ npm install
 npm run dev
 ```
 
+Poi apri `http://localhost:5173` (dal telefono sulla stessa rete: `http://IP_DEL_PC:5173` con `npm run dev -- --host 0.0.0.0`).
+
 ## Funzioni
 
-- Calendario rifiuti settimanale personalizzabile.
-- Notifiche promemoria sul telefono (permesso alla prima attivazione).
+- Calendario turni lun–ven con ciclo a 5 settimane e rientri pomeridiani a scalare.
+- Scelta fascia oraria anticipata / tardiva.
+- Lunedì di riferimento per allineare il ciclo.
+- Promemoria giornaliero (testo del turno per il giorno dopo).
