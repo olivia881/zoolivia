@@ -3,7 +3,7 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "it.promemoria.rifiuti",
+  appId: "it.turni.servizio",
   appName: "Turni di servizio",
   webDir: "dist",
   android: {
@@ -11,8 +11,8 @@ const config: CapacitorConfig = {
   },
   plugins: {
     LocalNotifications: {
-      smallIcon: "ic_stat_rifiuti",
-      iconColor: "#0d9488",
+      smallIcon: "ic_stat_turni",
+      iconColor: "#1e40af",
     },
   },
 };

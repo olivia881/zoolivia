@@ -1,52 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Cestino + simbolo riciclo (tema rifiuti), non documento/busta -->
+<!-- Calendario mensile + giorno in evidenza + lista (compilazione turni) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Area sicura ~66dp: contenuto centrato -->
-    <group
-        android:translateX="54"
-        android:translateY="56">
-        <!-- Ruote -->
+    <group android:translateX="54" android:translateY="54">
         <path
             android:fillColor="#FFFFFF"
-            android:pathData="M-19,22a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+            android:pathData="M-36,-38h72v80h-72z" />
         <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M13,22a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
-        <!-- Corpo cestino -->
+            android:fillColor="#BFDBFE"
+            android:pathData="M-36,-38h72v20h-72z" />
         <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M-18,-18h36l-2.5,38h-31L-18,-18z" />
-        <!-- Bordo superiore -->
+            android:fillColor="#1E40AF"
+            android:pathData="M-28,-32h7v7h-7z M-9,-32h7v7h-7z M10,-32h7v7h-7z" />
         <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M-22,-24h44v6h-44z" />
-        <!-- Coperchio -->
+            android:fillColor="#93C5FD"
+            android:pathData="M-32,-10h64v2h-64z M-32,4h64v2h-64z M-32,18h64v2h-64z M-32,32h64v2h-64z" />
         <path
-            android:fillColor="#B8F0EB"
-            android:pathData="M-20,-30h40v5h-40z" />
-        <!-- Maniglia -->
+            android:fillColor="#93C5FD"
+            android:pathData="M-21,-14h2v48h-2z M-3,-14h2v48h-2z M15,-14h2v48h-2z" />
         <path
-            android:fillColor="#B8F0EB"
-            android:pathData="M-12,-36h24v5h-24z" />
-        <!-- Tre frecce riciclo (triangoli 120°) -->
-        <group android:rotation="0" android:pivotX="0" android:pivotY="-2">
-            <path
-                android:fillColor="#0D4F48"
-                android:pathData="M-5,-8 L5,-8 L0,5 Z" />
-        </group>
-        <group android:rotation="120" android:pivotX="0" android:pivotY="-2">
-            <path
-                android:fillColor="#0D4F48"
-                android:pathData="M-5,-8 L5,-8 L0,5 Z" />
-        </group>
-        <group android:rotation="240" android:pivotX="0" android:pivotY="-2">
-            <path
-                android:fillColor="#0D4F48"
-                android:pathData="M-5,-8 L5,-8 L0,5 Z" />
-        </group>
+            android:fillColor="#2563EB"
+            android:pathData="M-6,2h18v16h-18z" />
+        <!-- Righe “lista” a destra (monitoraggio) -->
+        <path
+            android:fillColor="#1E3A8A"
+            android:pathData="M22,-8h18v3h-18z M22,-2h14v3h-14z M22,4h16v3h-16z M22,10h12v3h-12z" />
     </group>
 </vector>

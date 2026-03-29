@@ -2,7 +2,7 @@
 
 App **solo per uso personale** sul telefono: **calendario mensile** (tutti i giorni); per ogni data puoi annotare mattina, rientro pomeridiano, straordinario, servizi esterni/fuori sede, congedi (C.O., C.S. malattia/famiglia, PNL, C.P.), buono pasto, corsi e note. Il turno **a scalare** (lun–ven, ciclo 5 settimane) resta come **suggerimento** con pulsante «Inserisci fasce previste». In fondo al mese: **conteggi** (ore da fasce, straordinario, servizi, giorni per tipo di assenza, buoni pasto). Fasce predefinite **8–14 / 14:30–17:30** o **9–15 / 15:30–18:30**, promemoria opzionale (usa le tue annotazioni se presenti per il giorno dopo).
 
-L’**applicationId** Android è ancora `it.promemoria.rifiuti` (stesso pacchetto del progetto precedente): se avevi installato la vecchia app, questa **la aggiorna** al posto di crearne un’altra affiancata.
+L’**applicationId** Android è **`it.turni.servizio`**: è un’**app distinta** da «Promemoria rifiuti» (`it.promemoria.rifiuti`); puoi tenere entrambe installate. Icona: calendario + evidenziazione giorno (tema turni).
 
 ## Installazione sul telefono (consigliato: Android Studio)
 

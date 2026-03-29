@@ -1,4 +1,4 @@
-package it.promemoria.rifiuti;
+package it.turni.servizio;
 
 import com.getcapacitor.BridgeActivity;
 
