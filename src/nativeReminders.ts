@@ -6,7 +6,8 @@ import {
 } from "@capacitor/local-notifications";
 import {
   ALT_NOTIFICATION_IDS,
-  buildAlternateOneShotSlots,
+  alternateWeekdaySet,
+  buildAllAlternateOneShotSlots,
   type AppSettings,
   resolveDayNote,
   type WeekdayIndex,
@@ -14,7 +15,6 @@ import {
 import { mondayFirstIndex } from "./weekdays";
 
 const CHANNEL_ID = "promemoria-rifiuti";
-/** ID fissi per lunedì–domenica (Android: int a 32 bit). */
 const WEEKLY_IDS = [100, 101, 102, 103, 104, 105, 106] as const;
 
 const WEEKDAY_LABELS = [
@@ -46,11 +46,8 @@ function sampleDateForWeekday(weekday: WeekdayIndex): Date {
   return d;
 }
 
-function alternateWeeklyHandled(settings: AppSettings): boolean {
-  const a = settings.alternate;
-  if (!a.enabled || !a.referenceDate.trim()) return false;
-  const anchor = a.referenceDate;
-  return /^(\d{4})-(\d{2})-(\d{2})$/.test(anchor.trim());
+function hasValidAlternateSlots(settings: AppSettings): boolean {
+  return alternateWeekdaySet(settings).size > 0;
 }
 
 export function isNativeApp(): boolean {
@@ -103,17 +100,14 @@ export async function syncNativeWeeklyReminders(options: {
   if (perm.display !== "granted") return;
 
   const now = new Date();
-  const useAlternateSlots =
-    alternateWeeklyHandled(options.settings) &&
-    options.settings.alternate.enabled;
+  const altDays = alternateWeekdaySet(options.settings);
+  const useAlternateSlots = hasValidAlternateSlots(options.settings);
 
   const notifications: LocalNotificationSchema[] = [];
 
   for (let i = 0; i < 7; i++) {
     const idx = i as WeekdayIndex;
-    if (useAlternateSlots && idx === options.settings.alternate.weekday) {
-      continue;
-    }
+    if (useAlternateSlots && altDays.has(idx)) continue;
     const sample = sampleDateForWeekday(idx);
     const body = resolveDayNote(sample, options.baseSchedule, options.settings);
     notifications.push({
@@ -133,7 +127,7 @@ export async function syncNativeWeeklyReminders(options: {
   }
 
   if (useAlternateSlots) {
-    const slots = buildAlternateOneShotSlots(
+    const slots = buildAllAlternateOneShotSlots(
       now,
       options.hour,
       options.minute,
@@ -141,10 +135,12 @@ export async function syncNativeWeeklyReminders(options: {
       options.settings
     );
     for (const s of slots) {
+      const d = s.at;
+      const widx = mondayFirstIndex(d);
       notifications.push({
         id: s.id,
         title: "Rifiuti — promemoria",
-        body: `${WEEKDAY_LABELS[options.settings.alternate.weekday]}: ${s.body}`,
+        body: `${WEEKDAY_LABELS[widx]}: ${s.body}`,
         channelId: CHANNEL_ID,
         schedule: { at: s.at },
       });
