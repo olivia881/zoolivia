@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Turni di Servizio</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="page-header">
+        <h1>Turni di Servizio</h1>
+        <p class="subtitle">
+          Gestisci i turni giornalieri, visualizza i prossimi impegni ed esporta il
+          piano in JSON.
+        </p>
+      </header>
+
+      <section class="card">
+        <h2>Nuovo turno</h2>
+        <form id="shiftForm" class="grid-form">
+          <label>
+            Data
+            <input type="date" id="date" required />
+          </label>
+          <label>
+            Ora inizio
+            <input type="time" id="startTime" required />
+          </label>
+          <label>
+            Ora fine
+            <input type="time" id="endTime" required />
+          </label>
+          <label>
+            Persona
+            <input type="text" id="person" placeholder="Es. Mario Rossi" required />
+          </label>
+          <label>
+            Servizio
+            <input
+              type="text"
+              id="service"
+              placeholder="Es. Sala, Reperibilità, Apertura"
+              required
+            />
+          </label>
+          <label>
+            Luogo
+            <input type="text" id="location" placeholder="Es. Sede Centrale" />
+          </label>
+          <label class="full-width">
+            Note
+            <textarea id="notes" rows="2" placeholder="Informazioni aggiuntive"></textarea>
+          </label>
+          <label class="inline-label full-width">
+            <input type="checkbox" id="repeatWeekly" />
+            Ripeti ogni settimana
+          </label>
+          <label id="repeatCountWrapper" class="hidden">
+            Numero ripetizioni
+            <input
+              type="number"
+              id="repeatCount"
+              min="1"
+              max="52"
+              value="4"
+              aria-label="Numero di settimane da ripetere"
+            />
+          </label>
+          <div class="full-width actions">
+            <button type="submit">Aggiungi turno</button>
+          </div>
+        </form>
+        <p id="formMessage" class="form-message" aria-live="polite"></p>
+      </section>
+
+      <section class="card stats">
+        <h2>Panoramica</h2>
+        <div class="stats-grid">
+          <article>
+            <h3>Oggi</h3>
+            <p id="todayCount">0 turni</p>
+          </article>
+          <article>
+            <h3>Domani</h3>
+            <p id="tomorrowCount">0 turni</p>
+          </article>
+          <article>
+            <h3>Prossimi 7 giorni</h3>
+            <p id="nextWeekCount">0 turni</p>
+          </article>
+          <article>
+            <h3>Prossimo turno</h3>
+            <p id="nextShift">Nessun turno programmato</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Filtri</h2>
+        <div class="filters">
+          <label>
+            Cerca
+            <input
+              type="search"
+              id="searchInput"
+              placeholder="Persona, servizio, luogo o note"
+            />
+          </label>
+          <label>
+            Persona
+            <select id="personFilter">
+              <option value="">Tutte</option>
+            </select>
+          </label>
+          <label>
+            Servizio
+            <select id="serviceFilter">
+              <option value="">Tutti</option>
+            </select>
+          </label>
+          <label>
+            Da data
+            <input type="date" id="fromDate" />
+          </label>
+          <label>
+            A data
+            <input type="date" id="toDate" />
+          </label>
+          <button type="button" id="resetFilters" class="secondary">Reset filtri</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <h2>Elenco turni</h2>
+          <div class="tools">
+            <button type="button" id="exportBtn" class="secondary">Esporta JSON</button>
+            <label class="import-label secondary">
+              Importa JSON
+              <input type="file" id="importFile" accept="application/json" />
+            </label>
+            <button type="button" id="clearAllBtn" class="danger">Cancella tutto</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Orario</th>
+                <th>Persona</th>
+                <th>Servizio</th>
+                <th>Luogo</th>
+                <th>Note</th>
+                <th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="shiftTableBody"></tbody>
+          </table>
+          <p id="emptyState" class="empty-state">Nessun turno inserito.</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
