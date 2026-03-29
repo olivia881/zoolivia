@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { resolveDayNote, type AppSettings, type WeekdayIndex } from "./scheduleLogic";
 import { glyphsFromScheduleLine } from "./wasteIcons";
 const MONTH_NAMES = [
@@ -94,6 +94,22 @@ export function CalendarMonthView({
   today,
   onOpenSettings,
 }: Props) {
+  const [detailDate, setDetailDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (!detailDate) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDetailDate(null);
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [detailDate]);
+
   const cells = useMemo(() => {
     const dim = daysInMonth(year, month);
     const pad = mondayOffsetFirstOfMonth(year, month);
@@ -112,6 +128,20 @@ export function CalendarMonthView({
   }, [year, month]);
 
   const title = `${MONTH_NAMES[month].toUpperCase()} ${year}`;
+
+  const detailTitle = detailDate
+    ? new Intl.DateTimeFormat("it-IT", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(detailDate)
+    : "";
+
+  const detailNote = detailDate
+    ? resolveDayNote(detailDate, schedule, settings)
+    : "";
+  const detailGlyphs = detailNote ? glyphsFromScheduleLine(detailNote) : [];
 
   return (
     <div>
@@ -263,8 +293,11 @@ export function CalendarMonthView({
           const glyphs = glyphsFromScheduleLine(line);
 
           return (
-            <div
+            <button
               key={key}
+              type="button"
+              onClick={() => setDetailDate(date)}
+              aria-label={`Dettaglio ${date.getDate()} ${MONTH_NAMES[month]} ${year}`}
               style={{
                 minHeight: "4.5rem",
                 border: `1px solid ${isToday ? "var(--accent)" : "var(--border)"}`,
@@ -275,6 +308,11 @@ export function CalendarMonthView({
                 flexDirection: "column",
                 alignItems: "center",
                 gap: "2px",
+                cursor: "pointer",
+                font: "inherit",
+                color: "inherit",
+                width: "100%",
+                boxSizing: "border-box",
               }}
             >
               <span
@@ -298,7 +336,7 @@ export function CalendarMonthView({
                   <WasteIcon key={`${g.letter}-${i}`} g={g} />
                 ))}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -311,10 +349,128 @@ export function CalendarMonthView({
           lineHeight: 1.4,
         }}
       >
-        Le icone (U, C, M, V, I) dipendono dai testi che imposti: usa parole come
-        umido, carta, plastica, vetro, indifferenziata. Apri le impostazioni per
-        modificare il calendario.
+        Tocca un giorno per il dettaglio del ritiro. Le icone (U, C, M, V, I)
+        dipendono dai testi nelle impostazioni.
       </p>
+
+      {detailDate && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="day-detail-title"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            padding: "1rem",
+            background: "rgb(0 0 0 / 0.45)",
+          }}
+          onClick={() => setDetailDate(null)}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "24rem",
+              maxHeight: "85dvh",
+              overflow: "auto",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: "16px",
+              padding: "1.15rem 1.2rem",
+              marginBottom: "env(safe-area-inset-bottom, 0)",
+              boxShadow: "0 8px 32px rgb(0 0 0 / 0.2)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: "0.75rem",
+                marginBottom: "0.85rem",
+              }}
+            >
+              <h2
+                id="day-detail-title"
+                style={{
+                  margin: 0,
+                  fontSize: "1.05rem",
+                  fontWeight: 700,
+                  lineHeight: 1.3,
+                  textTransform: "capitalize",
+                }}
+              >
+                {detailTitle}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setDetailDate(null)}
+                aria-label="Chiudi"
+                style={{
+                  flexShrink: 0,
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "10px",
+                  border: "1px solid var(--border)",
+                  background: "var(--bg)",
+                  cursor: "pointer",
+                  fontSize: "1.25rem",
+                  lineHeight: 1,
+                  color: "var(--text)",
+                }}
+              >
+                ×
+              </button>
+            </div>
+            {detailGlyphs.length > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "6px",
+                  marginBottom: "0.85rem",
+                }}
+              >
+                {detailGlyphs.map((g, i) => (
+                  <WasteIcon key={`d-${g.letter}-${i}`} g={g} />
+                ))}
+              </div>
+            )}
+            <p
+              style={{
+                margin: 0,
+                fontSize: "1rem",
+                lineHeight: 1.45,
+                color: "var(--text)",
+              }}
+            >
+              {detailNote || "Nessun ritiro indicato per questo giorno."}
+            </p>
+            <button
+              type="button"
+              onClick={() => setDetailDate(null)}
+              style={{
+                marginTop: "1.1rem",
+                width: "100%",
+                padding: "0.65rem",
+                borderRadius: "12px",
+                border: "none",
+                background: "var(--accent)",
+                color: "#fff",
+                font: "inherit",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Chiudi
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
