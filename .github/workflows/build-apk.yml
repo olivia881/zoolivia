@@ -1,0 +1,76 @@
+name: Build APK
+
+# APK scaricabile da GitHub: dopo il run verde, vai su Release "Ultimo APK"
+# oppure Azioni → questo workflow → Artifacts.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Dipendenze web e sync Capacitor
+        run: |
+          npm ci
+          npm run build
+          npx cap sync android
+
+      - name: Compila APK debug
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+
+      - name: Rinomina APK per il download
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk promemoria-rifiuti.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: promemoria-rifiuti-apk
+          path: promemoria-rifiuti.apk
+
+      # Stesso tag = stesso URL di release; eliminiamo tag/release vecchi e li ricreiamo su questo commit.
+      - name: Rimuovi release/tag apk-ultimo precedenti
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete apk-ultimo --yes 2>/dev/null || true
+          gh api --method DELETE "repos/${{ github.repository }}/git/refs/tags/apk-ultimo" 2>/dev/null || true
+
+      - name: Pubblica release "Ultimo APK"
+        uses: ncipollo/release-action@v1
+        with:
+          tag: apk-ultimo
+          name: Ultimo APK — Promemoria rifiuti
+          body: |
+            APK debug generato automaticamente da GitHub Actions (commit `${{ github.sha }}`).
+
+            **Installazione:** scarica **promemoria-rifiuti.apk**, aprilo sul telefono e consenti l’installazione da origini sconosciute se richiesto.
+
+            Per aggiornare: torna su questa pagina dopo un nuovo build verde in **Actions** e scarica di nuovo l’APK.
+          artifacts: promemoria-rifiuti.apk
+          token: ${{ secrets.GITHUB_TOKEN }}

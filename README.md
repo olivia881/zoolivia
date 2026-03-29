@@ -20,6 +20,18 @@ Serve un PC con **Android Studio** (almeno la prima volta).
 
 I dati restano sul telefono (nessun account obbligatorio). Il repo su GitHub può essere **privato**.
 
+## Scaricare l’APK da GitHub (come per busta badante)
+
+A ogni push su **`main`** (e se lanci il workflow a mano) GitHub Actions compila un **APK debug** e lo mette a disposizione.
+
+1. Vai al repo **zoolivia** su GitHub.
+2. **Releases** (barra laterale o `https://github.com/olivia881/zoolivia/releases`) → release **Ultimo APK — Promemoria rifiuti** → scarica **`promemoria-rifiuti.apk`**.
+3. Sul telefono apri il file e installa (potrebbe servire consentire installazioni da origini sconosciute).
+
+In alternativa: tab **Actions** → workflow **Build APK** → ultimo run con segno verde → in basso **Artifacts** → scarica **promemoria-rifiuti-apk** (zip con l’APK dentro).
+
+> Se il repository è **privato**, devi essere loggata su GitHub con l’account che ha accesso al repo.
+
 ## APK solo per te (senza Play Store)
 
 ### Debug (più veloce, firma di sviluppo)
