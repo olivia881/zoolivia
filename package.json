@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:pages": "tsc --noEmit && VITE_GITHUB_PAGES=1 vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "cap:sync": "npm run build && npx cap sync android",
