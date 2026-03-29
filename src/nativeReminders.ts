@@ -1,54 +1,21 @@
 import { Capacitor } from "@capacitor/core";
 import {
   LocalNotifications,
-  Weekday,
   type LocalNotificationSchema,
 } from "@capacitor/local-notifications";
+import type { AppSettings, WeekdayIndex } from "./scheduleLogic";
 import {
-  ALT_NOTIFICATION_IDS,
-  alternateWeekdaySet,
-  buildAllAlternateOneShotSlots,
-  type AppSettings,
-  resolveDayNote,
-  type WeekdayIndex,
-} from "./scheduleLogic";
-import { mondayFirstIndex } from "./weekdays";
+  buildDailyReminderSlots,
+  DAILY_REMINDER_IDS,
+} from "./voiceReminder";
 
 const CHANNEL_ID = "promemoria-rifiuti";
-const WEEKLY_IDS = [100, 101, 102, 103, 104, 105, 106] as const;
 
-const WEEKDAY_LABELS = [
-  "Lunedì",
-  "Martedì",
-  "Mercoledì",
-  "Giovedì",
-  "Venerdì",
-  "Sabato",
-  "Domenica",
-] as const;
-
-const JS_MONDAY_FIRST_TO_CAPACITOR: Weekday[] = [
-  Weekday.Monday,
-  Weekday.Tuesday,
-  Weekday.Wednesday,
-  Weekday.Thursday,
-  Weekday.Friday,
-  Weekday.Saturday,
-  Weekday.Sunday,
+/** Vecchi ID (settimanali + slot alternanza) da annullare dopo aggiornamento app */
+const LEGACY_NOTIFICATION_IDS = [
+  ...Array.from({ length: 7 }, (_, i) => 100 + i),
+  ...Array.from({ length: 90 }, (_, i) => 200 + i),
 ];
-
-function sampleDateForWeekday(weekday: WeekdayIndex): Date {
-  const d = new Date();
-  const idx = mondayFirstIndex(d);
-  const add = (weekday - idx + 7) % 7;
-  d.setDate(d.getDate() + add);
-  d.setHours(12, 0, 0, 0);
-  return d;
-}
-
-function hasValidAlternateSlots(settings: AppSettings): boolean {
-  return alternateWeekdaySet(settings).size > 0;
-}
 
 export function isNativeApp(): boolean {
   return Capacitor.isNativePlatform();
@@ -62,7 +29,7 @@ async function ensureAndroidChannel(): Promise<void> {
   await LocalNotifications.createChannel({
     id: CHANNEL_ID,
     name: "Promemoria rifiuti",
-    description: "Promemoria giornaliero sulla raccolta rifiuti",
+    description: "Promemoria vocale e testuale sulla raccolta rifiuti",
     importance: 4,
     vibration: true,
   });
@@ -78,8 +45,13 @@ export async function requestNativeNotificationPermission(): Promise<boolean> {
   return req.display === "granted";
 }
 
+/**
+ * Un promemoria al giorno all'orario scelto: testo = cosa esce domani.
+ * Se voiceEnabled, extra.voiceText viene letto all'arrivo della notifica (app in foreground).
+ */
 export async function syncNativeWeeklyReminders(options: {
   enabled: boolean;
+  voiceEnabled: boolean;
   hour: number;
   minute: number;
   baseSchedule: Record<WeekdayIndex, string>;
@@ -88,11 +60,10 @@ export async function syncNativeWeeklyReminders(options: {
   if (!isNativeApp()) return;
   await ensureAndroidChannel();
 
-  const toCancel = [
-    ...WEEKLY_IDS.map((id) => ({ id })),
-    ...ALT_NOTIFICATION_IDS.map((id) => ({ id })),
-  ];
-  await LocalNotifications.cancel({ notifications: toCancel });
+  const allIds = [...LEGACY_NOTIFICATION_IDS, ...DAILY_REMINDER_IDS];
+  await LocalNotifications.cancel({
+    notifications: allIds.map((id) => ({ id })),
+  });
 
   if (!options.enabled) return;
 
@@ -100,52 +71,25 @@ export async function syncNativeWeeklyReminders(options: {
   if (perm.display !== "granted") return;
 
   const now = new Date();
-  const altDays = alternateWeekdaySet(options.settings);
-  const useAlternateSlots = hasValidAlternateSlots(options.settings);
+  const slots = buildDailyReminderSlots(
+    now,
+    options.hour,
+    options.minute,
+    options.baseSchedule,
+    options.settings
+  );
 
-  const notifications: LocalNotificationSchema[] = [];
-
-  for (let i = 0; i < 7; i++) {
-    const idx = i as WeekdayIndex;
-    if (useAlternateSlots && altDays.has(idx)) continue;
-    const sample = sampleDateForWeekday(idx);
-    const body = resolveDayNote(sample, options.baseSchedule, options.settings);
-    notifications.push({
-      id: WEEKLY_IDS[i],
-      title: "Rifiuti — promemoria",
-      body: `${WEEKDAY_LABELS[i]}: ${body}`,
-      channelId: CHANNEL_ID,
-      schedule: {
-        on: {
-          weekday: JS_MONDAY_FIRST_TO_CAPACITOR[i],
-          hour: options.hour,
-          minute: options.minute,
-        },
-        repeats: true,
-      },
-    });
-  }
-
-  if (useAlternateSlots) {
-    const slots = buildAllAlternateOneShotSlots(
-      now,
-      options.hour,
-      options.minute,
-      options.baseSchedule,
-      options.settings
-    );
-    for (const s of slots) {
-      const d = s.at;
-      const widx = mondayFirstIndex(d);
-      notifications.push({
-        id: s.id,
-        title: "Rifiuti — promemoria",
-        body: `${WEEKDAY_LABELS[widx]}: ${s.body}`,
-        channelId: CHANNEL_ID,
-        schedule: { at: s.at },
-      });
-    }
-  }
+  const notifications: LocalNotificationSchema[] = slots.map((s) => ({
+    id: s.id,
+    title: s.title,
+    body: s.body,
+    channelId: CHANNEL_ID,
+    schedule: { at: s.at },
+    extra: {
+      voiceText: s.voiceText,
+      voiceEnabled: options.voiceEnabled,
+    },
+  }));
 
   if (notifications.length > 0) {
     await LocalNotifications.schedule({ notifications });

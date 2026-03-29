@@ -5,14 +5,13 @@ import {
   requestNativeNotificationPermission,
   syncNativeWeeklyReminders,
 } from "./nativeReminders";
-import {
-  loadSettings,
-  resolveDayNote,
-  saveSettings,
-  type WeekdayIndex,
-} from "./scheduleLogic";
-import { WEEKDAYS } from "./weekdays";
+import { loadSettings, saveSettings, type WeekdayIndex } from "./scheduleLogic";
 import { SettingsView } from "./SettingsView";
+import {
+  buildTomorrowReminderCopy,
+  type ReminderState,
+  speakReminderText,
+} from "./voiceReminder";
 
 const STORAGE_KEY = "promemoria-rifiuti-schedule-v1";
 const REMINDER_KEY = "promemoria-rifiuti-reminder-v1";
@@ -44,24 +43,27 @@ function loadSchedule(): Record<WeekdayIndex, string> {
   }
 }
 
-function loadReminder(): { enabled: boolean; hour: number; minute: number } {
+function loadReminder(): ReminderState {
   try {
     const raw = localStorage.getItem(REMINDER_KEY);
-    if (!raw) return { enabled: false, hour: 7, minute: 30 };
+    if (!raw)
+      return { enabled: false, voiceEnabled: true, hour: 20, minute: 0 };
     const p = JSON.parse(raw) as {
       enabled?: boolean;
+      voiceEnabled?: boolean;
       hour?: number;
       minute?: number;
     };
     return {
       enabled: Boolean(p.enabled),
-      hour: Number.isFinite(p.hour) ? Math.min(23, Math.max(0, p.hour!)) : 7,
+      voiceEnabled: p.voiceEnabled !== false,
+      hour: Number.isFinite(p.hour) ? Math.min(23, Math.max(0, p.hour!)) : 20,
       minute: Number.isFinite(p.minute)
         ? Math.min(59, Math.max(0, p.minute!))
-        : 30,
+        : 0,
     };
   } catch {
-    return { enabled: false, hour: 7, minute: 30 };
+    return { enabled: false, voiceEnabled: true, hour: 20, minute: 0 };
   }
 }
 
@@ -102,18 +104,29 @@ export default function App() {
   scheduleRef.current = schedule;
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+  const reminderRef = useRef(reminder);
+  reminderRef.current = reminder;
 
   useEffect(() => {
     if (isNative) {
       void syncNativeWeeklyReminders({
         enabled: reminder.enabled,
+        voiceEnabled: reminder.voiceEnabled,
         hour: reminder.hour,
         minute: reminder.minute,
         baseSchedule: schedule,
         settings,
       });
     }
-  }, [isNative, reminder.enabled, reminder.hour, reminder.minute, schedule, settings]);
+  }, [
+    isNative,
+    reminder.enabled,
+    reminder.voiceEnabled,
+    reminder.hour,
+    reminder.minute,
+    schedule,
+    settings,
+  ]);
 
   useEffect(() => {
     if (isNative) return;
@@ -134,20 +147,19 @@ export default function App() {
       const delay = msUntilNextFire(new Date());
       timeoutId = window.setTimeout(() => {
         if (cancelled) return;
-        const d = new Date();
-        const idx = (d.getDay() === 0 ? 6 : d.getDay() - 1) as WeekdayIndex;
-        const note = resolveDayNote(
-          d,
+        const fireAt = new Date();
+        const { title, body, voiceText } = buildTomorrowReminderCopy(
+          fireAt,
           scheduleRef.current,
           settingsRef.current
         );
         try {
-          new Notification("Rifiuti di oggi", {
-            body: `${WEEKDAYS[idx]}: ${note}`,
-            lang: "it",
-          });
+          new Notification(title, { body, lang: "it" });
         } catch {
           /* ignore */
+        }
+        if (reminderRef.current.voiceEnabled) {
+          void speakReminderText(voiceText);
         }
         arm();
       }, delay);
@@ -158,7 +170,14 @@ export default function App() {
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [isNative, reminder.enabled, reminder.hour, reminder.minute, notifSupportedWeb]);
+  }, [
+    isNative,
+    reminder.enabled,
+    reminder.hour,
+    reminder.minute,
+    reminder.voiceEnabled,
+    notifSupportedWeb,
+  ]);
 
   async function enableWebNotifications() {
     if (!notifSupportedWeb) return;

@@ -1,4 +1,5 @@
 import { type CSSProperties, type Dispatch, type SetStateAction } from "react";
+import type { ReminderState } from "./voiceReminder";
 import {
   emptyAlternate,
   type AlternateWeekConfig,
@@ -12,10 +13,8 @@ type Props = {
   setSettings: Dispatch<SetStateAction<AppSettings>>;
   schedule: Record<WeekdayIndex, string>;
   setSchedule: Dispatch<SetStateAction<Record<WeekdayIndex, string>>>;
-  reminder: { enabled: boolean; hour: number; minute: number };
-  setReminder: Dispatch<
-    SetStateAction<{ enabled: boolean; hour: number; minute: number }>
-  >;
+  reminder: ReminderState;
+  setReminder: Dispatch<SetStateAction<ReminderState>>;
   isNative: boolean;
   notifSupportedWeb: boolean;
   onReminderToggle: (on: boolean) => void;
@@ -332,9 +331,10 @@ export function SettingsView({
           {isNative ? "Promemoria (Android)" : "Promemoria (browser)"}
         </h2>
         <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "var(--muted)" }}>
-          {isNative
-            ? "Per i giorni con alternanza le notifiche sono programmate per mesi; riapri l’app dopo aver cambiato il calendario."
-            : "La notifica web dipende dal browser."}
+          All’orario scelto ricevi un promemoria su <strong>cosa esce domani</strong> (non
+          oggi). Testo di esempio: «Domani (martedì): carta». Con la voce attiva il
+          telefono legge anche l’ora e il messaggio (meglio se l’app è aperta o in
+          secondo piano; in background dipende da Android).
         </p>
         <div
           style={{
@@ -381,6 +381,25 @@ export function SettingsView({
             }}
           />
         </div>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.45rem",
+            cursor: "pointer",
+            fontSize: "0.95rem",
+            marginTop: "0.75rem",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={reminder.voiceEnabled}
+            onChange={(e) =>
+              setReminder((r) => ({ ...r, voiceEnabled: e.target.checked }))
+            }
+          />
+          Leggi il messaggio ad alta voce (sintesi vocale)
+        </label>
         {!isNative &&
           notifSupportedWeb &&
           Notification.permission === "denied" && (
