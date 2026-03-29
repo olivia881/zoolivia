@@ -3,13 +3,13 @@ import {
   LocalNotifications,
   type LocalNotificationSchema,
 } from "@capacitor/local-notifications";
-import type { AppSettings, WeekdayIndex } from "./scheduleLogic";
+import type { ShiftAppSettings } from "./shiftScheduleLogic";
 import {
-  buildDailyReminderSlots,
+  buildDailyShiftReminderSlots,
   DAILY_REMINDER_IDS,
-} from "./voiceReminder";
+} from "./shiftVoiceReminder";
 
-const CHANNEL_ID = "promemoria-rifiuti";
+const CHANNEL_ID = "turni-servizio";
 
 /** Max notifiche per chiamata schedule (Android può fallire con array troppo grandi). */
 const SCHEDULE_CHUNK = 12;
@@ -30,8 +30,8 @@ async function ensureAndroidChannel(): Promise<void> {
   if (channelReady) return;
   await LocalNotifications.createChannel({
     id: CHANNEL_ID,
-    name: "Promemoria rifiuti",
-    description: "Promemoria sulla raccolta rifiuti",
+    name: "Turni di servizio",
+    description: "Promemoria sui turni di servizio",
     importance: 4,
     vibration: true,
   });
@@ -60,13 +60,12 @@ async function scheduleNotificationsChunked(
  * Un promemoria al giorno: notifica con testo per il giorno dopo.
  * La voce (se attiva) parte dall'evento localNotificationReceived quando l'app è in esecuzione.
  */
-export async function syncNativeWeeklyReminders(options: {
+export async function syncNativeShiftReminders(options: {
   enabled: boolean;
   voiceEnabled: boolean;
   hour: number;
   minute: number;
-  baseSchedule: Record<WeekdayIndex, string>;
-  settings: AppSettings;
+  shiftSettings: ShiftAppSettings;
 }): Promise<void> {
   if (!isNativeApp()) return;
   await ensureAndroidChannel();
@@ -82,12 +81,11 @@ export async function syncNativeWeeklyReminders(options: {
   if (perm.display !== "granted") return;
 
   const now = new Date();
-  const slots = buildDailyReminderSlots(
+  const slots = buildDailyShiftReminderSlots(
     now,
     options.hour,
     options.minute,
-    options.baseSchedule,
-    options.settings
+    options.shiftSettings
   );
 
   const notifications: LocalNotificationSchema[] = slots.map((s) => ({

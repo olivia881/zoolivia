@@ -1,7 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import type { LocalNotificationSchema } from "@capacitor/local-notifications";
-import { speakReminderText } from "./voiceReminder";
+import { speakReminderText } from "./shiftVoiceReminder";
 
 /** Legge il messaggio quando la notifica arriva e l'app è in esecuzione (foreground / processo attivo). */
 export function registerNotificationVoiceListener(): void {

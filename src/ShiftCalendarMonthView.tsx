@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { resolveDayNote, type AppSettings, type WeekdayIndex } from "./scheduleLogic";
-import { glyphsFromScheduleLine } from "./wasteIcons";
+import {
+  resolveDayShift,
+  type ShiftAppSettings,
+} from "./shiftScheduleLogic";
+import { shiftCellSummary } from "./shiftVoiceReminder";
+import { WEEKDAYS } from "./weekdays";
+
 const MONTH_NAMES = [
   "Gennaio",
   "Febbraio",
@@ -18,6 +23,14 @@ const MONTH_NAMES = [
 
 const WEEKDAY_SHORT = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 
+const CYCLE_LABELS = [
+  "Lun↔Mer · Mar↔Gio",
+  "Mer↔Ven",
+  "Lun↔Gio",
+  "Mar↔Ven",
+  "Mar↔Ven",
+];
+
 type Props = {
   year: number;
   month: number;
@@ -25,8 +38,7 @@ type Props = {
   onNextMonth: () => void;
   onPrevYear: () => void;
   onNextYear: () => void;
-  schedule: Record<WeekdayIndex, string>;
-  settings: AppSettings;
+  shiftSettings: ShiftAppSettings;
   today: Date;
   onOpenSettings: () => void;
 };
@@ -35,62 +47,20 @@ function daysInMonth(y: number, m: number): number {
   return new Date(y, m + 1, 0).getDate();
 }
 
-/** Lunedì = 0 … domenica = 6 per il primo giorno del mese */
 function mondayOffsetFirstOfMonth(y: number, m: number): number {
   const d = new Date(y, m, 1);
   const js = d.getDay();
-  const monFirst = js === 0 ? 6 : js - 1;
-  return monFirst;
+  return js === 0 ? 6 : js - 1;
 }
 
-function WasteIcon({ g }: { g: { letter: string; shape: string; color: string } }) {
-  const size = 18;
-  const fs = 10;
-  if (g.shape === "circle") {
-    return (
-      <svg width={size} height={size} viewBox="0 0 18 18" aria-hidden>
-        <circle cx="9" cy="9" r="8" fill={g.color} />
-        <text
-          x="9"
-          y="12"
-          textAnchor="middle"
-          fill="#fff"
-          fontSize={fs}
-          fontWeight="700"
-          fontFamily="system-ui, sans-serif"
-        >
-          {g.letter}
-        </text>
-      </svg>
-    );
-  }
-  return (
-    <svg width={size} height={size} viewBox="0 0 18 18" aria-hidden>
-      <path d="M9 1 L17 9 L9 17 L1 9 Z" fill={g.color} />
-      <text
-        x="9"
-        y="12"
-        textAnchor="middle"
-        fill="#fff"
-        fontSize={fs}
-        fontWeight="700"
-        fontFamily="system-ui, sans-serif"
-      >
-        {g.letter}
-      </text>
-    </svg>
-  );
-}
-
-export function CalendarMonthView({
+export function ShiftCalendarMonthView({
   year,
   month,
   onPrevMonth,
   onNextMonth,
   onPrevYear,
   onNextYear,
-  schedule,
-  settings,
+  shiftSettings,
   today,
   onOpenSettings,
 }: Props) {
@@ -138,10 +108,9 @@ export function CalendarMonthView({
       }).format(detailDate)
     : "";
 
-  const detailNote = detailDate
-    ? resolveDayNote(detailDate, schedule, settings)
-    : "";
-  const detailGlyphs = detailNote ? glyphsFromScheduleLine(detailNote) : [];
+  const detailShift = detailDate
+    ? resolveDayShift(detailDate, shiftSettings)
+    : null;
 
   return (
     <div>
@@ -163,12 +132,10 @@ export function CalendarMonthView({
               letterSpacing: "-0.02em",
             }}
           >
-            Promemoria rifiuti
+            Turni di servizio
           </h1>
           <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem" }}>
-            {settings.municipality.trim()
-              ? `Comune di ${settings.municipality.trim()}`
-              : "Tocca l’ingranaggio per impostare il comune"}
+            Ciclo a scalare (5 settimane) · lun–ven
           </p>
         </div>
         <button
@@ -194,7 +161,7 @@ export function CalendarMonthView({
 
       <div
         style={{
-          background: "linear-gradient(135deg, #b91c1c 0%, #1e40af 100%)",
+          background: "linear-gradient(135deg, #0f766e 0%, #1e3a8a 100%)",
           borderRadius: "12px",
           padding: "0.65rem 0.5rem",
           marginBottom: "0.5rem",
@@ -289,8 +256,8 @@ export function CalendarMonthView({
             date.getMonth() === today.getMonth() &&
             date.getFullYear() === today.getFullYear();
           const isSunday = date.getDay() === 0;
-          const line = resolveDayNote(date, schedule, settings);
-          const glyphs = glyphsFromScheduleLine(line);
+          const shift = resolveDayShift(date, shiftSettings);
+          const summary = shiftCellSummary(date, shiftSettings);
 
           return (
             <button
@@ -307,7 +274,8 @@ export function CalendarMonthView({
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: "2px",
+                justifyContent: "flex-start",
+                gap: "3px",
                 cursor: "pointer",
                 font: "inherit",
                 color: "inherit",
@@ -324,18 +292,29 @@ export function CalendarMonthView({
               >
                 {date.getDate()}
               </span>
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  justifyContent: "center",
-                  gap: "2px",
-                }}
-              >
-                {glyphs.map((g, i) => (
-                  <WasteIcon key={`${g.letter}-${i}`} g={g} />
-                ))}
-              </div>
+              {shift ? (
+                <span
+                  style={{
+                    fontSize: "0.62rem",
+                    lineHeight: 1.25,
+                    color: "var(--muted)",
+                    textAlign: "center",
+                    fontWeight: 600,
+                  }}
+                >
+                  {summary}
+                </span>
+              ) : (
+                <span
+                  style={{
+                    fontSize: "0.62rem",
+                    color: "var(--muted)",
+                    opacity: 0.6,
+                  }}
+                >
+                  —
+                </span>
+              )}
             </button>
           );
         })}
@@ -349,15 +328,15 @@ export function CalendarMonthView({
           lineHeight: 1.4,
         }}
       >
-        Tocca un giorno per il dettaglio del ritiro. Le icone (U, C, M, V, I)
-        dipendono dai testi nelle impostazioni.
+        Tocca un giorno per mattina, rientro pomeridiano e fascia oraria. In
+        impostazioni puoi allineare il ciclo al tuo lunedì di partenza.
       </p>
 
       {detailDate && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-labelledby="day-detail-title"
+          aria-labelledby="shift-detail-title"
           style={{
             position: "fixed",
             inset: 0,
@@ -395,7 +374,7 @@ export function CalendarMonthView({
               }}
             >
               <h2
-                id="day-detail-title"
+                id="shift-detail-title"
                 style={{
                   margin: 0,
                   fontSize: "1.05rem",
@@ -426,30 +405,60 @@ export function CalendarMonthView({
                 ×
               </button>
             </div>
-            {detailGlyphs.length > 0 && (
+            {!detailShift ? (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "1rem",
+                  lineHeight: 1.45,
+                  color: "var(--muted)",
+                }}
+              >
+                Riposo (sabato o domenica).
+              </p>
+            ) : (
               <div
                 style={{
                   display: "flex",
-                  flexWrap: "wrap",
-                  gap: "6px",
-                  marginBottom: "0.85rem",
+                  flexDirection: "column",
+                  gap: "0.75rem",
+                  fontSize: "0.95rem",
+                  lineHeight: 1.45,
                 }}
               >
-                {detailGlyphs.map((g, i) => (
-                  <WasteIcon key={`d-${g.letter}-${i}`} g={g} />
-                ))}
+                <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>
+                  Settimana nel ciclo:{" "}
+                  <strong style={{ color: "var(--text)" }}>
+                    {detailShift.weekInCycle + 1} di 5
+                  </strong>{" "}
+                  ({CYCLE_LABELS[detailShift.weekInCycle]})
+                </p>
+                <p style={{ margin: 0 }}>
+                  <strong>Mattina ({WEEKDAYS[detailShift.morningWeekday]}):</strong>{" "}
+                  {detailShift.labels.morning}
+                </p>
+                {detailShift.afternoonWeekday === null ? (
+                  <p style={{ margin: 0, color: "var(--muted)" }}>
+                    Nessun rientro pomeridiano abbinato per questo giorno in
+                    questa settimana di ciclo.
+                  </p>
+                ) : detailShift.afternoonWeekday ===
+                  detailShift.morningWeekday ? (
+                  <p style={{ margin: 0 }}>
+                    <strong>Pomeriggio (stesso giorno):</strong>{" "}
+                    {detailShift.labels.afternoon}
+                  </p>
+                ) : (
+                  <p style={{ margin: 0 }}>
+                    <strong>
+                      Rientro pomeridiano (
+                      {WEEKDAYS[detailShift.afternoonWeekday]}):
+                    </strong>{" "}
+                    {detailShift.labels.afternoon}
+                  </p>
+                )}
               </div>
             )}
-            <p
-              style={{
-                margin: 0,
-                fontSize: "1rem",
-                lineHeight: 1.45,
-                color: "var(--text)",
-              }}
-            >
-              {detailNote || "Nessun ritiro indicato per questo giorno."}
-            </p>
             <button
               type="button"
               onClick={() => setDetailDate(null)}
