@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { DayServiceEntry } from "./dayLogModel";
 import { loadDayLogs, saveDayLogs } from "./dayLogStorage";
 import { ShiftCalendarMonthView } from "./ShiftCalendarMonthView";
+import { ShiftWeekGridView } from "./ShiftWeekGridView";
 import {
   isNativeApp,
   requestNativeNotificationPermission,
@@ -47,6 +48,8 @@ function loadReminder(): ReminderState {
 export default function App() {
   const [isNative] = useState(() => isNativeApp());
   const [view, setView] = useState<"calendar" | "settings">("calendar");
+  const [calendarMode, setCalendarMode] = useState<"week" | "month">("week");
+  const [weekAnchor, setWeekAnchor] = useState(() => new Date());
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
 
@@ -203,6 +206,20 @@ export default function App() {
     setCalYear((y) => y + delta);
   }
 
+  function shiftWeek(delta: number) {
+    setWeekAnchor((d) => {
+      const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      x.setDate(x.getDate() + delta * 7);
+      return x;
+    });
+  }
+
+  function goMonthFromWeek() {
+    setCalYear(weekAnchor.getFullYear());
+    setCalMonth(weekAnchor.getMonth());
+    setCalendarMode("month");
+  }
+
   return (
     <div
       style={{
@@ -213,19 +230,37 @@ export default function App() {
       }}
     >
       {view === "calendar" ? (
-        <ShiftCalendarMonthView
-          year={calYear}
-          month={calMonth}
-          onPrevMonth={() => shiftMonth(-1)}
-          onNextMonth={() => shiftMonth(1)}
-          onPrevYear={() => shiftYear(-1)}
-          onNextYear={() => shiftYear(1)}
-          shiftSettings={shiftSettings}
-          today={now}
-          onOpenSettings={() => setView("settings")}
-          dayLogs={dayLogs}
-          setDayLogs={setDayLogs}
-        />
+        calendarMode === "week" ? (
+          <ShiftWeekGridView
+            weekAnchor={weekAnchor}
+            onPrevWeek={() => shiftWeek(-1)}
+            onNextWeek={() => shiftWeek(1)}
+            onShowMonth={goMonthFromWeek}
+            shiftSettings={shiftSettings}
+            today={now}
+            onOpenSettings={() => setView("settings")}
+            dayLogs={dayLogs}
+            setDayLogs={setDayLogs}
+          />
+        ) : (
+          <ShiftCalendarMonthView
+            year={calYear}
+            month={calMonth}
+            onPrevMonth={() => shiftMonth(-1)}
+            onNextMonth={() => shiftMonth(1)}
+            onPrevYear={() => shiftYear(-1)}
+            onNextYear={() => shiftYear(1)}
+            shiftSettings={shiftSettings}
+            today={now}
+            onOpenSettings={() => setView("settings")}
+            onShowWeek={() => {
+              setWeekAnchor(new Date(calYear, calMonth, 15));
+              setCalendarMode("week");
+            }}
+            dayLogs={dayLogs}
+            setDayLogs={setDayLogs}
+          />
+        )
       ) : (
         <ShiftSettingsView
           shiftSettings={shiftSettings}

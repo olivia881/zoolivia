@@ -1,6 +1,6 @@
 # Turni di servizio
 
-App **solo per uso personale** sul telefono: **calendario mensile** (tutti i giorni); per ogni data puoi annotare mattina, rientro pomeridiano, straordinario, servizi esterni/fuori sede, congedi (C.O., C.S. malattia/famiglia, PNL, C.P.), buono pasto, corsi e note. Il turno **a scalare** (lun–ven, ciclo 5 settimane) resta come **suggerimento** con pulsante «Inserisci fasce previste». In fondo al mese: **conteggi** (ore da fasce, straordinario, servizi, giorni per tipo di assenza, buoni pasto). Fasce predefinite **8–14 / 14:30–17:30** o **9–15 / 15:30–18:30**, promemoria opzionale (usa le tue annotazioni se presenti per il giorno dopo).
+App **solo per uso personale** sul telefono: **vista settimanale** (predefinita) con **7 colonne** e dettagli visibili (mattina, pomeriggio, straordinario, fuori sede, note, flag C.O./PNL/BP…). Pulsante **«Applica turno a scalare a questa settimana»** compila automaticamente **lun–ven** con le fasce delle impostazioni (es. 9–15 e 15:30–18:30), inclusi i **rientri incrociati** (es. pomeriggio del lunedì sul mercoledì). C’è anche il **calendario mese** per panoramica e conteggi mensili. Promemoria opzionale.
 
 L’**applicationId** Android è **`it.turni.servizio`**: è un’**app distinta** da «Promemoria rifiuti» (`it.promemoria.rifiuti`); puoi tenere entrambe installate. Icona: calendario + evidenziazione giorno (tema turni).
 
@@ -79,8 +79,8 @@ Poi apri `http://localhost:5173` (dal telefono sulla stessa rete: `http://IP_DEL
 
 ## Funzioni
 
-- Vista **mensile** con modifica giorno per giorno (modulo a scheda).
-- Suggerimento turno a scalare (lun–ven) + campi liberi per orari reali.
-- **Conteggi del mese** (ore da intervalli tipo `08:00-14:00`, ore numeriche per straordinario/servizi, contatori assenze e buoni pasto).
-- Intestazione ufficio/reparto nelle impostazioni (come servizio settimanale).
-- Promemoria: se hai già compilato il giorno dopo, la notifica usa quelle note; altrimenti il turno teorico a scalare.
+- **Griglia settimanale** a scorrimento orizzontale + pulsante applica turno a scalare sulla settimana corrente.
+- **Calendario mensile** (link «Vista settimana» / «Calendario mese»).
+- **Conteggi** del mese (anche dalla vista settimana).
+- Scheda completa per giorno (corsi, servizi esterni, ecc.).
+- Sfondo interfaccia **blu** (tema coerente con l’icona).

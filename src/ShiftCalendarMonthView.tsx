@@ -50,6 +50,7 @@ type Props = {
   shiftSettings: ShiftAppSettings;
   today: Date;
   onOpenSettings: () => void;
+  onShowWeek: () => void;
   dayLogs: Record<string, DayServiceEntry>;
   setDayLogs: Dispatch<SetStateAction<Record<string, DayServiceEntry>>>;
 };
@@ -111,6 +112,7 @@ export function ShiftCalendarMonthView({
   shiftSettings,
   today,
   onOpenSettings,
+  onShowWeek,
   dayLogs,
   setDayLogs,
 }: Props) {
@@ -278,6 +280,45 @@ export function ShiftCalendarMonthView({
         >
           ⚙
         </button>
+      </div>
+
+      <div style={{ display: "flex", gap: "0.4rem", marginBottom: "0.65rem" }}>
+        <button
+          type="button"
+          onClick={onShowWeek}
+          style={{
+            flex: 1,
+            padding: "0.45rem",
+            borderRadius: "10px",
+            border: "1px solid var(--border)",
+            background: "var(--surface-muted)",
+            color: "var(--text)",
+            font: "inherit",
+            fontSize: "0.82rem",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          Vista settimana
+        </button>
+        <span
+          style={{
+            flex: 1,
+            padding: "0.45rem",
+            borderRadius: "10px",
+            border: "1px solid var(--accent)",
+            background: "var(--accent-soft)",
+            color: "var(--text)",
+            fontSize: "0.82rem",
+            fontWeight: 700,
+            textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          Mese
+        </span>
       </div>
 
       <div
