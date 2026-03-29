@@ -4,7 +4,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "it.promemoria.rifiuti",
-  appName: "Promemoria rifiuti",
+  appName: "Turni di servizio",
   webDir: "dist",
   android: {
     allowMixedContent: false,

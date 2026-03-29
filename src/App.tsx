@@ -1,47 +1,24 @@
 import { useEffect, useRef, useState } from "react";
-import { CalendarMonthView } from "./CalendarMonthView";
+import type { DayServiceEntry } from "./dayLogModel";
+import { loadDayLogs, saveDayLogs } from "./dayLogStorage";
+import { ShiftCalendarMonthView } from "./ShiftCalendarMonthView";
 import {
   isNativeApp,
   requestNativeNotificationPermission,
-  syncNativeWeeklyReminders,
+  syncNativeShiftReminders,
 } from "./nativeReminders";
-import { loadSettings, saveSettings, type WeekdayIndex } from "./scheduleLogic";
-import { SettingsView } from "./SettingsView";
 import {
-  buildTomorrowReminderCopy,
+  loadShiftSettings,
+  saveShiftSettings,
+} from "./shiftScheduleLogic";
+import { ShiftSettingsView } from "./ShiftSettingsView";
+import {
+  buildTomorrowShiftReminderCopy,
   type ReminderState,
   speakReminderText,
-} from "./voiceReminder";
+} from "./shiftVoiceReminder";
 
-const STORAGE_KEY = "promemoria-rifiuti-schedule-v1";
-const REMINDER_KEY = "promemoria-rifiuti-reminder-v1";
-
-/** Modello tipo Bacoli: lun/mer/sab umido, mar carta, gio plastica; ven e dom da alternanza / testo */
-const DEFAULT_SCHEDULE: Record<WeekdayIndex, string> = {
-  0: "Umido / organico",
-  1: "Carta",
-  2: "Umido / organico",
-  3: "Plastica e metalli (multimateriale)",
-  4: "Vetro",
-  5: "Umido / organico",
-  6: "Nessun ritiro",
-};
-
-function loadSchedule(): Record<WeekdayIndex, string> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...DEFAULT_SCHEDULE };
-    const parsed = JSON.parse(raw) as Record<string, string>;
-    const out = { ...DEFAULT_SCHEDULE };
-    for (let i = 0; i < 7; i++) {
-      const v = parsed[String(i)];
-      if (typeof v === "string") out[i as WeekdayIndex] = v;
-    }
-    return out;
-  } catch {
-    return { ...DEFAULT_SCHEDULE };
-  }
-}
+const REMINDER_KEY = "turni-servizio-reminder-v1";
 
 function loadReminder(): ReminderState {
   try {
@@ -73,10 +50,10 @@ export default function App() {
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
 
-  const [schedule, setSchedule] = useState<Record<WeekdayIndex, string>>(
-    () => loadSchedule()
+  const [shiftSettings, setShiftSettings] = useState(() => loadShiftSettings());
+  const [dayLogs, setDayLogs] = useState<Record<string, DayServiceEntry>>(
+    () => loadDayLogs()
   );
-  const [settings, setSettings] = useState(() => loadSettings());
   const [reminder, setReminder] = useState(loadReminder);
   const [now, setNow] = useState(() => new Date());
   const [notifSupportedWeb] = useState(
@@ -89,33 +66,33 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(schedule));
-  }, [schedule]);
+    saveShiftSettings(shiftSettings);
+  }, [shiftSettings]);
 
   useEffect(() => {
-    saveSettings(settings);
-  }, [settings]);
+    saveDayLogs(dayLogs);
+  }, [dayLogs]);
 
   useEffect(() => {
     localStorage.setItem(REMINDER_KEY, JSON.stringify(reminder));
   }, [reminder]);
 
-  const scheduleRef = useRef(schedule);
-  scheduleRef.current = schedule;
-  const settingsRef = useRef(settings);
-  settingsRef.current = settings;
+  const shiftSettingsRef = useRef(shiftSettings);
+  shiftSettingsRef.current = shiftSettings;
+  const dayLogsRef = useRef(dayLogs);
+  dayLogsRef.current = dayLogs;
   const reminderRef = useRef(reminder);
   reminderRef.current = reminder;
 
   useEffect(() => {
     if (isNative) {
-      void syncNativeWeeklyReminders({
+      void syncNativeShiftReminders({
         enabled: reminder.enabled,
         voiceEnabled: reminder.voiceEnabled,
         hour: reminder.hour,
         minute: reminder.minute,
-        baseSchedule: schedule,
-        settings,
+        shiftSettings,
+        dayLogs,
       });
     }
   }, [
@@ -124,8 +101,8 @@ export default function App() {
     reminder.voiceEnabled,
     reminder.hour,
     reminder.minute,
-    schedule,
-    settings,
+    shiftSettings,
+    dayLogs,
   ]);
 
   useEffect(() => {
@@ -148,10 +125,10 @@ export default function App() {
       timeoutId = window.setTimeout(() => {
         if (cancelled) return;
         const fireAt = new Date();
-        const { title, body, voiceText } = buildTomorrowReminderCopy(
+        const { title, body, voiceText } = buildTomorrowShiftReminderCopy(
           fireAt,
-          scheduleRef.current,
-          settingsRef.current
+          shiftSettingsRef.current,
+          dayLogsRef.current
         );
         try {
           new Notification(title, { body, lang: "it" });
@@ -177,6 +154,7 @@ export default function App() {
     reminder.minute,
     reminder.voiceEnabled,
     notifSupportedWeb,
+    dayLogs,
   ]);
 
   async function enableWebNotifications() {
@@ -235,24 +213,23 @@ export default function App() {
       }}
     >
       {view === "calendar" ? (
-        <CalendarMonthView
+        <ShiftCalendarMonthView
           year={calYear}
           month={calMonth}
           onPrevMonth={() => shiftMonth(-1)}
           onNextMonth={() => shiftMonth(1)}
           onPrevYear={() => shiftYear(-1)}
           onNextYear={() => shiftYear(1)}
-          schedule={schedule}
-          settings={settings}
+          shiftSettings={shiftSettings}
           today={now}
           onOpenSettings={() => setView("settings")}
+          dayLogs={dayLogs}
+          setDayLogs={setDayLogs}
         />
       ) : (
-        <SettingsView
-          settings={settings}
-          setSettings={setSettings}
-          schedule={schedule}
-          setSchedule={setSchedule}
+        <ShiftSettingsView
+          shiftSettings={shiftSettings}
+          setShiftSettings={setShiftSettings}
           reminder={reminder}
           setReminder={setReminder}
           isNative={isNative}
