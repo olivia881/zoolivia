@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Turni di servizio</string>
     <string name="title_activity_main">Turni di servizio</string>
-    <string name="package_name">it.promemoria.rifiuti</string>
-    <string name="custom_url_scheme">it.promemoria.rifiuti</string>
+    <string name="package_name">it.turni.servizio</string>
+    <string name="custom_url_scheme">it.turni.servizio</string>
 </resources>
