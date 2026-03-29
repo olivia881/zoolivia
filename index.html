@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Promemoria rifiuti giornaliero</title>
+    <meta
+      name="description"
+      content="Piccola app web per ricordare i rifiuti da buttare giorno per giorno."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Promemoria quotidiano</p>
+          <h1>Raccolta rifiuti giorno per giorno</h1>
+          <p class="hero-copy">
+            Una mini app da aprire nel browser per vedere subito cosa buttare
+            oggi, cosa preparare per domani e personalizzare il calendario
+            settimanale in pochi click.
+          </p>
+        </div>
+
+        <div class="hero-actions">
+          <button id="enableReminderButton" class="primary-button" type="button">
+            Attiva promemoria browser
+          </button>
+          <p class="helper-text">
+            Le impostazioni restano salvate solo su questo dispositivo tramite
+            localStorage.
+          </p>
+        </div>
+      </section>
+
+      <section class="panel highlight">
+        <div class="panel-header">
+          <div>
+            <p class="section-label">Oggi</p>
+            <h2 id="todayLabel">Caricamento...</h2>
+          </div>
+          <span id="todayBadge" class="badge neutral">In attesa</span>
+        </div>
+        <div id="todayContent" class="waste-list" aria-live="polite"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="section-label">Domani</p>
+            <h2 id="tomorrowLabel">Caricamento...</h2>
+          </div>
+        </div>
+        <div id="tomorrowContent" class="waste-list" aria-live="polite"></div>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="section-label">Programma settimanale</p>
+              <h2>I tuoi giorni di raccolta</h2>
+            </div>
+            <button id="resetScheduleButton" class="ghost-button" type="button">
+              Ripristina esempio
+            </button>
+          </div>
+
+          <p class="helper-text">
+            Seleziona i tipi di rifiuto per ogni giorno della settimana.
+          </p>
+
+          <form id="scheduleForm" class="schedule-form"></form>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="section-label">Promemoria</p>
+              <h2>Preferenze notifica</h2>
+            </div>
+          </div>
+
+          <form id="notificationForm" class="notification-form">
+            <label>
+              Ora del promemoria
+              <input
+                id="notificationTime"
+                name="notificationTime"
+                type="time"
+                required
+              />
+            </label>
+
+            <label class="checkbox-row simple-row">
+              <input
+                id="notifyOnlyWhenNeeded"
+                name="notifyOnlyWhenNeeded"
+                type="checkbox"
+              />
+              <span>Avvisa solo quando c'e qualcosa da buttare</span>
+            </label>
+
+            <div class="notification-actions">
+              <button type="submit" class="secondary-button">
+                Salva preferenze
+              </button>
+              <button
+                id="testNotificationButton"
+                type="button"
+                class="ghost-button"
+              >
+                Invia notifica di prova
+              </button>
+            </div>
+          </form>
+
+          <div id="notificationStatus" class="status-box" aria-live="polite"></div>
+        </article>
+      </section>
+
+      <section class="panel compact-panel">
+        <div class="panel-header">
+          <div>
+            <p class="section-label">Come usarla</p>
+            <h2>Avvio rapido</h2>
+          </div>
+        </div>
+        <ol class="tips-list">
+          <li>Apri il file <strong>index.html</strong> nel browser.</li>
+          <li>Imposta i giorni di raccolta che vuoi monitorare.</li>
+          <li>Salva l'ora del promemoria e attiva le notifiche.</li>
+        </ol>
+      </section>
+    </main>
+
+    <template id="wasteCardTemplate">
+      <article class="waste-card">
+        <span class="waste-token" aria-hidden="true"></span>
+        <div>
+          <h3></h3>
+          <p></p>
+        </div>
+      </article>
+    </template>
+
+    <noscript>
+      <p class="noscript-banner">
+        Questa app ha bisogno di JavaScript per mostrare i promemoria.
+      </p>
+    </noscript>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
