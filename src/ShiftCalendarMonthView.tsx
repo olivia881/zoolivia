@@ -1,10 +1,27 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
+import { DayEditorSheet } from "./DayEditorSheet";
+import {
+  dayEntryCellTags,
+  emptyDayEntry,
+  hasDayEntryContent,
+  toYmd,
+  type DayServiceEntry,
+} from "./dayLogModel";
+import { getDayLog } from "./dayLogStorage";
+import { aggregateMonthTotals } from "./monthTotals";
 import {
   resolveDayShift,
+  shiftTimeLabels,
   type ShiftAppSettings,
 } from "./shiftScheduleLogic";
 import { shiftCellSummary } from "./shiftVoiceReminder";
-import { WEEKDAYS } from "./weekdays";
 
 const MONTH_NAMES = [
   "Gennaio",
@@ -23,14 +40,6 @@ const MONTH_NAMES = [
 
 const WEEKDAY_SHORT = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 
-const CYCLE_LABELS = [
-  "Lun↔Mer · Mar↔Gio",
-  "Mer↔Ven",
-  "Lun↔Gio",
-  "Mar↔Ven",
-  "Mar↔Ven",
-];
-
 type Props = {
   year: number;
   month: number;
@@ -41,6 +50,8 @@ type Props = {
   shiftSettings: ShiftAppSettings;
   today: Date;
   onOpenSettings: () => void;
+  dayLogs: Record<string, DayServiceEntry>;
+  setDayLogs: Dispatch<SetStateAction<Record<string, DayServiceEntry>>>;
 };
 
 function daysInMonth(y: number, m: number): number {
@@ -53,6 +64,43 @@ function mondayOffsetFirstOfMonth(y: number, m: number): number {
   return js === 0 ? 6 : js - 1;
 }
 
+function formatMonthRangeIt(y: number, m: number): string {
+  const first = new Date(y, m, 1);
+  const last = new Date(y, m, daysInMonth(y, m));
+  const a = new Intl.DateTimeFormat("it-IT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(first);
+  const b = new Intl.DateTimeFormat("it-IT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(last);
+  return `${a} – ${b}`;
+}
+
+function cellLine(
+  date: Date,
+  settings: ShiftAppSettings,
+  entry: DayServiceEntry
+): string {
+  const planned = shiftCellSummary(date, settings);
+  const chunks: string[] = [];
+  if (planned) chunks.push(planned);
+  const tags = dayEntryCellTags(entry);
+  if (tags.length) chunks.push(tags.join(" "));
+  if (entry.mattina.trim()) {
+    const t = entry.mattina.trim().replace(/\s+/g, " ");
+    chunks.push(t.length > 16 ? `${t.slice(0, 16)}…` : t);
+  } else if (entry.pomeriggioRientro.trim() && !planned) {
+    const t = entry.pomeriggioRientro.trim();
+    chunks.push(t.length > 16 ? `${t.slice(0, 16)}…` : t);
+  }
+  if (chunks.length === 0) return "";
+  return chunks.join(" · ");
+}
+
 export function ShiftCalendarMonthView({
   year,
   month,
@@ -63,8 +111,17 @@ export function ShiftCalendarMonthView({
   shiftSettings,
   today,
   onOpenSettings,
+  dayLogs,
+  setDayLogs,
 }: Props) {
   const [detailDate, setDetailDate] = useState<Date | null>(null);
+  const [draftEntry, setDraftEntry] = useState<DayServiceEntry>(emptyDayEntry);
+  const [totalsOpen, setTotalsOpen] = useState(true);
+
+  useEffect(() => {
+    if (!detailDate) return;
+    setDraftEntry({ ...getDayLog(dayLogs, toYmd(detailDate)) });
+  }, [detailDate, dayLogs]);
 
   useEffect(() => {
     if (!detailDate) return;
@@ -98,6 +155,7 @@ export function ShiftCalendarMonthView({
   }, [year, month]);
 
   const title = `${MONTH_NAMES[month].toUpperCase()} ${year}`;
+  const monthRange = formatMonthRangeIt(year, month);
 
   const detailTitle = detailDate
     ? new Intl.DateTimeFormat("it-IT", {
@@ -108,9 +166,59 @@ export function ShiftCalendarMonthView({
       }).format(detailDate)
     : "";
 
-  const detailShift = detailDate
-    ? resolveDayShift(detailDate, shiftSettings)
-    : null;
+  const totals = useMemo(
+    () => aggregateMonthTotals(year, month, dayLogs),
+    [year, month, dayLogs]
+  );
+
+  function persistAndClose() {
+    if (!detailDate) {
+      setDetailDate(null);
+      return;
+    }
+    const ymd = toYmd(detailDate);
+    setDayLogs((prev) => {
+      const next = { ...prev };
+      if (hasDayEntryContent(draftEntry)) {
+        next[ymd] = { ...draftEntry };
+      } else {
+        delete next[ymd];
+      }
+      return next;
+    });
+    setDetailDate(null);
+  }
+
+  function clearDayFromStorage() {
+    if (!detailDate) return;
+    const ymd = toYmd(detailDate);
+    setDayLogs((prev) => {
+      const next = { ...prev };
+      delete next[ymd];
+      return next;
+    });
+    setDetailDate(null);
+  }
+
+  function applyPlannedToDraft() {
+    if (!detailDate) return;
+    const planned = resolveDayShift(detailDate, shiftSettings);
+    if (!planned) return;
+    const lab = shiftTimeLabels(shiftSettings.timeVariant);
+    const norm = (s: string) =>
+      s.replace(/\s/g, "").replace(/–/g, "-").replace(/—/g, "-");
+    setDraftEntry((e) => ({
+      ...e,
+      mattina: norm(lab.morning),
+      pomeriggioRientro:
+        planned.afternoonWeekday !== null
+          ? norm(lab.afternoon)
+          : e.pomeriggioRientro,
+    }));
+  }
+
+  const office1 = shiftSettings.officeLine1.trim();
+  const office2 = shiftSettings.officeLine2.trim();
 
   return (
     <div>
@@ -120,23 +228,36 @@ export function ShiftCalendarMonthView({
           alignItems: "center",
           justifyContent: "space-between",
           gap: "0.5rem",
-          marginBottom: "1rem",
+          marginBottom: "0.85rem",
         }}
       >
         <div style={{ minWidth: 0, flex: 1 }}>
           <h1
             style={{
-              fontSize: "clamp(1.1rem, 4vw, 1.45rem)",
+              fontSize: "clamp(1.05rem, 3.8vw, 1.35rem)",
               fontWeight: 700,
-              margin: "0 0 0.2rem",
+              margin: "0 0 0.15rem",
               letterSpacing: "-0.02em",
             }}
           >
-            Turni di servizio
+            Servizio mensile
           </h1>
-          <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem" }}>
-            Ciclo a scalare (5 settimane) · lun–ven
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.8rem" }}>
+            {monthRange}
           </p>
+          {(office1 || office2) && (
+            <p
+              style={{
+                margin: "0.35rem 0 0",
+                fontSize: "0.78rem",
+                color: "var(--text)",
+                lineHeight: 1.35,
+              }}
+            >
+              {office1 && <span style={{ display: "block" }}>{office1}</span>}
+              {office2 && <span style={{ display: "block" }}>{office2}</span>}
+            </p>
+          )}
         </div>
         <button
           type="button"
@@ -196,9 +317,9 @@ export function ShiftCalendarMonthView({
             style={{
               color: "#fff",
               fontWeight: 700,
-              fontSize: "clamp(0.85rem, 3.5vw, 1rem)",
+              fontSize: "clamp(0.8rem, 3.2vw, 0.95rem)",
               letterSpacing: "0.04em",
-              minWidth: "10rem",
+              minWidth: "9rem",
               textAlign: "center",
             }}
           >
@@ -227,11 +348,11 @@ export function ShiftCalendarMonthView({
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
-          gap: "4px",
-          fontSize: "0.7rem",
+          gap: "3px",
+          fontSize: "0.65rem",
           fontWeight: 600,
           color: "var(--muted)",
-          marginBottom: "6px",
+          marginBottom: "5px",
           textAlign: "center",
         }}
       >
@@ -244,241 +365,212 @@ export function ShiftCalendarMonthView({
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
-          gap: "5px",
+          gap: "4px",
         }}
       >
         {cells.map(({ date, key }) => {
           if (!date) {
-            return <div key={key} style={{ minHeight: "4.5rem" }} />;
+            return <div key={key} style={{ minHeight: "5.1rem" }} />;
           }
           const isToday =
             date.getDate() === today.getDate() &&
             date.getMonth() === today.getMonth() &&
             date.getFullYear() === today.getFullYear();
           const isSunday = date.getDay() === 0;
-          const shift = resolveDayShift(date, shiftSettings);
-          const summary = shiftCellSummary(date, shiftSettings);
+          const ymd = toYmd(date);
+          const entry = getDayLog(dayLogs, ymd);
+          const line = cellLine(date, shiftSettings, entry);
+          const hasUser = hasDayEntryContent(entry);
+          const planned = resolveDayShift(date, shiftSettings);
 
           return (
             <button
               key={key}
               type="button"
               onClick={() => setDetailDate(date)}
-              aria-label={`Dettaglio ${date.getDate()} ${MONTH_NAMES[month]} ${year}`}
+              aria-label={`Modifica ${date.getDate()} ${MONTH_NAMES[month]} ${year}`}
               style={{
-                minHeight: "4.5rem",
+                minHeight: "5.1rem",
                 border: `1px solid ${isToday ? "var(--accent)" : "var(--border)"}`,
-                borderRadius: "10px",
-                padding: "4px 3px",
+                borderRadius: "9px",
+                padding: "3px 2px",
                 background: isToday ? "var(--today)" : "var(--surface)",
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "center",
+                alignItems: "stretch",
                 justifyContent: "flex-start",
-                gap: "3px",
+                gap: "2px",
                 cursor: "pointer",
                 font: "inherit",
                 color: "inherit",
                 width: "100%",
                 boxSizing: "border-box",
+                textAlign: "left",
               }}
             >
               <span
                 style={{
-                  fontSize: "0.8rem",
+                  fontSize: "0.78rem",
                   fontWeight: 700,
                   color: isSunday ? "#dc2626" : "var(--text)",
+                  textAlign: "center",
                 }}
               >
                 {date.getDate()}
               </span>
-              {shift ? (
-                <span
-                  style={{
-                    fontSize: "0.62rem",
-                    lineHeight: 1.25,
-                    color: "var(--muted)",
-                    textAlign: "center",
-                    fontWeight: 600,
-                  }}
-                >
-                  {summary}
-                </span>
-              ) : (
-                <span
-                  style={{
-                    fontSize: "0.62rem",
-                    color: "var(--muted)",
-                    opacity: 0.6,
-                  }}
-                >
-                  —
-                </span>
-              )}
+              <span
+                style={{
+                  fontSize: "0.58rem",
+                  lineHeight: 1.2,
+                  color: hasUser ? "var(--text)" : "var(--muted)",
+                  fontWeight: hasUser ? 600 : 500,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 4,
+                  WebkitBoxOrient: "vertical" as const,
+                  overflow: "hidden",
+                  wordBreak: "break-word",
+                  padding: "0 1px",
+                }}
+              >
+                {line ||
+                  (planned
+                    ? shiftCellSummary(date, shiftSettings)
+                    : "—")}
+              </span>
             </button>
           );
         })}
       </div>
 
+      <section
+        style={{
+          marginTop: "1rem",
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: "14px",
+          overflow: "hidden",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setTotalsOpen((o) => !o)}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0.75rem 0.9rem",
+            border: "none",
+            background: "transparent",
+            font: "inherit",
+            fontWeight: 700,
+            fontSize: "0.88rem",
+            color: "var(--text)",
+            cursor: "pointer",
+            textAlign: "left",
+          }}
+        >
+          Conteggi del mese
+          <span aria-hidden style={{ color: "var(--muted)" }}>
+            {totalsOpen ? "▼" : "▶"}
+          </span>
+        </button>
+        {totalsOpen && (
+          <div
+            style={{
+              padding: "0 0.9rem 0.9rem",
+              fontSize: "0.82rem",
+              lineHeight: 1.5,
+              color: "var(--muted)",
+              borderTop: "1px solid var(--border)",
+            }}
+          >
+            <p style={{ margin: "0.65rem 0 0.5rem", fontSize: "0.75rem" }}>
+              Le ore da turno si calcolano dagli intervalli scritti come{" "}
+              <code style={{ fontSize: "0.7rem" }}>08:00-14:00</code>. Straordinario
+              e servizi usano i campi «ore» (numero).
+            </p>
+            <ul
+              style={{
+                margin: 0,
+                paddingLeft: "1.1rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.25rem",
+              }}
+            >
+              <li>
+                <strong style={{ color: "var(--text)" }}>Giorni annotati:</strong>{" "}
+                {totals.giorniConAnnotazioni}
+              </li>
+              <li>
+                <strong style={{ color: "var(--text)" }}>Ore da mattina + rientro:</strong>{" "}
+                {totals.oreDaFasceMattinaPomeriggio} h
+              </li>
+              <li>
+                <strong style={{ color: "var(--text)" }}>Straordinario:</strong>{" "}
+                {totals.oreStraordinario} h
+              </li>
+              <li>
+                <strong style={{ color: "var(--text)" }}>Servizio esterno:</strong>{" "}
+                {totals.oreServizioEsterno} h
+              </li>
+              <li>
+                <strong style={{ color: "var(--text)" }}>Fuori sede:</strong>{" "}
+                {totals.oreServizioFuoriSede} h
+              </li>
+              <li>
+                <strong style={{ color: "var(--text)" }}>Giorni C.O.:</strong>{" "}
+                {totals.giorniCongedoOrdinario}
+              </li>
+              <li>
+                <strong style={{ color: "var(--text)" }}>Giorni C.S. malattia:</strong>{" "}
+                {totals.giorniCongedoStraordMalattia}
+              </li>
+              <li>
+                <strong style={{ color: "var(--text)" }}>Giorni C.S. famiglia:</strong>{" "}
+                {totals.giorniCongedoStraordFamiglia}
+              </li>
+              <li>
+                <strong style={{ color: "var(--text)" }}>Giorni PNL:</strong>{" "}
+                {totals.giorniPnl}
+              </li>
+              <li>
+                <strong style={{ color: "var(--text)" }}>Giorni C.P.:</strong>{" "}
+                {totals.giorniCongedoParentale}
+              </li>
+              <li>
+                <strong style={{ color: "var(--text)" }}>Buoni pasto:</strong>{" "}
+                {totals.buoniPasto}
+              </li>
+            </ul>
+          </div>
+        )}
+      </section>
+
       <p
         style={{
-          margin: "1rem 0 0",
-          fontSize: "0.78rem",
+          margin: "0.85rem 0 0",
+          fontSize: "0.75rem",
           color: "var(--muted)",
           lineHeight: 1.4,
         }}
       >
-        Tocca un giorno per mattina, rientro pomeridiano e fascia oraria. In
-        impostazioni puoi allineare il ciclo al tuo lunedì di partenza.
+        Tocca un giorno per compilare turni, permessi e note. Il turno a scalare è
+        suggerito; puoi sovrascrivere liberamente i campi.
       </p>
 
       {detailDate && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="shift-detail-title"
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 1000,
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "center",
-            padding: "1rem",
-            background: "rgb(0 0 0 / 0.45)",
-          }}
-          onClick={() => setDetailDate(null)}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "24rem",
-              maxHeight: "85dvh",
-              overflow: "auto",
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-              borderRadius: "16px",
-              padding: "1.15rem 1.2rem",
-              marginBottom: "env(safe-area-inset-bottom, 0)",
-              boxShadow: "0 8px 32px rgb(0 0 0 / 0.2)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                gap: "0.75rem",
-                marginBottom: "0.85rem",
-              }}
-            >
-              <h2
-                id="shift-detail-title"
-                style={{
-                  margin: 0,
-                  fontSize: "1.05rem",
-                  fontWeight: 700,
-                  lineHeight: 1.3,
-                  textTransform: "capitalize",
-                }}
-              >
-                {detailTitle}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setDetailDate(null)}
-                aria-label="Chiudi"
-                style={{
-                  flexShrink: 0,
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "10px",
-                  border: "1px solid var(--border)",
-                  background: "var(--bg)",
-                  cursor: "pointer",
-                  fontSize: "1.25rem",
-                  lineHeight: 1,
-                  color: "var(--text)",
-                }}
-              >
-                ×
-              </button>
-            </div>
-            {!detailShift ? (
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "1rem",
-                  lineHeight: 1.45,
-                  color: "var(--muted)",
-                }}
-              >
-                Riposo (sabato o domenica).
-              </p>
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.75rem",
-                  fontSize: "0.95rem",
-                  lineHeight: 1.45,
-                }}
-              >
-                <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>
-                  Settimana nel ciclo:{" "}
-                  <strong style={{ color: "var(--text)" }}>
-                    {detailShift.weekInCycle + 1} di 5
-                  </strong>{" "}
-                  ({CYCLE_LABELS[detailShift.weekInCycle]})
-                </p>
-                <p style={{ margin: 0 }}>
-                  <strong>Mattina ({WEEKDAYS[detailShift.morningWeekday]}):</strong>{" "}
-                  {detailShift.labels.morning}
-                </p>
-                {detailShift.afternoonWeekday === null ? (
-                  <p style={{ margin: 0, color: "var(--muted)" }}>
-                    Nessun rientro pomeridiano abbinato per questo giorno in
-                    questa settimana di ciclo.
-                  </p>
-                ) : detailShift.afternoonWeekday ===
-                  detailShift.morningWeekday ? (
-                  <p style={{ margin: 0 }}>
-                    <strong>Pomeriggio (stesso giorno):</strong>{" "}
-                    {detailShift.labels.afternoon}
-                  </p>
-                ) : (
-                  <p style={{ margin: 0 }}>
-                    <strong>
-                      Rientro pomeridiano (
-                      {WEEKDAYS[detailShift.afternoonWeekday]}):
-                    </strong>{" "}
-                    {detailShift.labels.afternoon}
-                  </p>
-                )}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => setDetailDate(null)}
-              style={{
-                marginTop: "1.1rem",
-                width: "100%",
-                padding: "0.65rem",
-                borderRadius: "12px",
-                border: "none",
-                background: "var(--accent)",
-                color: "#fff",
-                font: "inherit",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Chiudi
-            </button>
-          </div>
-        </div>
+        <DayEditorSheet
+          detailTitle={detailTitle}
+          detailDate={detailDate}
+          entry={draftEntry}
+          setEntry={setDraftEntry}
+          shiftSettings={shiftSettings}
+          onClose={persistAndClose}
+          onApplyPlanned={applyPlannedToDraft}
+          onClearDay={clearDayFromStorage}
+        />
       )}
     </div>
   );

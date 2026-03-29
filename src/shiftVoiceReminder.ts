@@ -1,6 +1,11 @@
 import { Capacitor } from "@capacitor/core";
 import { TextToSpeech } from "@capacitor-community/text-to-speech";
 import {
+  hasDayEntryContent,
+  toYmd,
+  type DayServiceEntry,
+} from "./dayLogModel";
+import {
   resolveDayShift,
   shiftTimeLabels,
   type ShiftAppSettings,
@@ -82,12 +87,34 @@ function formatHourMinuteSpoken(hour: number, minute: number): string {
 
 function describeTomorrowShift(
   tomorrow: Date,
-  settings: ShiftAppSettings
+  settings: ShiftAppSettings,
+  dayLog: DayServiceEntry | undefined
 ): { bodyLine: string; voiceText: string } {
-  const shift = resolveDayShift(tomorrow, settings);
   const weekdayLong = new Intl.DateTimeFormat("it-IT", {
     weekday: "long",
   }).format(tomorrow);
+
+  if (dayLog && hasDayEntryContent(dayLog)) {
+    const parts: string[] = [];
+    if (dayLog.mattina.trim()) parts.push(`Mattina: ${dayLog.mattina.trim()}`);
+    if (dayLog.pomeriggioRientro.trim())
+      parts.push(`Pomeriggio: ${dayLog.pomeriggioRientro.trim()}`);
+    if (dayLog.straordinarioOre.trim())
+      parts.push(`Straordinario: ${dayLog.straordinarioOre.trim()} h`);
+    if (dayLog.congedoOrdinario) parts.push("C.O.");
+    if (dayLog.congedoStraordMalattia) parts.push("C.S. malattia");
+    if (dayLog.congedoStraordFamiglia) parts.push("C.S. famiglia");
+    if (dayLog.pnl) parts.push("PNL");
+    if (dayLog.congedoParentale) parts.push("C.P.");
+    if (dayLog.buonoPasto) parts.push("Buono pasto");
+    const line = parts.length ? parts.join(". ") : "Annotazioni del giorno.";
+    return {
+      bodyLine: line,
+      voiceText: `Domani, ${weekdayLong}. ${line}`,
+    };
+  }
+
+  const shift = resolveDayShift(tomorrow, settings);
 
   if (!shift) {
     return {
@@ -128,7 +155,8 @@ function describeTomorrowShift(
 
 export function buildTomorrowShiftReminderCopy(
   fireAt: Date,
-  settings: ShiftAppSettings
+  settings: ShiftAppSettings,
+  dayLogs: Record<string, DayServiceEntry>
 ): { title: string; body: string; voiceText: string } {
   const tomorrow = addCalendarDays(fireAt, 1);
   const timeSpoken = formatHourMinuteSpoken(
@@ -138,7 +166,12 @@ export function buildTomorrowShiftReminderCopy(
   const weekdayLong = new Intl.DateTimeFormat("it-IT", {
     weekday: "long",
   }).format(tomorrow);
-  const { bodyLine, voiceText } = describeTomorrowShift(tomorrow, settings);
+  const ymd = toYmd(tomorrow);
+  const { bodyLine, voiceText } = describeTomorrowShift(
+    tomorrow,
+    settings,
+    dayLogs[ymd]
+  );
   const title = "Turni di servizio";
   return {
     title,
@@ -151,7 +184,8 @@ export function buildDailyShiftReminderSlots(
   now: Date,
   hour: number,
   minute: number,
-  settings: ShiftAppSettings
+  settings: ShiftAppSettings,
+  dayLogs: Record<string, DayServiceEntry>
 ): { id: number; at: Date; title: string; body: string; voiceText: string }[] {
   const out: {
     id: number;
@@ -163,7 +197,7 @@ export function buildDailyShiftReminderSlots(
   let cursor = new Date(now);
   for (let i = 0; i < DAILY_REMINDER_COUNT; i++) {
     const at = nextDailyFire(cursor, hour, minute);
-    const copy = buildTomorrowShiftReminderCopy(at, settings);
+    const copy = buildTomorrowShiftReminderCopy(at, settings, dayLogs);
     out.push({
       id: DAILY_REMINDER_BASE_ID + i,
       at,

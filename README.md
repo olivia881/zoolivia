@@ -1,6 +1,6 @@
 # Turni di servizio
 
-App **solo per uso personale** sul telefono: calendario **lun–ven** con turno **a scalare** (ciclo di 5 settimane), fasce **8–14 / 14:30–17:30** oppure **9–15 / 15:30–18:30**, promemoria giornaliero opzionale.
+App **solo per uso personale** sul telefono: **calendario mensile** (tutti i giorni); per ogni data puoi annotare mattina, rientro pomeridiano, straordinario, servizi esterni/fuori sede, congedi (C.O., C.S. malattia/famiglia, PNL, C.P.), buono pasto, corsi e note. Il turno **a scalare** (lun–ven, ciclo 5 settimane) resta come **suggerimento** con pulsante «Inserisci fasce previste». In fondo al mese: **conteggi** (ore da fasce, straordinario, servizi, giorni per tipo di assenza, buoni pasto). Fasce predefinite **8–14 / 14:30–17:30** o **9–15 / 15:30–18:30**, promemoria opzionale (usa le tue annotazioni se presenti per il giorno dopo).
 
 L’**applicationId** Android è ancora `it.promemoria.rifiuti` (stesso pacchetto del progetto precedente): se avevi installato la vecchia app, questa **la aggiorna** al posto di crearne un’altra affiancata.
 
@@ -79,7 +79,8 @@ Poi apri `http://localhost:5173` (dal telefono sulla stessa rete: `http://IP_DEL
 
 ## Funzioni
 
-- Calendario turni lun–ven con ciclo a 5 settimane e rientri pomeridiani a scalare.
-- Scelta fascia oraria anticipata / tardiva.
-- Lunedì di riferimento per allineare il ciclo.
-- Promemoria giornaliero (testo del turno per il giorno dopo).
+- Vista **mensile** con modifica giorno per giorno (modulo a scheda).
+- Suggerimento turno a scalare (lun–ven) + campi liberi per orari reali.
+- **Conteggi del mese** (ore da intervalli tipo `08:00-14:00`, ore numeriche per straordinario/servizi, contatori assenze e buoni pasto).
+- Intestazione ufficio/reparto nelle impostazioni (come servizio settimanale).
+- Promemoria: se hai già compilato il giorno dopo, la notifica usa quelle note; altrimenti il turno teorico a scalare.

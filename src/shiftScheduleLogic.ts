@@ -9,19 +9,55 @@ export type ShiftAppSettings = {
   timeVariant: ShiftTimeVariant;
   /** Lunedì di riferimento per l’inizio del ciclo a 5 settimane (YYYY-MM-DD, deve essere un lunedì) */
   anchorMondayYmd: string;
+  /** Intestazione tipo servizio settimanale (es. ufficio / area) */
+  officeLine1: string;
+  officeLine2: string;
 };
 
-const SETTINGS_KEY = "turni-servizio-settings-v1";
+const SETTINGS_KEY = "turni-servizio-settings-v2";
+
+const SETTINGS_KEY_LEGACY = "turni-servizio-settings-v1";
 
 export const DEFAULT_SHIFT_SETTINGS: ShiftAppSettings = {
   timeVariant: "early",
   anchorMondayYmd: "",
+  officeLine1: "",
+  officeLine2: "",
 };
+
+function migrateFromV1(raw: string): ShiftAppSettings | null {
+  try {
+    const p = JSON.parse(raw) as Partial<ShiftAppSettings>;
+    const timeVariant =
+      p.timeVariant === "late" || p.timeVariant === "early"
+        ? p.timeVariant
+        : "early";
+    let anchorMondayYmd =
+      typeof p.anchorMondayYmd === "string" ? p.anchorMondayYmd : "";
+    if (!anchorMondayYmd.trim()) anchorMondayYmd = defaultAnchorMondayYmd();
+    return {
+      timeVariant,
+      anchorMondayYmd,
+      officeLine1: "",
+      officeLine2: "",
+    };
+  } catch {
+    return null;
+  }
+}
 
 export function loadShiftSettings(): ShiftAppSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) {
+      const legacy = localStorage.getItem(SETTINGS_KEY_LEGACY);
+      if (legacy) {
+        const m = migrateFromV1(legacy);
+        if (m) {
+          saveShiftSettings(m);
+          return m;
+        }
+      }
       const s = {
         ...DEFAULT_SHIFT_SETTINGS,
         anchorMondayYmd: defaultAnchorMondayYmd(),
@@ -39,7 +75,14 @@ export function loadShiftSettings(): ShiftAppSettings {
     if (!anchorMondayYmd.trim()) {
       anchorMondayYmd = defaultAnchorMondayYmd();
     }
-    return { timeVariant, anchorMondayYmd };
+    return {
+      timeVariant,
+      anchorMondayYmd,
+      officeLine1:
+        typeof p.officeLine1 === "string" ? p.officeLine1 : "",
+      officeLine2:
+        typeof p.officeLine2 === "string" ? p.officeLine2 : "",
+    };
   } catch {
     return {
       ...DEFAULT_SHIFT_SETTINGS,

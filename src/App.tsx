@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import type { DayServiceEntry } from "./dayLogModel";
+import { loadDayLogs, saveDayLogs } from "./dayLogStorage";
 import { ShiftCalendarMonthView } from "./ShiftCalendarMonthView";
 import {
   isNativeApp,
@@ -49,6 +51,9 @@ export default function App() {
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
 
   const [shiftSettings, setShiftSettings] = useState(() => loadShiftSettings());
+  const [dayLogs, setDayLogs] = useState<Record<string, DayServiceEntry>>(
+    () => loadDayLogs()
+  );
   const [reminder, setReminder] = useState(loadReminder);
   const [now, setNow] = useState(() => new Date());
   const [notifSupportedWeb] = useState(
@@ -65,11 +70,17 @@ export default function App() {
   }, [shiftSettings]);
 
   useEffect(() => {
+    saveDayLogs(dayLogs);
+  }, [dayLogs]);
+
+  useEffect(() => {
     localStorage.setItem(REMINDER_KEY, JSON.stringify(reminder));
   }, [reminder]);
 
   const shiftSettingsRef = useRef(shiftSettings);
   shiftSettingsRef.current = shiftSettings;
+  const dayLogsRef = useRef(dayLogs);
+  dayLogsRef.current = dayLogs;
   const reminderRef = useRef(reminder);
   reminderRef.current = reminder;
 
@@ -81,6 +92,7 @@ export default function App() {
         hour: reminder.hour,
         minute: reminder.minute,
         shiftSettings,
+        dayLogs,
       });
     }
   }, [
@@ -90,6 +102,7 @@ export default function App() {
     reminder.hour,
     reminder.minute,
     shiftSettings,
+    dayLogs,
   ]);
 
   useEffect(() => {
@@ -114,7 +127,8 @@ export default function App() {
         const fireAt = new Date();
         const { title, body, voiceText } = buildTomorrowShiftReminderCopy(
           fireAt,
-          shiftSettingsRef.current
+          shiftSettingsRef.current,
+          dayLogsRef.current
         );
         try {
           new Notification(title, { body, lang: "it" });
@@ -140,6 +154,7 @@ export default function App() {
     reminder.minute,
     reminder.voiceEnabled,
     notifSupportedWeb,
+    dayLogs,
   ]);
 
   async function enableWebNotifications() {
@@ -208,6 +223,8 @@ export default function App() {
           shiftSettings={shiftSettings}
           today={now}
           onOpenSettings={() => setView("settings")}
+          dayLogs={dayLogs}
+          setDayLogs={setDayLogs}
         />
       ) : (
         <ShiftSettingsView

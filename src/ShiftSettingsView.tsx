@@ -95,6 +95,56 @@ export function ShiftSettingsView({
             textTransform: "uppercase",
             letterSpacing: "0.06em",
             color: "var(--muted)",
+            margin: "0 0 0.75rem",
+            fontWeight: 600,
+          }}
+        >
+          Intestazione (come servizio settimanale)
+        </h2>
+        <p style={{ margin: "0 0 0.85rem", fontSize: "0.88rem", color: "var(--muted)" }}>
+          Compare sotto il titolo nel calendario mensile (es. ufficio e area).
+        </p>
+        <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem", marginBottom: "0.75rem" }}>
+          <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Riga 1 — Ufficio</span>
+          <input
+            type="text"
+            placeholder="es. Ufficio: Indagini elettroniche"
+            value={shiftSettings.officeLine1}
+            onChange={(e) =>
+              setShiftSettings((s) => ({ ...s, officeLine1: e.target.value }))
+            }
+            style={inputStyle}
+          />
+        </label>
+        <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+          <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Riga 2 — Reparto / area</span>
+          <textarea
+            rows={2}
+            placeholder="es. Regionale di Polizia Scientifica — III Area"
+            value={shiftSettings.officeLine2}
+            onChange={(e) =>
+              setShiftSettings((s) => ({ ...s, officeLine2: e.target.value }))
+            }
+            style={{ ...inputStyle, resize: "vertical", minHeight: "2.75rem" }}
+          />
+        </label>
+      </section>
+
+      <section
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: "14px",
+          padding: "1.1rem 1.15rem",
+          marginBottom: "1.25rem",
+        }}
+      >
+        <h2
+          style={{
+            fontSize: "0.85rem",
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "var(--muted)",
             margin: "0 0 0.5rem",
             fontWeight: 600,
           }}

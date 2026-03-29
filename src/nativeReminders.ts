@@ -3,6 +3,7 @@ import {
   LocalNotifications,
   type LocalNotificationSchema,
 } from "@capacitor/local-notifications";
+import type { DayServiceEntry } from "./dayLogModel";
 import type { ShiftAppSettings } from "./shiftScheduleLogic";
 import {
   buildDailyShiftReminderSlots,
@@ -66,6 +67,7 @@ export async function syncNativeShiftReminders(options: {
   hour: number;
   minute: number;
   shiftSettings: ShiftAppSettings;
+  dayLogs: Record<string, DayServiceEntry>;
 }): Promise<void> {
   if (!isNativeApp()) return;
   await ensureAndroidChannel();
@@ -85,7 +87,8 @@ export async function syncNativeShiftReminders(options: {
     now,
     options.hour,
     options.minute,
-    options.shiftSettings
+    options.shiftSettings,
+    options.dayLogs
   );
 
   const notifications: LocalNotificationSchema[] = slots.map((s) => ({
