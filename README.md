@@ -25,7 +25,8 @@ I dati restano sul telefono (nessun account obbligatorio). Il repo su GitHub pu�
 A ogni push su **`main`** (e se lanci il workflow a mano) GitHub Actions compila un **APK debug** e lo mette a disposizione.
 
 1. Vai al repo **zoolivia** su GitHub.
-2. **Releases** (barra laterale o `https://github.com/olivia881/zoolivia/releases`) → release **Ultimo APK — Promemoria rifiuti** → scarica **`promemoria-rifiuti.apk`**.
+2. **Releases** → [Ultimo APK — Promemoria rifiuti](https://github.com/olivia881/zoolivia/releases/tag/apk-ultimo) → scarica **`promemoria-rifiuti.apk`**  
+   (link diretto: [promemoria-rifiuti.apk](https://github.com/olivia881/zoolivia/releases/download/apk-ultimo/promemoria-rifiuti.apk)).
 3. Sul telefono apri il file e installa (potrebbe servire consentire installazioni da origini sconosciute).
 
 In alternativa: tab **Actions** → workflow **Build APK** → ultimo run con segno verde → in basso **Artifacts** → scarica **promemoria-rifiuti-apk** (zip con l’APK dentro).
