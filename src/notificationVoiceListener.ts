@@ -3,11 +3,9 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 import type { LocalNotificationSchema } from "@capacitor/local-notifications";
 import { speakReminderText } from "./voiceReminder";
 
-/**
- * iOS: TTS quando la notifica arriva con l’app aperta (Android usa allarmi nativi).
- */
+/** Legge il messaggio quando la notifica arriva e l'app è in esecuzione (foreground / processo attivo). */
 export function registerNotificationVoiceListener(): void {
-  if (Capacitor.getPlatform() !== "ios") return;
+  if (!Capacitor.isNativePlatform()) return;
   void LocalNotifications.addListener(
     "localNotificationReceived",
     (n: LocalNotificationSchema) => {

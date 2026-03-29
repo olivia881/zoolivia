@@ -4,7 +4,6 @@ import {
   type LocalNotificationSchema,
 } from "@capacitor/local-notifications";
 import type { AppSettings, WeekdayIndex } from "./scheduleLogic";
-import { VoiceAlarm } from "./voiceAlarm";
 import {
   buildDailyReminderSlots,
   DAILY_REMINDER_IDS,
@@ -12,7 +11,9 @@ import {
 
 const CHANNEL_ID = "promemoria-rifiuti";
 
-/** Vecchi ID (settimanali + slot alternanza) da annullare dopo aggiornamento app */
+/** Max notifiche per chiamata schedule (Android può fallire con array troppo grandi). */
+const SCHEDULE_CHUNK = 12;
+
 const LEGACY_NOTIFICATION_IDS = [
   ...Array.from({ length: 7 }, (_, i) => 100 + i),
   ...Array.from({ length: 90 }, (_, i) => 200 + i),
@@ -30,7 +31,7 @@ async function ensureAndroidChannel(): Promise<void> {
   await LocalNotifications.createChannel({
     id: CHANNEL_ID,
     name: "Promemoria rifiuti",
-    description: "Promemoria vocale e testuale sulla raccolta rifiuti",
+    description: "Promemoria sulla raccolta rifiuti",
     importance: 4,
     vibration: true,
   });
@@ -46,9 +47,18 @@ export async function requestNativeNotificationPermission(): Promise<boolean> {
   return req.display === "granted";
 }
 
+async function scheduleNotificationsChunked(
+  list: LocalNotificationSchema[]
+): Promise<void> {
+  for (let i = 0; i < list.length; i += SCHEDULE_CHUNK) {
+    const chunk = list.slice(i, i + SCHEDULE_CHUNK);
+    await LocalNotifications.schedule({ notifications: chunk });
+  }
+}
+
 /**
- * Promemoria giornaliero: notifica con testo domani.
- * Su Android, se voiceEnabled, allarmi nativi (AlarmManager) + TTS anche a schermo spento.
+ * Un promemoria al giorno: notifica con testo per il giorno dopo.
+ * La voce (se attiva) parte dall'evento localNotificationReceived quando l'app è in esecuzione.
  */
 export async function syncNativeWeeklyReminders(options: {
   enabled: boolean;
@@ -66,12 +76,6 @@ export async function syncNativeWeeklyReminders(options: {
     notifications: allIds.map((id) => ({ id })),
   });
 
-  try {
-    await VoiceAlarm.cancelAll();
-  } catch {
-    /* plugin assente su web build */
-  }
-
   if (!options.enabled) return;
 
   const perm = await LocalNotifications.checkPermissions();
@@ -86,38 +90,19 @@ export async function syncNativeWeeklyReminders(options: {
     options.settings
   );
 
-  const isAndroid = Capacitor.getPlatform() === "android";
-
   const notifications: LocalNotificationSchema[] = slots.map((s) => ({
     id: s.id,
     title: s.title,
     body: s.body,
     channelId: CHANNEL_ID,
     schedule: { at: s.at },
-    ...(isAndroid
-      ? {}
-      : {
-          extra: {
-            voiceText: s.voiceText,
-            voiceEnabled: options.voiceEnabled,
-          },
-        }),
+    extra: {
+      voiceText: s.voiceText,
+      voiceEnabled: options.voiceEnabled,
+    },
   }));
 
   if (notifications.length > 0) {
-    await LocalNotifications.schedule({ notifications });
-  }
-
-  if (isAndroid && options.voiceEnabled) {
-    try {
-      await VoiceAlarm.scheduleAlarms({
-        alarms: slots.map((s) => ({
-          when: s.at.getTime(),
-          voiceText: s.voiceText,
-        })),
-      });
-    } catch {
-      /* fallback: solo notifica silenziosa */
-    }
+    await scheduleNotificationsChunked(notifications);
   }
 }
