@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  isNativeApp,
+  requestNativeNotificationPermission,
+  syncNativeWeeklyReminders,
+} from "./nativeReminders";
 
 const STORAGE_KEY = "promemoria-rifiuti-schedule-v1";
 const REMINDER_KEY = "promemoria-rifiuti-reminder-v1";
@@ -77,12 +82,13 @@ function formatTodayLong(date: Date): string {
 }
 
 export default function App() {
+  const [isNative] = useState(() => isNativeApp());
   const [schedule, setSchedule] = useState<Record<WeekdayIndex, string>>(
     () => loadSchedule()
   );
   const [reminder, setReminder] = useState(loadReminder);
   const [now, setNow] = useState(() => new Date());
-  const [notifSupported] = useState(
+  const [notifSupportedWeb] = useState(
     () => typeof Notification !== "undefined"
   );
 
@@ -114,7 +120,20 @@ export default function App() {
   scheduleRef.current = schedule;
 
   useEffect(() => {
-    if (!reminder.enabled || !notifSupported) return;
+    if (isNative) {
+      const texts = Array.from({ length: 7 }, (_, i) => schedule[i as WeekdayIndex]);
+      void syncNativeWeeklyReminders({
+        enabled: reminder.enabled,
+        hour: reminder.hour,
+        minute: reminder.minute,
+        scheduleTexts: texts,
+      });
+    }
+  }, [isNative, reminder.enabled, reminder.hour, reminder.minute, schedule]);
+
+  useEffect(() => {
+    if (isNative) return;
+    if (!reminder.enabled || !notifSupportedWeb) return;
     if (Notification.permission !== "granted") return;
 
     let timeoutId: number;
@@ -151,12 +170,30 @@ export default function App() {
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [reminder.enabled, reminder.hour, reminder.minute, notifSupported]);
+  }, [isNative, reminder.enabled, reminder.hour, reminder.minute, notifSupportedWeb]);
 
-  async function enableNotifications() {
-    if (!notifSupported) return;
+  async function enableWebNotifications() {
+    if (!notifSupportedWeb) return;
     const perm = await Notification.requestPermission();
     if (perm !== "granted") return;
+    setReminder((r) => ({ ...r, enabled: true }));
+  }
+
+  async function handleReminderToggle(wantOn: boolean) {
+    if (!wantOn) {
+      setReminder((r) => ({ ...r, enabled: false }));
+      return;
+    }
+    if (isNative) {
+      const ok = await requestNativeNotificationPermission();
+      if (ok) setReminder((r) => ({ ...r, enabled: true }));
+      return;
+    }
+    if (notifSupportedWeb && Notification.permission === "default") {
+      await enableWebNotifications();
+      return;
+    }
+    if (notifSupportedWeb && Notification.permission === "denied") return;
     setReminder((r) => ({ ...r, enabled: true }));
   }
 
@@ -288,11 +325,12 @@ export default function App() {
             fontWeight: 600,
           }}
         >
-          Promemoria (browser)
+          {isNative ? "Promemoria (Android)" : "Promemoria (browser)"}
         </h2>
         <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "var(--muted)" }}>
-          Ricevi una notifica una volta al giorno all’orario scelto (solo se la
-          scheda è aperta o il browser lo consente).
+          {isNative
+            ? "Ogni giorno alla stessa ora ricevi un promemoria con il testo del giorno corrispondente nel calendario sotto (lunedì–domenica)."
+            : "Ricevi una notifica una volta al giorno all’orario scelto (solo se la scheda è aperta o il browser lo consente)."}
         </p>
         <div
           style={{
@@ -315,15 +353,7 @@ export default function App() {
               type="checkbox"
               checked={reminder.enabled}
               onChange={(e) => {
-                const on = e.target.checked;
-                if (on && notifSupported && Notification.permission === "default") {
-                  void enableNotifications();
-                  return;
-                }
-                if (on && notifSupported && Notification.permission === "denied") {
-                  return;
-                }
-                setReminder((r) => ({ ...r, enabled: on }));
+                void handleReminderToggle(e.target.checked);
               }}
             />
             Attiva promemoria
@@ -349,7 +379,9 @@ export default function App() {
             }}
           />
         </div>
-        {notifSupported && Notification.permission === "denied" && (
+        {!isNative &&
+          notifSupportedWeb &&
+          Notification.permission === "denied" && (
           <p style={{ margin: "0.75rem 0 0", fontSize: "0.85rem", color: "#b45309" }}>
             Le notifiche sono bloccate per questo sito: abilitale dalle
             impostazioni del browser.
