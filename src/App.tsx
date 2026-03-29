@@ -1,29 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   isNativeApp,
   requestNativeNotificationPermission,
   syncNativeWeeklyReminders,
 } from "./nativeReminders";
+import {
+  loadSettings,
+  resolveDayNote,
+  saveSettings,
+  type AppSettings,
+  type WeekdayIndex,
+} from "./scheduleLogic";
+import { WEEKDAYS } from "./weekdays";
 
 const STORAGE_KEY = "promemoria-rifiuti-schedule-v1";
 const REMINDER_KEY = "promemoria-rifiuti-reminder-v1";
-
-const WEEKDAYS = [
-  "Lunedì",
-  "Martedì",
-  "Mercoledì",
-  "Giovedì",
-  "Venerdì",
-  "Sabato",
-  "Domenica",
-] as const;
-
-type WeekdayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-
-function mondayFirstIndex(date: Date): WeekdayIndex {
-  const js = date.getDay();
-  return (js === 0 ? 6 : js - 1) as WeekdayIndex;
-}
 
 const DEFAULT_SCHEDULE: Record<WeekdayIndex, string> = {
   0: "Umido / organico",
@@ -81,11 +72,18 @@ function formatTodayLong(date: Date): string {
   }).format(date);
 }
 
+function addDays(base: Date, days: number): Date {
+  const d = new Date(base);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
 export default function App() {
   const [isNative] = useState(() => isNativeApp());
   const [schedule, setSchedule] = useState<Record<WeekdayIndex, string>>(
     () => loadSchedule()
   );
+  const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [reminder, setReminder] = useState(loadReminder);
   const [now, setNow] = useState(() => new Date());
   const [notifSupportedWeb] = useState(
@@ -102,34 +100,49 @@ export default function App() {
   }, [schedule]);
 
   useEffect(() => {
+    saveSettings(settings);
+  }, [settings]);
+
+  useEffect(() => {
     localStorage.setItem(REMINDER_KEY, JSON.stringify(reminder));
   }, [reminder]);
 
-  const todayIdx = mondayFirstIndex(now);
-  const todayNote = schedule[todayIdx];
+  const todayNote = useMemo(
+    () => resolveDayNote(now, schedule, settings),
+    [now, schedule, settings]
+  );
 
   const orderedDays = useMemo(() => {
-    const start = todayIdx;
     return Array.from({ length: 7 }, (_, k) => {
-      const idx = ((start + k) % 7) as WeekdayIndex;
-      return { idx, label: WEEKDAYS[idx], isToday: k === 0 };
+      const d = addDays(now, k);
+      const idx = d.getDay();
+      const mondayFirst = (idx === 0 ? 6 : idx - 1) as WeekdayIndex;
+      return {
+        date: d,
+        idx: mondayFirst,
+        label: WEEKDAYS[mondayFirst],
+        isToday: k === 0,
+        note: resolveDayNote(d, schedule, settings),
+      };
     });
-  }, [todayIdx]);
+  }, [now, schedule, settings]);
 
   const scheduleRef = useRef(schedule);
   scheduleRef.current = schedule;
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
 
   useEffect(() => {
     if (isNative) {
-      const texts = Array.from({ length: 7 }, (_, i) => schedule[i as WeekdayIndex]);
       void syncNativeWeeklyReminders({
         enabled: reminder.enabled,
         hour: reminder.hour,
         minute: reminder.minute,
-        scheduleTexts: texts,
+        baseSchedule: schedule,
+        settings,
       });
     }
-  }, [isNative, reminder.enabled, reminder.hour, reminder.minute, schedule]);
+  }, [isNative, reminder.enabled, reminder.hour, reminder.minute, schedule, settings]);
 
   useEffect(() => {
     if (isNative) return;
@@ -151,8 +164,12 @@ export default function App() {
       timeoutId = window.setTimeout(() => {
         if (cancelled) return;
         const d = new Date();
-        const idx = mondayFirstIndex(d);
-        const note = scheduleRef.current[idx];
+        const idx = (d.getDay() === 0 ? 6 : d.getDay() - 1) as WeekdayIndex;
+        const note = resolveDayNote(
+          d,
+          scheduleRef.current,
+          settingsRef.current
+        );
         try {
           new Notification("Rifiuti di oggi", {
             body: `${WEEKDAYS[idx]}: ${note}`,
@@ -197,6 +214,17 @@ export default function App() {
     setReminder((r) => ({ ...r, enabled: true }));
   }
 
+  const inputStyle: CSSProperties = {
+    width: "100%",
+    padding: "0.5rem 0.65rem",
+    borderRadius: "10px",
+    border: "1px solid var(--border)",
+    background: "var(--bg)",
+    color: "var(--text)",
+    font: "inherit",
+    lineHeight: 1.4,
+  };
+
   return (
     <div
       style={{
@@ -218,9 +246,173 @@ export default function App() {
           Promemoria rifiuti
         </h1>
         <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.95rem" }}>
-          Personalizza i giorni qui sotto in base al calendario del tuo comune.
+          {settings.municipality.trim()
+            ? `Comune di ${settings.municipality.trim()}`
+            : "Imposta comune e calendario qui sotto."}
         </p>
       </header>
+
+      <section
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: "14px",
+          padding: "1.1rem 1.15rem",
+          marginBottom: "1.25rem",
+        }}
+      >
+        <h2
+          style={{
+            fontSize: "0.85rem",
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "var(--muted)",
+            margin: "0 0 0.75rem",
+            fontWeight: 600,
+          }}
+        >
+          Comune
+        </h2>
+        <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+          <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Nome comune</span>
+          <input
+            type="text"
+            placeholder="es. Bacoli"
+            value={settings.municipality}
+            onChange={(e) =>
+              setSettings((s) => ({ ...s, municipality: e.target.value }))
+            }
+            style={inputStyle}
+          />
+        </label>
+      </section>
+
+      <section
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: "14px",
+          padding: "1.1rem 1.15rem",
+          marginBottom: "1.25rem",
+        }}
+      >
+        <h2
+          style={{
+            fontSize: "0.85rem",
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "var(--muted)",
+            margin: "0 0 0.5rem",
+            fontWeight: 600,
+          }}
+        >
+          Ritiro a settimane alterne
+        </h2>
+        <p style={{ margin: "0 0 1rem", fontSize: "0.88rem", color: "var(--muted)" }}>
+          Esempio Bacoli: venerdì, una settimana vetro + indifferenziata, la
+          successiva no. Scegli il giorno, una data di riferimento in cui vale la
+          <strong> settimana A</strong>, e i testi per settimana A e B.
+        </p>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.45rem",
+            cursor: "pointer",
+            fontSize: "0.95rem",
+            marginBottom: "0.85rem",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={settings.alternate.enabled}
+            onChange={(e) =>
+              setSettings((s) => ({
+                ...s,
+                alternate: { ...s.alternate, enabled: e.target.checked },
+              }))
+            }
+          />
+          Attiva per questo giorno della settimana
+        </label>
+        {settings.alternate.enabled && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Giorno del ritiro alternato</span>
+              <select
+                value={settings.alternate.weekday}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    alternate: {
+                      ...s.alternate,
+                      weekday: Number(e.target.value) as WeekdayIndex,
+                    },
+                  }))
+                }
+                style={inputStyle}
+              >
+                {WEEKDAYS.map((d, i) => (
+                  <option key={d} value={i}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
+                Data di riferimento (settimana A)
+              </span>
+              <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
+                Un giorno che cade di {WEEKDAYS[settings.alternate.weekday]} e in cui
+                passano i rifiuti indicati sotto in «settimana A».
+              </span>
+              <input
+                type="date"
+                value={settings.alternate.referenceDate}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    alternate: {
+                      ...s.alternate,
+                      referenceDate: e.target.value,
+                    },
+                  }))
+                }
+                style={inputStyle}
+              />
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Settimana A (es. vetro + indifferenziata)</span>
+              <textarea
+                value={settings.alternate.weekAText}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    alternate: { ...s.alternate, weekAText: e.target.value },
+                  }))
+                }
+                rows={2}
+                style={{ ...inputStyle, resize: "vertical", minHeight: "2.75rem" }}
+              />
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Settimana B (es. nessun ritiro)</span>
+              <textarea
+                value={settings.alternate.weekBText}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    alternate: { ...s.alternate, weekBText: e.target.value },
+                  }))
+                }
+                rows={2}
+                style={{ ...inputStyle, resize: "vertical", minHeight: "2.75rem" }}
+              />
+            </label>
+          </div>
+        )}
+      </section>
 
       <section
         style={{
@@ -281,9 +473,9 @@ export default function App() {
             gap: "0.5rem",
           }}
         >
-          {orderedDays.map(({ idx, label, isToday }) => (
+          {orderedDays.map(({ date: d, label, isToday, note }) => (
             <li
-              key={idx}
+              key={d.toDateString()}
               style={{
                 background: isToday ? "var(--today)" : "var(--surface)",
                 border: `1px solid ${isToday ? "var(--today-border)" : "var(--border)"}`,
@@ -299,7 +491,7 @@ export default function App() {
                 {isToday ? " · oggi" : ""}
               </span>
               <span style={{ fontSize: "0.9rem", color: "var(--muted)" }}>
-                {schedule[idx]}
+                {note}
               </span>
             </li>
           ))}
@@ -329,7 +521,7 @@ export default function App() {
         </h2>
         <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "var(--muted)" }}>
           {isNative
-            ? "Ogni giorno alla stessa ora ricevi un promemoria con il testo del giorno corrispondente nel calendario sotto (lunedì–domenica)."
+            ? "Ogni giorno alla stessa ora ricevi un promemoria. Per il giorno a settimane alternate le notifiche sono programmate per circa 6 mesi; riapri l’app dopo un aggiornamento del calendario per rinnovarle."
             : "Ricevi una notifica una volta al giorno all’orario scelto (solo se la scheda è aperta o il browser lo consente)."}
         </p>
         <div
@@ -400,8 +592,13 @@ export default function App() {
             fontWeight: 600,
           }}
         >
-          Calendario settimanale
+          Calendario settimanale (giorni fissi)
         </h2>
+        <p style={{ margin: "0 0 0.85rem", fontSize: "0.88rem", color: "var(--muted)" }}>
+          Usato per i giorni senza alternanza e come base per gli altri. Il giorno
+          che hai impostato come «alternato» usa qui il testo solo nei giorni in
+          cui non applichi l’alternanza (es. se disattivi l’opzione).
+        </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
           {WEEKDAYS.map((day, i) => {
             const idx = i as WeekdayIndex;

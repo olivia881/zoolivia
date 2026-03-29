@@ -4,6 +4,14 @@ import {
   Weekday,
   type LocalNotificationSchema,
 } from "@capacitor/local-notifications";
+import {
+  ALT_NOTIFICATION_IDS,
+  buildAlternateOneShotSlots,
+  type AppSettings,
+  resolveDayNote,
+  type WeekdayIndex,
+} from "./scheduleLogic";
+import { mondayFirstIndex } from "./weekdays";
 
 const CHANNEL_ID = "promemoria-rifiuti";
 /** ID fissi per lunedì–domenica (Android: int a 32 bit). */
@@ -28,6 +36,22 @@ const JS_MONDAY_FIRST_TO_CAPACITOR: Weekday[] = [
   Weekday.Saturday,
   Weekday.Sunday,
 ];
+
+function sampleDateForWeekday(weekday: WeekdayIndex): Date {
+  const d = new Date();
+  const idx = mondayFirstIndex(d);
+  const add = (weekday - idx + 7) % 7;
+  d.setDate(d.getDate() + add);
+  d.setHours(12, 0, 0, 0);
+  return d;
+}
+
+function alternateWeeklyHandled(settings: AppSettings): boolean {
+  const a = settings.alternate;
+  if (!a.enabled || !a.referenceDate.trim()) return false;
+  const anchor = a.referenceDate;
+  return /^(\d{4})-(\d{2})-(\d{2})$/.test(anchor.trim());
+}
 
 export function isNativeApp(): boolean {
   return Capacitor.isNativePlatform();
@@ -61,25 +85,41 @@ export async function syncNativeWeeklyReminders(options: {
   enabled: boolean;
   hour: number;
   minute: number;
-  scheduleTexts: readonly string[];
+  baseSchedule: Record<WeekdayIndex, string>;
+  settings: AppSettings;
 }): Promise<void> {
   if (!isNativeApp()) return;
   await ensureAndroidChannel();
 
-  await LocalNotifications.cancel({
-    notifications: WEEKLY_IDS.map((id) => ({ id })),
-  });
+  const toCancel = [
+    ...WEEKLY_IDS.map((id) => ({ id })),
+    ...ALT_NOTIFICATION_IDS.map((id) => ({ id })),
+  ];
+  await LocalNotifications.cancel({ notifications: toCancel });
 
   if (!options.enabled) return;
 
   const perm = await LocalNotifications.checkPermissions();
   if (perm.display !== "granted") return;
 
-  const notifications: LocalNotificationSchema[] = WEEKLY_IDS.map(
-    (id, i) => ({
-      id,
+  const now = new Date();
+  const useAlternateSlots =
+    alternateWeeklyHandled(options.settings) &&
+    options.settings.alternate.enabled;
+
+  const notifications: LocalNotificationSchema[] = [];
+
+  for (let i = 0; i < 7; i++) {
+    const idx = i as WeekdayIndex;
+    if (useAlternateSlots && idx === options.settings.alternate.weekday) {
+      continue;
+    }
+    const sample = sampleDateForWeekday(idx);
+    const body = resolveDayNote(sample, options.baseSchedule, options.settings);
+    notifications.push({
+      id: WEEKLY_IDS[i],
       title: "Rifiuti — promemoria",
-      body: `${WEEKDAY_LABELS[i]}: ${options.scheduleTexts[i] ?? ""}`,
+      body: `${WEEKDAY_LABELS[i]}: ${body}`,
       channelId: CHANNEL_ID,
       schedule: {
         on: {
@@ -89,8 +129,29 @@ export async function syncNativeWeeklyReminders(options: {
         },
         repeats: true,
       },
-    })
-  );
+    });
+  }
 
-  await LocalNotifications.schedule({ notifications });
+  if (useAlternateSlots) {
+    const slots = buildAlternateOneShotSlots(
+      now,
+      options.hour,
+      options.minute,
+      options.baseSchedule,
+      options.settings
+    );
+    for (const s of slots) {
+      notifications.push({
+        id: s.id,
+        title: "Rifiuti — promemoria",
+        body: `${WEEKDAY_LABELS[options.settings.alternate.weekday]}: ${s.body}`,
+        channelId: CHANNEL_ID,
+        schedule: { at: s.at },
+      });
+    }
+  }
+
+  if (notifications.length > 0) {
+    await LocalNotifications.schedule({ notifications });
+  }
 }
