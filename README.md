@@ -1,4 +1,4 @@
-# Turni di Servizio
+# Turni di servizio
 
 Mini web app (HTML, CSS, JavaScript vanilla) per pianificare e gestire i turni di servizio.
 
