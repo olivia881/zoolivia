@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2e7d32" />
+  <meta name="description" content="Promemoria raccolta differenziata giornaliero" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>Rifiuti – Promemoria</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:   #2e7d32;
+      --green-l: #4caf50;
+      --bg:      #f1f8e9;
+      --card:    #ffffff;
+      --text:    #1b5e20;
+      --muted:   #6a6a6a;
+      --radius:  14px;
+      --shadow:  0 4px 18px rgba(0,0,0,.10);
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      background: var(--green);
+      color: #fff;
+      padding: 1.1rem 1.4rem .9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    }
+
+    header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: .02em; }
+    header span { font-size: 1.6rem; }
+
+    main {
+      width: 100%;
+      max-width: 480px;
+      padding: 1.2rem 1rem 2rem;
+      flex: 1;
+    }
+
+    /* ---- TODAY CARD ---- */
+    .today-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.4rem 1.3rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .today-card .label {
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .35rem;
+    }
+
+    .today-card .date-line {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .bins {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .65rem;
+    }
+
+    .bin-badge {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .55rem .9rem;
+      border-radius: 999px;
+      font-size: .92rem;
+      font-weight: 600;
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,.18);
+    }
+
+    .bin-badge .icon { font-size: 1.2rem; }
+
+    .no-collection {
+      color: var(--muted);
+      font-style: italic;
+      font-size: .95rem;
+    }
+
+    /* ---- WEEK STRIP ---- */
+    .week-title {
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .6rem;
+      margin-left: .1rem;
+    }
+
+    .week-strip {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: .4rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .day-cell {
+      background: var(--card);
+      border-radius: 10px;
+      padding: .5rem .2rem;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,.07);
+      cursor: pointer;
+      transition: transform .12s, box-shadow .12s;
+      border: 2px solid transparent;
+    }
+
+    .day-cell:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,.13); }
+
+    .day-cell.active {
+      border-color: var(--green);
+      background: #e8f5e9;
+    }
+
+    .day-cell .day-name {
+      font-size: .68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .day-cell .day-num {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: .15rem 0;
+    }
+
+    .day-cell .dots {
+      display: flex;
+      justify-content: center;
+      gap: 2px;
+      flex-wrap: wrap;
+      min-height: 8px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    /* ---- DETAIL PANEL ---- */
+    .detail-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.2rem 1.3rem;
+      margin-bottom: 1.4rem;
+      display: none;
+    }
+
+    .detail-card.visible { display: block; }
+
+    .detail-card h3 {
+      font-size: 1rem;
+      margin-bottom: .8rem;
+      color: var(--green);
+    }
+
+    .item-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .item-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: .6rem;
+      font-size: .9rem;
+      line-height: 1.4;
+    }
+
+    .item-list li .bullet { font-size: 1.1rem; }
+
+    /* ---- NOTIFICATION BTN ---- */
+    .notif-section {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .notif-section p {
+      font-size: .88rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .btn {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: .6rem 1.2rem;
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+
+    .btn:hover { background: var(--green-l); }
+    .btn:disabled { background: #aaa; cursor: default; }
+
+    /* ---- FOOTER ---- */
+    footer {
+      text-align: center;
+      font-size: .75rem;
+      color: var(--muted);
+      padding: 1rem;
+    }
+
+    /* ---- SETTINGS ---- */
+    .settings-toggle {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .settings-panel {
+      display: none;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.2rem 1.3rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .settings-panel.open { display: block; }
+
+    .settings-panel h2 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: var(--green);
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .6rem 0;
+      border-bottom: 1px solid #eee;
+      gap: .8rem;
+    }
+
+    .setting-row:last-child { border-bottom: none; }
+
+    .setting-row label {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .9rem;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .setting-row input[type="time"],
+    .setting-row input[type="text"] {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: .35rem .6rem;
+      font-size: .9rem;
+      width: 9rem;
+      outline: none;
+    }
+
+    .setting-row input[type="time"]:focus,
+    .setting-row input[type="text"]:focus {
+      border-color: var(--green);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🗑️ Promemoria Rifiuti</h1>
+  </div>
+  <button class="settings-toggle" id="settingsToggle" title="Impostazioni" aria-label="Impostazioni">⚙️</button>
+</header>
+
+<main>
+
+  <!-- SETTINGS PANEL -->
+  <div class="settings-panel" id="settingsPanel">
+    <h2>Impostazioni</h2>
+
+    <div class="setting-row">
+      <label for="citySelect">🏙️ Città / schema raccolta</label>
+      <select id="citySelect" style="border:1px solid #ccc;border-radius:8px;padding:.35rem .6rem;font-size:.9rem;outline:none;">
+        <option value="default">Schema predefinito</option>
+        <option value="custom">Personalizzato</option>
+      </select>
+    </div>
+
+    <div class="setting-row">
+      <label for="notifTime">🔔 Orario notifica (sera prima)</label>
+      <input type="time" id="notifTime" value="20:00" />
+    </div>
+
+    <div class="setting-row" id="customRow" style="display:none;">
+      <label>📝 Schema personalizzato</label>
+    </div>
+
+    <div id="customSchedule" style="display:none; margin-top:.5rem;">
+      <!-- populated by JS -->
+    </div>
+
+    <button class="btn" id="saveSettings" style="margin-top:1rem;">Salva impostazioni</button>
+  </div>
+
+  <!-- TODAY CARD -->
+  <div class="today-card">
+    <div class="label">Oggi</div>
+    <div class="date-line" id="todayDate">—</div>
+    <div class="bins" id="todayBins"></div>
+  </div>
+
+  <!-- WEEK STRIP -->
+  <div class="week-title">Questa settimana</div>
+  <div class="week-strip" id="weekStrip"></div>
+
+  <!-- DETAIL PANEL (shown when a day is clicked) -->
+  <div class="detail-card" id="detailCard">
+    <h3 id="detailTitle"></h3>
+    <ul class="item-list" id="detailList"></ul>
+  </div>
+
+  <!-- NOTIFICATION SECTION -->
+  <div class="notif-section">
+    <p>Ricevi una notifica la sera prima per non dimenticare.</p>
+    <button class="btn" id="notifBtn">Attiva notifiche</button>
+  </div>
+
+</main>
+
+<footer>Nessun dato viene inviato online &bull; funziona anche offline</footer>
+
+<script>
+// ── COLOUR MAP ──────────────────────────────────────────────────────────────
+const BIN_COLOURS = {
+  organico:    '#6d4c41',
+  plastica:    '#fdd835',
+  carta:       '#1e88e5',
+  vetro:       '#43a047',
+  secco:       '#757575',
+  verde:       '#558b2f',
+  ingombranti: '#8e24aa',
+  raee:        '#f4511e',
+};
+
+const BIN_ICONS = {
+  organico:    '🟤',
+  plastica:    '🟡',
+  carta:       '🔵',
+  vetro:       '🟢',
+  secco:       '⚫',
+  verde:       '🌿',
+  ingombranti: '🟣',
+  raee:        '🔌',
+};
+
+const BIN_ITEMS = {
+  organico:    ['Scarti di cucina','Fondi di caffè e filtri','Gusci d\'uovo','Pane raffermo','Frutta e verdura','Tovaglioli di carta usati'],
+  plastica:    ['Bottiglie di plastica schiacciate','Flaconi detersivi','Vaschette per alimenti','Imballaggi polistirolo','Lattine e barattoli in alluminio','Tetrapak'],
+  carta:       ['Giornali e riviste','Scatole di cartone (appiattite)','Carta da ufficio','Sacchetti di carta','Imballaggi in cartoncino'],
+  vetro:       ['Bottiglie di vetro','Barattoli di vetro','Vasetti per conserve','Flaconi di profumo'],
+  secco:       ['Tutto ciò che non è riciclabile','Pannolini e assorbenti','Gomme da masticare','Mozziconi di sigarette'],
+  verde:       ['Sfalci d\'erba','Foglie secche','Potature leggere','Fiori recisi'],
+  ingombranti: ['Mobili smontati','Materassi','Elettrodomestici grandi (prenotare il ritiro)'],
+  raee:        ['Computer e monitor','Telefoni e tablet','Piccoli elettrodomestici','Lampadine e neon'],
+};
+
+// ── DEFAULT SCHEDULE  (day 0=Sun … 6=Sat) ───────────────────────────────────
+// Each value is an array of bin types collected that day.
+const DEFAULT_SCHEDULE = {
+  0: [],                           // domenica – niente
+  1: ['organico', 'plastica'],     // lunedì
+  2: ['carta'],                    // martedì
+  3: ['organico'],                 // mercoledì
+  4: ['vetro', 'plastica'],        // giovedì
+  5: ['organico', 'secco'],        // venerdì
+  6: ['verde'],                    // sabato
+};
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let schedule = loadSchedule();
+let notifTime = localStorage.getItem('notifTime') || '20:00';
+let notifGranted = Notification.permission === 'granted';
+
+function loadSchedule() {
+  try {
+    const s = JSON.parse(localStorage.getItem('schedule'));
+    if (s && typeof s === 'object') return s;
+  } catch(_) {}
+  return JSON.parse(JSON.stringify(DEFAULT_SCHEDULE));
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+const DAY_NAMES = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+const MONTHS    = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+
+function formatDate(d) {
+  return `${DAY_NAMES[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function getBins(dayOfWeek) {
+  return schedule[dayOfWeek] || [];
+}
+
+// ── RENDER TODAY ─────────────────────────────────────────────────────────────
+function renderToday() {
+  const today = new Date();
+  document.getElementById('todayDate').textContent = formatDate(today);
+
+  const bins = getBins(today.getDay());
+  const container = document.getElementById('todayBins');
+  container.innerHTML = '';
+
+  if (bins.length === 0) {
+    container.innerHTML = '<span class="no-collection">Nessuna raccolta oggi 🎉</span>';
+    return;
+  }
+
+  bins.forEach(bin => {
+    const badge = document.createElement('div');
+    badge.className = 'bin-badge';
+    badge.style.background = BIN_COLOURS[bin] || '#555';
+    badge.innerHTML = `<span class="icon">${BIN_ICONS[bin] || '🗑️'}</span>${capitalize(bin)}`;
+    container.appendChild(badge);
+  });
+}
+
+// ── RENDER WEEK STRIP ────────────────────────────────────────────────────────
+function renderWeek() {
+  const strip = document.getElementById('weekStrip');
+  strip.innerHTML = '';
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  // find Monday of current week
+  const monday = new Date(today);
+  const dow = today.getDay(); // 0=Sun
+  const diff = (dow === 0) ? -6 : 1 - dow;
+  monday.setDate(today.getDate() + diff);
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+
+    const bins = getBins(d.getDay());
+    const cell = document.createElement('div');
+    cell.className = 'day-cell' + (d.getTime() === today.getTime() ? ' active' : '');
+    cell.dataset.dow  = d.getDay();
+    cell.dataset.date = formatDate(d);
+
+    const dots = bins.map(b => `<span class="dot" style="background:${BIN_COLOURS[b]||'#999'}"></span>`).join('');
+
+    cell.innerHTML = `
+      <div class="day-name">${DAY_NAMES[d.getDay()]}</div>
+      <div class="day-num">${d.getDate()}</div>
+      <div class="dots">${dots}</div>
+    `;
+
+    cell.addEventListener('click', () => showDetail(d.getDay(), formatDate(d), cell));
+    strip.appendChild(cell);
+  }
+}
+
+// ── DETAIL PANEL ─────────────────────────────────────────────────────────────
+function showDetail(dow, dateStr, cell) {
+  // toggle
+  const panel = document.getElementById('detailCard');
+  const prevActive = document.querySelector('.day-cell.detail-open');
+  if (prevActive === cell) {
+    panel.classList.remove('visible');
+    cell.classList.remove('detail-open');
+    return;
+  }
+  if (prevActive) prevActive.classList.remove('detail-open');
+  cell.classList.add('detail-open');
+
+  const bins = getBins(dow);
+  document.getElementById('detailTitle').textContent = dateStr;
+
+  const list = document.getElementById('detailList');
+  list.innerHTML = '';
+
+  if (bins.length === 0) {
+    list.innerHTML = '<li><span class="bullet">🎉</span>Nessuna raccolta questo giorno.</li>';
+  } else {
+    bins.forEach(bin => {
+      const header = document.createElement('li');
+      header.innerHTML = `<span class="bullet">${BIN_ICONS[bin]||'🗑️'}</span><strong>${capitalize(bin)}</strong>`;
+      list.appendChild(header);
+
+      (BIN_ITEMS[bin] || []).forEach(item => {
+        const li = document.createElement('li');
+        li.style.paddingLeft = '1.8rem';
+        li.innerHTML = `<span class="bullet" style="color:#aaa">•</span>${item}`;
+        list.appendChild(li);
+      });
+    });
+  }
+
+  panel.classList.add('visible');
+}
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
+function updateNotifBtn() {
+  const btn = document.getElementById('notifBtn');
+  if (!('Notification' in window)) {
+    btn.textContent = 'Non supportato';
+    btn.disabled = true;
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    btn.textContent = '✅ Notifiche attive';
+    btn.disabled = true;
+  } else if (Notification.permission === 'denied') {
+    btn.textContent = '🚫 Bloccate dal browser';
+    btn.disabled = true;
+  } else {
+    btn.textContent = 'Attiva notifiche';
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('notifBtn').addEventListener('click', async () => {
+  const perm = await Notification.requestPermission();
+  notifGranted = perm === 'granted';
+  updateNotifBtn();
+  if (notifGranted) scheduleNotification();
+});
+
+function scheduleNotification() {
+  if (!notifGranted) return;
+
+  const [h, m] = notifTime.split(':').map(Number);
+  const now = new Date();
+  const fire = new Date();
+  fire.setHours(h, m, 0, 0);
+  if (fire <= now) fire.setDate(fire.getDate() + 1); // tomorrow same time
+
+  const tomorrow = new Date(fire);
+  tomorrow.setDate(fire.getDate() + (fire.getHours() >= now.getHours() && fire.getDate() === now.getDate() ? 1 : 0));
+  const targetDay = new Date(fire);
+  targetDay.setDate(fire.getDate() + 1); // the day bins are collected
+
+  const bins = getBins(targetDay.getDay());
+  if (bins.length === 0) {
+    // reschedule for next day with bins – handled by service worker
+    return;
+  }
+
+  const delay = fire.getTime() - now.getTime();
+  const names = bins.map(b => capitalize(b)).join(', ');
+
+  setTimeout(() => {
+    new Notification('🗑️ Rifiuti domani!', {
+      body: `Domani si raccoglie: ${names}. Ricordati di portare il bidone fuori!`,
+      icon: 'icons/icon-192.png',
+      badge: 'icons/icon-192.png',
+      tag: 'rifiuti-reminder',
+    });
+  }, delay);
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────────────────
+document.getElementById('settingsToggle').addEventListener('click', () => {
+  document.getElementById('settingsPanel').classList.toggle('open');
+});
+
+document.getElementById('citySelect').addEventListener('change', e => {
+  const custom = e.target.value === 'custom';
+  document.getElementById('customRow').style.display    = custom ? '' : 'none';
+  document.getElementById('customSchedule').style.display = custom ? '' : 'none';
+  if (custom) buildCustomForm();
+});
+
+function buildCustomForm() {
+  const container = document.getElementById('customSchedule');
+  container.innerHTML = '';
+
+  for (let d = 1; d <= 7; d++) {
+    const dow = d % 7; // 1=Mon … 6=Sat, 0=Sun
+    const dayBins = schedule[dow] || [];
+    const row = document.createElement('div');
+    row.style.cssText = 'margin-bottom:.7rem;';
+
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:.85rem;font-weight:600;margin-bottom:.3rem;';
+    label.textContent = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'][dow];
+    row.appendChild(label);
+
+    const checks = document.createElement('div');
+    checks.style.cssText = 'display:flex;flex-wrap:wrap;gap:.4rem;';
+
+    Object.keys(BIN_COLOURS).forEach(bin => {
+      const id = `cb_${dow}_${bin}`;
+      const wrap = document.createElement('label');
+      wrap.style.cssText = 'display:flex;align-items:center;gap:.25rem;font-size:.82rem;cursor:pointer;';
+      wrap.innerHTML = `<input type="checkbox" id="${id}" data-dow="${dow}" data-bin="${bin}" ${dayBins.includes(bin)?'checked':''}> ${BIN_ICONS[bin]} ${capitalize(bin)}`;
+      checks.appendChild(wrap);
+    });
+
+    row.appendChild(checks);
+    container.appendChild(row);
+  }
+}
+
+document.getElementById('saveSettings').addEventListener('click', () => {
+  // save notification time
+  notifTime = document.getElementById('notifTime').value;
+  localStorage.setItem('notifTime', notifTime);
+
+  // save custom schedule if active
+  if (document.getElementById('citySelect').value === 'custom') {
+    const newSched = {};
+    for (let dow = 0; dow < 7; dow++) newSched[dow] = [];
+    document.querySelectorAll('#customSchedule input[type=checkbox]:checked').forEach(cb => {
+      newSched[cb.dataset.dow].push(cb.dataset.bin);
+    });
+    schedule = newSched;
+    localStorage.setItem('schedule', JSON.stringify(schedule));
+  } else {
+    schedule = JSON.parse(JSON.stringify(DEFAULT_SCHEDULE));
+    localStorage.removeItem('schedule');
+  }
+
+  document.getElementById('settingsPanel').classList.remove('open');
+  renderToday();
+  renderWeek();
+  if (notifGranted) scheduleNotification();
+
+  showToast('Impostazioni salvate ✅');
+});
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:.6rem 1.2rem;border-radius:999px;font-size:.88rem;z-index:999;opacity:1;transition:opacity .4s;';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2200);
+}
+
+// ── UTILS ────────────────────────────────────────────────────────────────────
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ── SERVICE WORKER ───────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+renderToday();
+renderWeek();
+updateNotifBtn();
+if (notifGranted) scheduleNotification();
+
+// restore saved notif time in input
+document.getElementById('notifTime').value = notifTime;
+</script>
+</body>
+</html>
