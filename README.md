@@ -20,6 +20,17 @@ Serve un PC con **Android Studio** (almeno la prima volta).
 
 I dati restano sul telefono (nessun account obbligatorio). Il repo su GitHub può essere **privato**.
 
+### Promemoria vocale e notifiche (Android)
+
+Per sentire il messaggio **anche con schermo spento** l’app usa **allarmi di sistema** e la sintesi vocale integrata. Consigliato:
+
+1. **Impostazioni → App → Promemoria rifiuti → Notifiche** — tutte attive, suono e priorità alta se presente.
+2. **Batteria** — “Non ottimizzare” / **Senza restrizioni** (nome varia tra Samsung, Xiaomi, ecc.), così gli allarmi non vengono ritardati.
+3. **Allarmi e promemoria** (Android 12+) — consenti **allarmi e promemoria esatti** per questa app.
+4. Dopo aver cambiato orario o calendario, **apri l’app una volta** per aggiornare gli allarmi (fino a ~3 mesi di programmazione).
+
+Se il produttore ha un menu **Avvio automatico** / **Autostart**, attivalo per l’app (non sempre necessario per gli allarmi).
+
 ## Scaricare l’APK da GitHub (come per busta badante)
 
 A ogni push su **`main`** (e se lanci il workflow a mano) GitHub Actions compila un **APK debug** e lo mette a disposizione.

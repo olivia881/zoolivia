@@ -10,7 +10,8 @@ import { TextToSpeech } from "@capacitor-community/text-to-speech";
 import { resolveDayNote, type AppSettings, type WeekdayIndex } from "./scheduleLogic";
 
 export const DAILY_REMINDER_BASE_ID = 300;
-export const DAILY_REMINDER_COUNT = 90;
+/** Allineato a VoiceAlarmPlugin.MAX_ALARMS su Android */
+export const DAILY_REMINDER_COUNT = 100;
 
 export const DAILY_REMINDER_IDS = Array.from(
   { length: DAILY_REMINDER_COUNT },

@@ -331,10 +331,11 @@ export function SettingsView({
           {isNative ? "Promemoria (Android)" : "Promemoria (browser)"}
         </h2>
         <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "var(--muted)" }}>
-          All’orario scelto ricevi un promemoria su <strong>cosa esce domani</strong> (non
-          oggi). Testo di esempio: «Domani (martedì): carta». Con la voce attiva il
-          telefono legge anche l’ora e il messaggio (meglio se l’app è aperta o in
-          secondo piano; in background dipende da Android).
+          All’orario scelto: notifica su <strong>cosa esce domani</strong>. Con la voce
+          attiva, su <strong>Android</strong> il messaggio usa un <strong>allarme di
+          sistema</strong> (TTS nativo), così può essere letto anche con schermo spento
+          se in Impostazioni hai consentito notifiche, batteria senza restrizioni e
+          allarmi esatti. Su browser la voce dipende dalla scheda aperta.
         </p>
         <div
           style={{

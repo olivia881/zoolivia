@@ -4,6 +4,7 @@ import {
   type LocalNotificationSchema,
 } from "@capacitor/local-notifications";
 import type { AppSettings, WeekdayIndex } from "./scheduleLogic";
+import { VoiceAlarm } from "./voiceAlarm";
 import {
   buildDailyReminderSlots,
   DAILY_REMINDER_IDS,
@@ -46,8 +47,8 @@ export async function requestNativeNotificationPermission(): Promise<boolean> {
 }
 
 /**
- * Un promemoria al giorno all'orario scelto: testo = cosa esce domani.
- * Se voiceEnabled, extra.voiceText viene letto all'arrivo della notifica (app in foreground).
+ * Promemoria giornaliero: notifica con testo domani.
+ * Su Android, se voiceEnabled, allarmi nativi (AlarmManager) + TTS anche a schermo spento.
  */
 export async function syncNativeWeeklyReminders(options: {
   enabled: boolean;
@@ -65,6 +66,12 @@ export async function syncNativeWeeklyReminders(options: {
     notifications: allIds.map((id) => ({ id })),
   });
 
+  try {
+    await VoiceAlarm.cancelAll();
+  } catch {
+    /* plugin assente su web build */
+  }
+
   if (!options.enabled) return;
 
   const perm = await LocalNotifications.checkPermissions();
@@ -79,19 +86,38 @@ export async function syncNativeWeeklyReminders(options: {
     options.settings
   );
 
+  const isAndroid = Capacitor.getPlatform() === "android";
+
   const notifications: LocalNotificationSchema[] = slots.map((s) => ({
     id: s.id,
     title: s.title,
     body: s.body,
     channelId: CHANNEL_ID,
     schedule: { at: s.at },
-    extra: {
-      voiceText: s.voiceText,
-      voiceEnabled: options.voiceEnabled,
-    },
+    ...(isAndroid
+      ? {}
+      : {
+          extra: {
+            voiceText: s.voiceText,
+            voiceEnabled: options.voiceEnabled,
+          },
+        }),
   }));
 
   if (notifications.length > 0) {
     await LocalNotifications.schedule({ notifications });
+  }
+
+  if (isAndroid && options.voiceEnabled) {
+    try {
+      await VoiceAlarm.scheduleAlarms({
+        alarms: slots.map((s) => ({
+          when: s.at.getTime(),
+          voiceText: s.voiceText,
+        })),
+      });
+    } catch {
+      /* fallback: solo notifica silenziosa */
+    }
   }
 }
