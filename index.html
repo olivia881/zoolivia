@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promemoria Rifiuti</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <h1>♻️ Promemoria Rifiuti</h1>
+            <p class="subtitle">Non dimenticare mai quale rifiuto buttare!</p>
+        </header>
+
+        <section class="today-card" id="today-card">
+            <div class="today-label">Oggi</div>
+            <div class="today-date" id="today-date"></div>
+            <div class="today-waste" id="today-waste"></div>
+        </section>
+
+        <section class="tomorrow-card" id="tomorrow-card">
+            <div class="tomorrow-label">Domani</div>
+            <div class="tomorrow-date" id="tomorrow-date"></div>
+            <div class="tomorrow-waste" id="tomorrow-waste"></div>
+        </section>
+
+        <section class="week-section">
+            <h2>Programma Settimanale</h2>
+            <div class="week-grid" id="week-grid"></div>
+        </section>
+
+        <section class="config-section">
+            <h2>Personalizza il Calendario</h2>
+            <p class="config-hint">Seleziona i rifiuti da raccogliere per ogni giorno della settimana.</p>
+            <div class="config-grid" id="config-grid"></div>
+            <button class="btn-reset" id="btn-reset">Ripristina Impostazioni</button>
+        </section>
+    </div>
+
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Configura Giorno</h3>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-footer">
+                <button class="btn-save" id="btn-save">Salva</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
