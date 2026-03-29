@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cestino + simbolo riciclo (tema rifiuti), non documento/busta -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Area sicura ~66dp: contenuto centrato -->
+    <group
+        android:translateX="54"
+        android:translateY="56">
+        <!-- Ruote -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M-19,22a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M13,22a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+        <!-- Corpo cestino -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M-18,-18h36l-2.5,38h-31L-18,-18z" />
+        <!-- Bordo superiore -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M-22,-24h44v6h-44z" />
+        <!-- Coperchio -->
+        <path
+            android:fillColor="#B8F0EB"
+            android:pathData="M-20,-30h40v5h-40z" />
+        <!-- Maniglia -->
+        <path
+            android:fillColor="#B8F0EB"
+            android:pathData="M-12,-36h24v5h-24z" />
+        <!-- Tre frecce riciclo (triangoli 120°) -->
+        <group android:rotation="0" android:pivotX="0" android:pivotY="-2">
+            <path
+                android:fillColor="#0D4F48"
+                android:pathData="M-5,-8 L5,-8 L0,5 Z" />
+        </group>
+        <group android:rotation="120" android:pivotX="0" android:pivotY="-2">
+            <path
+                android:fillColor="#0D4F48"
+                android:pathData="M-5,-8 L5,-8 L0,5 Z" />
+        </group>
+        <group android:rotation="240" android:pivotX="0" android:pivotY="-2">
+            <path
+                android:fillColor="#0D4F48"
+                android:pathData="M-5,-8 L5,-8 L0,5 Z" />
+        </group>
+    </group>
+</vector>
