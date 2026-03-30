@@ -17,11 +17,12 @@ import {
 import { getDayLog } from "./dayLogStorage";
 import { aggregateMonthTotals } from "./monthTotals";
 import {
+  formatTimeRangeForCalendar,
+  plannedShiftCalendarText,
   resolveDayShift,
   shiftTimeLabels,
   type ShiftAppSettings,
 } from "./shiftScheduleLogic";
-import { shiftCellSummary } from "./shiftVoiceReminder";
 
 const MONTH_NAMES = [
   "Gennaio",
@@ -81,25 +82,28 @@ function formatMonthRangeIt(y: number, m: number): string {
   return `${a} – ${b}`;
 }
 
-function cellLine(
+/** Testo cella mese: orari come 9.00/15.00 (salvati o turno previsto). */
+function monthCellDisplayText(
   date: Date,
   settings: ShiftAppSettings,
   entry: DayServiceEntry
 ): string {
-  const planned = shiftCellSummary(date, settings);
-  const chunks: string[] = [];
-  if (planned) chunks.push(planned);
   const tags = dayEntryCellTags(entry);
-  if (tags.length) chunks.push(tags.join(" "));
-  if (entry.mattina.trim()) {
-    const t = entry.mattina.trim().replace(/\s+/g, " ");
-    chunks.push(t.length > 16 ? `${t.slice(0, 16)}…` : t);
-  } else if (entry.pomeriggioRientro.trim() && !planned) {
-    const t = entry.pomeriggioRientro.trim();
-    chunks.push(t.length > 16 ? `${t.slice(0, 16)}…` : t);
+  const tagLine = tags.length ? tags.join(" ") : "";
+
+  const m = entry.mattina.trim();
+  const p = entry.pomeriggioRientro.trim();
+  if (m || p) {
+    const lines: string[] = [];
+    if (m) lines.push(formatTimeRangeForCalendar(m));
+    if (p) lines.push(formatTimeRangeForCalendar(p));
+    const timeBlock = lines.filter(Boolean).join("\n");
+    return tagLine ? `${tagLine}\n${timeBlock}` : timeBlock;
   }
-  if (chunks.length === 0) return "";
-  return chunks.join(" · ");
+
+  const planned = plannedShiftCalendarText(date, settings);
+  if (planned) return planned;
+  return tagLine;
 }
 
 export function ShiftCalendarMonthView({
@@ -420,9 +424,9 @@ export function ShiftCalendarMonthView({
           const isSunday = date.getDay() === 0;
           const ymd = toYmd(date);
           const entry = getDayLog(dayLogs, ymd);
-          const line = cellLine(date, shiftSettings, entry);
+          const line = monthCellDisplayText(date, shiftSettings, entry);
           const hasUser = hasDayEntryContent(entry);
-          const planned = resolveDayShift(date, shiftSettings);
+          const hasPlanned = Boolean(resolveDayShift(date, shiftSettings));
 
           return (
             <button
@@ -431,7 +435,7 @@ export function ShiftCalendarMonthView({
               onClick={() => setDetailDate(date)}
               aria-label={`Modifica ${date.getDate()} ${MONTH_NAMES[month]} ${year}`}
               style={{
-                minHeight: "5.1rem",
+                minHeight: "6.25rem",
                 border: `1px solid ${isToday ? "var(--accent)" : "var(--border)"}`,
                 borderRadius: "9px",
                 padding: "3px 2px",
@@ -461,22 +465,26 @@ export function ShiftCalendarMonthView({
               </span>
               <span
                 style={{
-                  fontSize: "0.58rem",
-                  lineHeight: 1.2,
-                  color: hasUser ? "var(--text)" : "var(--muted)",
-                  fontWeight: hasUser ? 600 : 500,
-                  display: "-webkit-box",
-                  WebkitLineClamp: 4,
-                  WebkitBoxOrient: "vertical" as const,
-                  overflow: "hidden",
+                  fontSize: "0.56rem",
+                  lineHeight: 1.22,
+                  color:
+                    hasUser || line
+                      ? "var(--text)"
+                      : hasPlanned
+                        ? "var(--muted)"
+                        : "var(--muted)",
+                  fontWeight: hasUser || line ? 600 : 500,
+                  whiteSpace: "pre-line",
                   wordBreak: "break-word",
                   padding: "0 1px",
+                  flex: 1,
+                  overflow: "hidden",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 5,
+                  WebkitBoxOrient: "vertical" as const,
                 }}
               >
-                {line ||
-                  (planned
-                    ? shiftCellSummary(date, shiftSettings)
-                    : "—")}
+                {line || "—"}
               </span>
             </button>
           );

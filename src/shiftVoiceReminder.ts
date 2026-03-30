@@ -5,11 +5,7 @@ import {
   toYmd,
   type DayServiceEntry,
 } from "./dayLogModel";
-import {
-  resolveDayShift,
-  shiftTimeLabels,
-  type ShiftAppSettings,
-} from "./shiftScheduleLogic";
+import { resolveDayShift, type ShiftAppSettings } from "./shiftScheduleLogic";
 import { WEEKDAYS } from "./weekdays";
 
 export type ReminderState = {
@@ -244,16 +240,3 @@ export async function speakReminderText(text: string): Promise<void> {
   }
 }
 
-/** Testo breve per cella calendario */
-export function shiftCellSummary(date: Date, settings: ShiftAppSettings): string {
-  const s = resolveDayShift(date, settings);
-  if (!s) return "";
-  const { morning } = shiftTimeLabels(settings.timeVariant);
-  const mShort = WEEKDAYS[s.morningWeekday].slice(0, 3);
-  if (s.afternoonWeekday === null) return `${mShort} ${morning}`;
-  const aShort = WEEKDAYS[s.afternoonWeekday].slice(0, 3);
-  if (s.afternoonWeekday === s.morningWeekday) {
-    return `${mShort} → pomeriggio`;
-  }
-  return `${mShort} → ${aShort}`;
-}

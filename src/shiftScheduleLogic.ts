@@ -187,6 +187,43 @@ export function shiftTimeLabels(variant: ShiftTimeVariant): {
   return { morning: "8:00 – 14:00", afternoon: "14:30 – 17:30" };
 }
 
+/** Es. 9:00-15:00 → 9.00/15.00 (anche più intervalli nella stringa). */
+export function formatTimeRangeForCalendar(s: string): string {
+  const t = s.trim();
+  if (!t) return "";
+  return t.replace(
+    /(\d{1,2})\s*[.:]\s*(\d{2})\s*-\s*(\d{1,2})\s*[.:]\s*(\d{2})/g,
+    "$1.$2/$3.$4"
+  );
+}
+
+/**
+ * Turno previsto per il calendario mese: stesse regole dell’applicazione settimanale.
+ * Una o due righe (seconda fascia solo se prevista quel giorno, anche incrociata).
+ */
+export function plannedShiftCalendarText(
+  date: Date,
+  settings: ShiftAppSettings
+): string {
+  const info = resolveDayShift(date, settings);
+  if (!info) return "";
+  const wk = info.weekInCycle;
+  const wd = info.morningWeekday;
+  const lab = shiftTimeLabels(settings.timeVariant);
+  const line1 = formatTimeRangeForCalendar(lab.morning);
+  let hasSecond = false;
+  for (let wdE = 0 as WeekdayIndex; wdE <= 4; wdE++) {
+    const dest = afternoonReturnWeekday(wk, wdE);
+    if (dest !== null && dest === wd) {
+      hasSecond = true;
+      break;
+    }
+  }
+  if (!hasSecond) return line1;
+  const line2 = formatTimeRangeForCalendar(lab.afternoon);
+  return line2 ? `${line1}\n${line2}` : line1;
+}
+
 export type DayShiftInfo = {
   isWorkday: boolean;
   morningWeekday: WeekdayIndex;

@@ -79,7 +79,7 @@ Poi apri `http://localhost:5173` (dal telefono sulla stessa rete: `http://IP_DEL
 
 ## Funzioni
 
-- **Griglia settimanale**: sabato/domenica mostrano **Weekend** al posto dei turni; flag **Fest.** per festivi infrasettimanali. C.O., PNL, ecc. **sostituiscono** i campi orario (un riquadro con le sigle). **BP** resta in più se serve.
+- **Griglia settimanale**: sabato e domenica hanno **gli stessi campi turno** dei giorni feriali (puoi compilare se lavori in weekend). Flag **Fest.** e assenze (C.O., PNL, …) **sostituiscono** i campi orario come negli altri giorni.
 - **Calendario mensile** (link «Vista settimana» / «Calendario mese»).
 - **Conteggi** del mese (anche dalla vista settimana).
 - Scheda completa per giorno (corsi, servizi esterni, ecc.).
