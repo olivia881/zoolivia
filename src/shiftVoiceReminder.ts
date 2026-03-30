@@ -102,7 +102,14 @@ function describeTomorrowShift(
     if (dayLog.straordinarioOre.trim())
       parts.push(`Straordinario: ${dayLog.straordinarioOre.trim()} h`);
     const dow = tomorrow.getDay();
-    if (dow === 0 || dow === 6) parts.push("Weekend");
+    const isWe = dow === 0 || dow === 6;
+    const hasTurno =
+      dayLog.mattina.trim() ||
+      dayLog.pomeriggioRientro.trim() ||
+      dayLog.straordinarioOre.trim();
+    if (isWe && !hasTurno) {
+      parts.push("Sabato o domenica: compila i turni se lavori");
+    }
     if (dayLog.festivo) parts.push("Festivo");
     if (dayLog.congedoOrdinario) parts.push("C.O.");
     if (dayLog.congedoStraordMalattia) parts.push("C.S. malattia");

@@ -1,18 +1,15 @@
 import type { DayServiceEntry } from "./dayLogModel";
 
-/** Sabato o domenica: niente turni standard nella griglia. */
+/** Sabato o domenica (0=lun … 6=dom): per etichetta opzionale in griglia. */
 export function isWeekendIndex(dayIndexFromMonday: number): boolean {
   return dayIndexFromMonday >= 5;
 }
 
 /**
  * Nasconde i campi turno (prime fasce + straord.) e mostra una sola riga di stato.
+ * Sabato e domenica restano modificabili salvo assenze come in settimana.
  */
-export function shouldHideShiftInputs(
-  e: DayServiceEntry,
-  dayIndexFromMonday: number
-): boolean {
-  if (isWeekendIndex(dayIndexFromMonday)) return true;
+export function shouldHideShiftInputs(e: DayServiceEntry): boolean {
   return (
     e.festivo ||
     e.congedoOrdinario ||
@@ -24,14 +21,10 @@ export function shouldHideShiftInputs(
 }
 
 /**
- * Testo unico al posto dei turni (weekend + permessi + BP se presenti).
+ * Testo unico al posto dei turni (permessi + BP se presenti).
  */
-export function mainStatusLine(
-  e: DayServiceEntry,
-  dayIndexFromMonday: number
-): string {
+export function mainStatusLine(e: DayServiceEntry): string {
   const parts: string[] = [];
-  if (isWeekendIndex(dayIndexFromMonday)) parts.push("Weekend");
   if (e.festivo) parts.push("Festivo");
   if (e.congedoOrdinario) parts.push("C.O.");
   if (e.congedoStraordMalattia) parts.push("C.S. malattia");

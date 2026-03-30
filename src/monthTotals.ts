@@ -56,10 +56,7 @@ export function aggregateMonthTotals(
     if (!hasDayEntryContent(e)) continue;
 
     t.giorniConAnnotazioni += 1;
-    const js = new Date(year, month, d).getDay();
-    const isWeekend = js === 0 || js === 6;
     const noTurno =
-      isWeekend ||
       e.festivo ||
       e.congedoOrdinario ||
       e.congedoStraordMalattia ||

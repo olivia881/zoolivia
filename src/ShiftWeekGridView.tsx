@@ -399,8 +399,9 @@ export function ShiftWeekGridView({
               date.getDate() === today.getDate() &&
               date.getMonth() === today.getMonth() &&
               date.getFullYear() === today.getFullYear();
-            const hideTurno = shouldHideShiftInputs(e, idx);
-            const statusLine = mainStatusLine(e, idx);
+            const hideTurno = shouldHideShiftInputs(e);
+            const statusLine = mainStatusLine(e);
+            const isWe = idx >= 5;
 
             return (
               <div
@@ -427,6 +428,17 @@ export function ShiftWeekGridView({
                   >
                     {SHORT[idx]} {date.getDate()}/{date.getMonth() + 1}
                   </div>
+                  {isWe && (
+                    <div
+                      style={{
+                        fontSize: "0.6rem",
+                        color: "var(--muted)",
+                        marginTop: "0.15rem",
+                      }}
+                    >
+                      Compilabile se lavori
+                    </div>
+                  )}
                 </div>
 
                 {hideTurno ? (

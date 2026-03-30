@@ -79,7 +79,7 @@ Poi apri `http://localhost:5173` (dal telefono sulla stessa rete: `http://IP_DEL
 
 ## Funzioni
 
-- **Griglia settimanale** a scorrimento orizzontale + pulsante applica turno a scalare sulla settimana corrente.
+- **Griglia settimanale**: sabato/domenica mostrano **Weekend** al posto dei turni; flag **Fest.** per festivi infrasettimanali. C.O., PNL, ecc. **sostituiscono** i campi orario (un riquadro con le sigle). **BP** resta in più se serve.
 - **Calendario mensile** (link «Vista settimana» / «Calendario mese»).
 - **Conteggi** del mese (anche dalla vista settimana).
 - Scheda completa per giorno (corsi, servizi esterni, ecc.).
