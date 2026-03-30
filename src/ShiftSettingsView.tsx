@@ -226,7 +226,7 @@ export function ShiftSettingsView({
         <p style={{ margin: "0 0 0.85rem", fontSize: "0.88rem", color: "var(--muted)" }}>
           Il turno «a scalare» si ripete ogni <strong>5 settimane</strong>. Imposta il{" "}
           <strong>lunedì</strong> in cui per te inizia la <strong>settimana 1</strong> del
-          ciclo (quella con abbinamenti Lun↔Mer e Mar↔Gio). Se il calendario non coincide
+          ciclo (settimana 1 = coppia Lun↔Mer, poi Mar↔Gio, Mer↔Ven, Lun↔Gio, Mar↔Ven). Se non coincide
           con l’ufficio, cambia solo questa data.
         </p>
         <label style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>

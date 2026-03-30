@@ -132,9 +132,17 @@ function weeksBetweenMonday(a: Date, b: Date): number {
   return Math.round((da - db) / 86400000 / 7);
 }
 
+/** Una sola coppia incrociata per settimana (5 settimane, poi si ripete). */
+export const CYCLE_PAIR_LABELS = [
+  "Lun↔Mer",
+  "Mar↔Gio",
+  "Mer↔Ven",
+  "Lun↔Gio",
+  "Mar↔Ven",
+] as const;
+
 /**
- * Indice 0..4 nel ciclo a scalare:
- * sett.0: lun↔mer, mar↔gio; sett.1: mer↔ven; sett.2: lun↔gio; sett.3: mar↔ven; poi si ripete.
+ * Indice 0..4 nel ciclo a scalare (settimana = una coppia).
  */
 export function weekIndexInCycle(date: Date, anchorMondayYmd: string): number {
   const anchor = parseLocalYmd(anchorMondayYmd);
@@ -145,21 +153,16 @@ export function weekIndexInCycle(date: Date, anchorMondayYmd: string): number {
 }
 
 /**
- * Per il giorno lavorativo `weekday` (lun=0…ven=4), giorno del rientro pomeridiano in quella settimana di ciclo.
+ * Per ogni settimana del ciclo: un solo incrocio (mattina su un giorno, seconda fascia sull’altro).
  */
 const AFTERNOON_PAIR: Record<
   number,
   Partial<Record<WeekdayIndex, WeekdayIndex>>
 > = {
-  /** Lun↔Mer, Mar↔Gio */
-  0: { 0: 2, 2: 0, 1: 3, 3: 1 },
-  /** Mer↔Ven */
-  1: { 2: 4, 4: 2 },
-  /** Lun↔Gio */
-  2: { 0: 3, 3: 0 },
-  /** Mar↔Ven */
-  3: { 1: 4, 4: 1 },
-  /** Quinta settimana: Mar↔Ven (come da ciclo a 5) */
+  0: { 0: 2, 2: 0 },
+  1: { 1: 3, 3: 1 },
+  2: { 2: 4, 4: 2 },
+  3: { 0: 3, 3: 0 },
   4: { 1: 4, 4: 1 },
 };
 

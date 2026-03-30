@@ -1,6 +1,6 @@
 # Turni di servizio
 
-App **solo per uso personale** sul telefono: **vista settimanale** (predefinita) con **7 colonne** e dettagli visibili (mattina, pomeriggio, straordinario, fuori sede, note, flag C.O./PNL/BP…). Pulsante **«Applica turno a scalare a questa settimana»** compila automaticamente **lun–ven** con le fasce delle impostazioni (es. 9–15 e 15:30–18:30), inclusi i **rientri incrociati** (es. pomeriggio del lunedì sul mercoledì). C’è anche il **calendario mese** per panoramica e conteggi mensili. Promemoria opzionale.
+App **solo per uso personale** sul telefono: **vista settimanale** (predefinita) con **7 colonne**; due campi orario per giorno (senza etichette “mattina/pomeriggio”), più straordinario, fuori sede, note e flag. Il turno a scalare usa **una sola coppia di giorni per settimana** (settimana 1: Lun↔Mer, poi Mar↔Gio, Mer↔Ven, Lun↔Gio, Mar↔Ven in ciclo di 5); il pulsante **«Applica turno…»** mette la prima fascia sul primo giorno della coppia e la seconda sull’altro. Calendario mese e promemoria opzionali.
 
 L’**applicationId** Android è **`it.turni.servizio`**: è un’**app distinta** da «Promemoria rifiuti» (`it.promemoria.rifiuti`); puoi tenere entrambe installate. Icona: calendario + evidenziazione giorno (tema turni).
 

@@ -5,6 +5,7 @@ import {
 } from "./dayLogModel";
 import {
   afternoonReturnWeekday,
+  CYCLE_PAIR_LABELS,
   resolveDayShift,
   shiftTimeLabels,
   type ShiftAppSettings,
@@ -77,12 +78,5 @@ export function weekCycleSummary(
   );
   const info = resolveDayShift(d, settings);
   if (!info) return "";
-  const labels = [
-    "Lun↔Mer · Mar↔Gio",
-    "Mer↔Ven",
-    "Lun↔Gio",
-    "Mar↔Ven",
-    "Mar↔Ven",
-  ];
-  return `Settimana nel ciclo ${info.weekInCycle + 1}/5: ${labels[info.weekInCycle]}`;
+  return `Ciclo ${info.weekInCycle + 1}/5: ${CYCLE_PAIR_LABELS[info.weekInCycle]}`;
 }

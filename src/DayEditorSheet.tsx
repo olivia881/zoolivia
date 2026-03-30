@@ -2,18 +2,11 @@ import { type CSSProperties, type Dispatch, type SetStateAction } from "react";
 import type { DayServiceEntry } from "./dayLogModel";
 import { WEEKDAYS } from "./weekdays";
 import {
+  CYCLE_PAIR_LABELS,
   resolveDayShift,
   shiftTimeLabels,
   type ShiftAppSettings,
 } from "./shiftScheduleLogic";
-
-const CYCLE_LABELS = [
-  "Lun↔Mer · Mar↔Gio",
-  "Mer↔Ven",
-  "Lun↔Gio",
-  "Mar↔Ven",
-  "Mar↔Ven",
-];
 
 type Props = {
   detailTitle: string;
@@ -173,14 +166,14 @@ export function DayEditorSheet({
               lineHeight: 1.4,
             }}
           >
-            <strong>Turno a scalare (settimana {planned.weekInCycle + 1}/5 —{" "}
-            {CYCLE_LABELS[planned.weekInCycle]}):</strong> mattina{" "}
+            <strong>Turno a scalare ({CYCLE_PAIR_LABELS[planned.weekInCycle]}, sett.{" "}
+            {planned.weekInCycle + 1}/5):</strong> prima fascia{" "}
             {labels.morning}
             {planned.afternoonWeekday === null
               ? "."
               : planned.afternoonWeekday === planned.morningWeekday
-                ? `; pomeriggio stesso giorno ${labels.afternoon}.`
-                : `; rientro ${WEEKDAYS[planned.afternoonWeekday]} ${labels.afternoon}.`}
+                ? `; seconda fascia stesso giorno ${labels.afternoon}.`
+                : `; seconda fascia ${WEEKDAYS[planned.afternoonWeekday]} ${labels.afternoon}.`}
             <div style={{ marginTop: "0.45rem" }}>
               <button
                 type="button"

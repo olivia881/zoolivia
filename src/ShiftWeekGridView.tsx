@@ -41,15 +41,6 @@ type Props = {
   setDayLogs: Dispatch<SetStateAction<Record<string, DayServiceEntry>>>;
 };
 
-const labelStyle: CSSProperties = {
-  fontSize: "0.65rem",
-  fontWeight: 600,
-  color: "var(--muted)",
-  marginBottom: "0.15rem",
-  textTransform: "uppercase",
-  letterSpacing: "0.04em",
-};
-
 const inp: CSSProperties = {
   width: "100%",
   padding: "0.35rem 0.4rem",
@@ -366,9 +357,8 @@ export function ShiftWeekGridView({
           lineHeight: 1.35,
         }}
       >
-        Compila <strong>lun–ven</strong> con le fasce delle impostazioni (es. 9:00–15:00 e
-        15:30–18:30 dove previsto, anche incrociate tra giorni). Sabato e domenica non vengono
-        modificate. Puoi correggere a mano dopo.
+        Una <strong>coppia di giorni</strong> per settimana (es. lun–mer): prima fascia sul primo
+        giorno, seconda sull’altro. Sab/dom invariati. Modificabile a mano.
       </p>
 
       <div
@@ -393,7 +383,6 @@ export function ShiftWeekGridView({
               date.getDate() === today.getDate() &&
               date.getMonth() === today.getMonth() &&
               date.getFullYear() === today.getFullYear();
-            const planned = resolveDayShift(date, shiftSettings);
             const tags = dayEntryCellTags(e);
             const isWork = idx < 5;
 
@@ -427,73 +416,58 @@ export function ShiftWeekGridView({
                       Riposo
                     </div>
                   )}
-                  {isWork && planned && (
-                    <div style={{ fontSize: "0.6rem", color: "var(--muted)" }}>
-                      Ciclo {planned.weekInCycle + 1}/5
-                    </div>
-                  )}
                 </div>
 
+                <input
+                  type="text"
+                  value={e.mattina}
+                  onChange={(ev) =>
+                    patchDay(ymd, { mattina: ev.target.value })
+                  }
+                  placeholder="9:00–15:00"
+                  style={inp}
+                  aria-label={`Prima fascia ${SHORT[idx]}`}
+                />
+                <input
+                  type="text"
+                  value={e.pomeriggioRientro}
+                  onChange={(ev) =>
+                    patchDay(ymd, { pomeriggioRientro: ev.target.value })
+                  }
+                  placeholder="15:30–18:30"
+                  style={inp}
+                  aria-label={`Seconda fascia ${SHORT[idx]}`}
+                />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={e.straordinarioOre}
+                  onChange={(ev) =>
+                    patchDay(ymd, { straordinarioOre: ev.target.value })
+                  }
+                  placeholder="Straord. h"
+                  style={inp}
+                />
                 <div>
-                  <div style={labelStyle}>Mattina</div>
-                  <input
-                    type="text"
-                    value={e.mattina}
-                    onChange={(ev) =>
-                      patchDay(ymd, { mattina: ev.target.value })
-                    }
-                    placeholder="9:00-15:00"
-                    style={inp}
-                  />
-                </div>
-                <div>
-                  <div style={labelStyle}>Pomeriggio</div>
-                  <input
-                    type="text"
-                    value={e.pomeriggioRientro}
-                    onChange={(ev) =>
-                      patchDay(ymd, { pomeriggioRientro: ev.target.value })
-                    }
-                    placeholder="15:30-18:30"
-                    style={inp}
-                  />
-                </div>
-                <div>
-                  <div style={labelStyle}>Straord. (h)</div>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={e.straordinarioOre}
-                    onChange={(ev) =>
-                      patchDay(ymd, { straordinarioOre: ev.target.value })
-                    }
-                    style={inp}
-                  />
-                </div>
-                <div>
-                  <div style={labelStyle}>Fuori sede</div>
                   <textarea
                     value={e.servizioFuoriSede}
                     onChange={(ev) =>
                       patchDay(ymd, { servizioFuoriSede: ev.target.value })
                     }
                     rows={2}
-                    placeholder="luogo / attività"
+                    placeholder="Fuori sede"
                     style={{ ...inp, resize: "vertical", minHeight: "2.2rem" }}
                   />
                 </div>
-                <div>
-                  <div style={labelStyle}>Note</div>
-                  <textarea
-                    value={e.altroNote}
-                    onChange={(ev) =>
-                      patchDay(ymd, { altroNote: ev.target.value })
-                    }
-                    rows={2}
-                    placeholder="Corsi nella scheda completa"
-                    style={{ ...inp, resize: "vertical", minHeight: "2.2rem" }}
-                  />
-                </div>
+                <textarea
+                  value={e.altroNote}
+                  onChange={(ev) =>
+                    patchDay(ymd, { altroNote: ev.target.value })
+                  }
+                  rows={2}
+                  placeholder="Note"
+                  style={{ ...inp, resize: "vertical", minHeight: "2.2rem" }}
+                />
 
                 <div
                   style={{
