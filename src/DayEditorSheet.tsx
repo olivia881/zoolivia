@@ -1,4 +1,5 @@
 import { type CSSProperties, type Dispatch, type SetStateAction } from "react";
+import { absenceFlagClearsShifts } from "./dayAbsenceDisplay";
 import type { DayServiceEntry } from "./dayLogModel";
 import { WEEKDAYS } from "./weekdays";
 import {
@@ -329,7 +330,7 @@ export function DayEditorSheet({
             }}
           >
             <legend style={{ fontSize: "0.78rem", fontWeight: 600, padding: "0 0.35rem" }}>
-              Assenze / permessi / pasti
+              Festivi / assenze / pasti
             </legend>
             <div
               style={{
@@ -339,30 +340,87 @@ export function DayEditorSheet({
               }}
             >
               {rowCheckbox(
+                entry.festivo,
+                (v) =>
+                  setEntry((x) => {
+                    const next = { ...x, festivo: v };
+                    if (v && absenceFlagClearsShifts("festivo")) {
+                      next.mattina = "";
+                      next.pomeriggioRientro = "";
+                      next.straordinarioOre = "";
+                    }
+                    return next;
+                  }),
+                "Festivo (lun–ven)"
+              )}
+              {rowCheckbox(
                 entry.congedoOrdinario,
-                (v) => setEntry((x) => ({ ...x, congedoOrdinario: v })),
+                (v) =>
+                  setEntry((x) => {
+                    const next = { ...x, congedoOrdinario: v };
+                    if (v && absenceFlagClearsShifts("congedoOrdinario")) {
+                      next.mattina = "";
+                      next.pomeriggioRientro = "";
+                      next.straordinarioOre = "";
+                    }
+                    return next;
+                  }),
                 "Congedo ordinario (C.O.)"
               )}
               {rowCheckbox(
                 entry.congedoStraordMalattia,
                 (v) =>
-                  setEntry((x) => ({ ...x, congedoStraordMalattia: v })),
+                  setEntry((x) => {
+                    const next = { ...x, congedoStraordMalattia: v };
+                    if (v && absenceFlagClearsShifts("congedoStraordMalattia")) {
+                      next.mattina = "";
+                      next.pomeriggioRientro = "";
+                      next.straordinarioOre = "";
+                    }
+                    return next;
+                  }),
                 "Congedo straordinario — malattia"
               )}
               {rowCheckbox(
                 entry.congedoStraordFamiglia,
                 (v) =>
-                  setEntry((x) => ({ ...x, congedoStraordFamiglia: v })),
+                  setEntry((x) => {
+                    const next = { ...x, congedoStraordFamiglia: v };
+                    if (v && absenceFlagClearsShifts("congedoStraordFamiglia")) {
+                      next.mattina = "";
+                      next.pomeriggioRientro = "";
+                      next.straordinarioOre = "";
+                    }
+                    return next;
+                  }),
                 "Congedo straordinario — motivi familiari"
               )}
               {rowCheckbox(
                 entry.pnl,
-                (v) => setEntry((x) => ({ ...x, pnl: v })),
+                (v) =>
+                  setEntry((x) => {
+                    const next = { ...x, pnl: v };
+                    if (v && absenceFlagClearsShifts("pnl")) {
+                      next.mattina = "";
+                      next.pomeriggioRientro = "";
+                      next.straordinarioOre = "";
+                    }
+                    return next;
+                  }),
                 "PNL"
               )}
               {rowCheckbox(
                 entry.congedoParentale,
-                (v) => setEntry((x) => ({ ...x, congedoParentale: v })),
+                (v) =>
+                  setEntry((x) => {
+                    const next = { ...x, congedoParentale: v };
+                    if (v && absenceFlagClearsShifts("congedoParentale")) {
+                      next.mattina = "";
+                      next.pomeriggioRientro = "";
+                      next.straordinarioOre = "";
+                    }
+                    return next;
+                  }),
                 "Congedo parentale (C.P.)"
               )}
               {rowCheckbox(

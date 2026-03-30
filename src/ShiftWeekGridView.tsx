@@ -8,7 +8,11 @@ import {
 } from "react";
 import { DayEditorSheet } from "./DayEditorSheet";
 import {
-  dayEntryCellTags,
+  absenceFlagClearsShifts,
+  mainStatusLine,
+  shouldHideShiftInputs,
+} from "./dayAbsenceDisplay";
+import {
   emptyDayEntry,
   hasDayEntryContent,
   toYmd,
@@ -118,7 +122,19 @@ export function ShiftWeekGridView({
 
   function patchDay(ymd: string, patch: Partial<DayServiceEntry>) {
     setDayLogs((prev) => {
-      const cur = { ...(prev[ymd] ?? emptyDayEntry()), ...patch };
+      let cur = { ...(prev[ymd] ?? emptyDayEntry()), ...patch };
+      const turnedOnAbsence = Object.keys(patch).some(
+        (k) =>
+          absenceFlagClearsShifts(k) && Boolean(patch[k as keyof DayServiceEntry])
+      );
+      if (turnedOnAbsence) {
+        cur = {
+          ...cur,
+          mattina: "",
+          pomeriggioRientro: "",
+          straordinarioOre: "",
+        };
+      }
       const next = { ...prev };
       if (hasDayEntryContent(cur)) next[ymd] = cur;
       else delete next[ymd];
@@ -383,8 +399,8 @@ export function ShiftWeekGridView({
               date.getDate() === today.getDate() &&
               date.getMonth() === today.getMonth() &&
               date.getFullYear() === today.getFullYear();
-            const tags = dayEntryCellTags(e);
-            const isWork = idx < 5;
+            const hideTurno = shouldHideShiftInputs(e, idx);
+            const statusLine = mainStatusLine(e, idx);
 
             return (
               <div
@@ -411,43 +427,62 @@ export function ShiftWeekGridView({
                   >
                     {SHORT[idx]} {date.getDate()}/{date.getMonth() + 1}
                   </div>
-                  {!isWork && (
-                    <div style={{ fontSize: "0.65rem", color: "var(--muted)" }}>
-                      Riposo
-                    </div>
-                  )}
                 </div>
 
-                <input
-                  type="text"
-                  value={e.mattina}
-                  onChange={(ev) =>
-                    patchDay(ymd, { mattina: ev.target.value })
-                  }
-                  placeholder="9:00–15:00"
-                  style={inp}
-                  aria-label={`Prima fascia ${SHORT[idx]}`}
-                />
-                <input
-                  type="text"
-                  value={e.pomeriggioRientro}
-                  onChange={(ev) =>
-                    patchDay(ymd, { pomeriggioRientro: ev.target.value })
-                  }
-                  placeholder="15:30–18:30"
-                  style={inp}
-                  aria-label={`Seconda fascia ${SHORT[idx]}`}
-                />
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={e.straordinarioOre}
-                  onChange={(ev) =>
-                    patchDay(ymd, { straordinarioOre: ev.target.value })
-                  }
-                  placeholder="Straord. h"
-                  style={inp}
-                />
+                {hideTurno ? (
+                  <div
+                    style={{
+                      minHeight: "4.5rem",
+                      padding: "0.5rem 0.35rem",
+                      borderRadius: "8px",
+                      background: "var(--accent-soft)",
+                      border: "1px solid var(--border)",
+                      fontSize: "0.82rem",
+                      fontWeight: 700,
+                      color: "var(--text)",
+                      textAlign: "center",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {statusLine || "—"}
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      value={e.mattina}
+                      onChange={(ev) =>
+                        patchDay(ymd, { mattina: ev.target.value })
+                      }
+                      placeholder="9:00–15:00"
+                      style={inp}
+                      aria-label={`Prima fascia ${SHORT[idx]}`}
+                    />
+                    <input
+                      type="text"
+                      value={e.pomeriggioRientro}
+                      onChange={(ev) =>
+                        patchDay(ymd, { pomeriggioRientro: ev.target.value })
+                      }
+                      placeholder="15:30–18:30"
+                      style={inp}
+                      aria-label={`Seconda fascia ${SHORT[idx]}`}
+                    />
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={e.straordinarioOre}
+                      onChange={(ev) =>
+                        patchDay(ymd, { straordinarioOre: ev.target.value })
+                      }
+                      placeholder="Straord. h"
+                      style={inp}
+                    />
+                  </>
+                )}
                 <div>
                   <textarea
                     value={e.servizioFuoriSede}
@@ -478,6 +513,7 @@ export function ShiftWeekGridView({
                   }}
                 >
                   {[
+                    ["Fest.", e.festivo, "festivo"],
                     ["C.O.", e.congedoOrdinario, "congedoOrdinario"],
                     ["C.S.m", e.congedoStraordMalattia, "congedoStraordMalattia"],
                     ["C.S.f", e.congedoStraordFamiglia, "congedoStraordFamiglia"],
@@ -501,7 +537,8 @@ export function ShiftWeekGridView({
                         onChange={(ev) => {
                           const v = ev.target.checked;
                           const patch: Partial<DayServiceEntry> = {};
-                          if (key === "congedoOrdinario")
+                          if (key === "festivo") patch.festivo = v;
+                          else if (key === "congedoOrdinario")
                             patch.congedoOrdinario = v;
                           else if (key === "congedoStraordMalattia")
                             patch.congedoStraordMalattia = v;
@@ -518,18 +555,6 @@ export function ShiftWeekGridView({
                     </label>
                   ))}
                 </div>
-
-                {tags.length > 0 && (
-                  <div
-                    style={{
-                      fontSize: "0.6rem",
-                      color: "var(--accent)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {tags.join(" ")}
-                  </div>
-                )}
 
                 <button
                   type="button"
@@ -576,7 +601,11 @@ export function ShiftWeekGridView({
         >
           <li>Ore mattina+rientro: {monthTotals.oreDaFasceMattinaPomeriggio} h</li>
           <li>Straord.: {monthTotals.oreStraordinario} h · Fuori sede: {monthTotals.oreServizioFuoriSede} h</li>
-          <li>Buoni pasto: {monthTotals.buoniPasto} · Giorni annotati: {monthTotals.giorniConAnnotazioni}</li>
+          <li>
+            Buoni pasto: {monthTotals.buoniPasto} · Festivi (flag):{" "}
+            {monthTotals.giorniFestivi} · Giorni annotati:{" "}
+            {monthTotals.giorniConAnnotazioni}
+          </li>
         </ul>
       </section>
 

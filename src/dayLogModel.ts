@@ -14,6 +14,8 @@ export type DayServiceEntry = {
   pnl: boolean;
   congedoParentale: boolean;
   buonoPasto: boolean;
+  /** Festivo (lun–ven: es. chiusura; sab/dom usano anche “Weekend”) */
+  festivo: boolean;
   corsiFormazione: string;
   altroNote: string;
 };
@@ -33,6 +35,7 @@ export function emptyDayEntry(): DayServiceEntry {
     pnl: false,
     congedoParentale: false,
     buonoPasto: false,
+    festivo: false,
     corsiFormazione: "",
     altroNote: "",
   };
@@ -86,6 +89,7 @@ export function hasDayEntryContent(e: DayServiceEntry): boolean {
   if (e.altroNote.trim()) return true;
   if (e.buonoPasto) return true;
   if (
+    e.festivo ||
     e.congedoOrdinario ||
     e.congedoStraordMalattia ||
     e.congedoStraordFamiglia ||
@@ -99,6 +103,7 @@ export function hasDayEntryContent(e: DayServiceEntry): boolean {
 /** Etichette compatte per la cella del calendario */
 export function dayEntryCellTags(e: DayServiceEntry): string[] {
   const tags: string[] = [];
+  if (e.festivo) tags.push("Fest.");
   if (e.congedoOrdinario) tags.push("C.O.");
   if (e.congedoStraordMalattia) tags.push("C.S. mal.");
   if (e.congedoStraordFamiglia) tags.push("C.S. fam.");
