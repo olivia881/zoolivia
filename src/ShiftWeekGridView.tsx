@@ -613,12 +613,29 @@ export function ShiftWeekGridView({
             lineHeight: 1.45,
           }}
         >
-          <li>Ore mattina+rientro: {weekTotals.oreDaFasceMattinaPomeriggio} h</li>
-          <li>Straord.: {weekTotals.oreStraordinario} h · Fuori sede: {weekTotals.oreServizioFuoriSede} h</li>
           <li>
-            Buoni pasto: {weekTotals.buoniPasto} · Festivi (flag):{" "}
-            {weekTotals.giorniFestivi} · Giorni annotati:{" "}
-            {weekTotals.giorniConAnnotazioni}
+            <strong style={{ color: "var(--text)" }}>BP</strong> (buoni pasto):{" "}
+            {weekTotals.buoniPasto} ·{" "}
+            <strong style={{ color: "var(--text)" }}>C.O.</strong>:{" "}
+            {weekTotals.giorniCongedoOrdinario} ·{" "}
+            <strong style={{ color: "var(--text)" }}>C.S. mal.</strong>:{" "}
+            {weekTotals.giorniCongedoStraordMalattia}
+          </li>
+          <li>
+            <strong style={{ color: "var(--text)" }}>PNL</strong>:{" "}
+            {weekTotals.giorniPnl} ·{" "}
+            <strong style={{ color: "var(--text)" }}>C.P.</strong>:{" "}
+            {weekTotals.giorniCongedoParentale} ·{" "}
+            <strong style={{ color: "var(--text)" }}>C.S. fam.</strong>:{" "}
+            {weekTotals.giorniCongedoStraordFamiglia}
+          </li>
+          <li>
+            Ore mattina+rientro: {weekTotals.oreDaFasceMattinaPomeriggio} h · Straord.:{" "}
+            {weekTotals.oreStraordinario} h · Fuori sede:{" "}
+            {weekTotals.oreServizioFuoriSede} h
+          </li>
+          <li style={{ fontSize: "0.74rem", color: "var(--muted)" }}>
+            Giorni con annotazioni: {weekTotals.giorniConAnnotazioni}
           </li>
         </ul>
       </section>

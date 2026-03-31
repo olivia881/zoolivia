@@ -17,7 +17,6 @@ export type MonthTotals = {
   giorniCongedoStraordFamiglia: number;
   giorniPnl: number;
   giorniCongedoParentale: number;
-  giorniFestivi: number;
   buoniPasto: number;
 };
 
@@ -46,7 +45,6 @@ export function aggregateMonthTotals(
     giorniCongedoStraordFamiglia: 0,
     giorniPnl: 0,
     giorniCongedoParentale: 0,
-    giorniFestivi: 0,
     buoniPasto: 0,
   };
 
@@ -77,7 +75,6 @@ const emptyTotals = (): MonthTotals => ({
   giorniCongedoStraordFamiglia: 0,
   giorniPnl: 0,
   giorniCongedoParentale: 0,
-  giorniFestivi: 0,
   buoniPasto: 0,
 });
 
@@ -86,7 +83,6 @@ function accumulateDayIntoTotals(
   t: MonthTotals
 ): void {
   if (e.buonoPasto) t.buoniPasto += 1;
-  if (e.festivo) t.giorniFestivi += 1;
   if (e.congedoOrdinario) t.giorniCongedoOrdinario += 1;
   if (e.congedoStraordMalattia) t.giorniCongedoStraordMalattia += 1;
   if (e.congedoStraordFamiglia) t.giorniCongedoStraordFamiglia += 1;

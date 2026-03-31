@@ -547,8 +547,18 @@ export function ShiftCalendarMonthView({
               }}
             >
               <li>
-                <strong style={{ color: "var(--text)" }}>Giorni annotati:</strong>{" "}
-                {totals.giorniConAnnotazioni}
+                <strong style={{ color: "var(--text)" }}>BP</strong> (buoni pasto):{" "}
+                {totals.buoniPasto} · <strong style={{ color: "var(--text)" }}>C.O.</strong>:{" "}
+                {totals.giorniCongedoOrdinario} ·{" "}
+                <strong style={{ color: "var(--text)" }}>C.S. mal.</strong>:{" "}
+                {totals.giorniCongedoStraordMalattia}
+              </li>
+              <li>
+                <strong style={{ color: "var(--text)" }}>PNL</strong>: {totals.giorniPnl} ·{" "}
+                <strong style={{ color: "var(--text)" }}>C.P.</strong>:{" "}
+                {totals.giorniCongedoParentale} ·{" "}
+                <strong style={{ color: "var(--text)" }}>C.S. fam.</strong>:{" "}
+                {totals.giorniCongedoStraordFamiglia}
               </li>
               <li>
                 <strong style={{ color: "var(--text)" }}>Ore da mattina + rientro:</strong>{" "}
@@ -566,29 +576,8 @@ export function ShiftCalendarMonthView({
                 <strong style={{ color: "var(--text)" }}>Fuori sede:</strong>{" "}
                 {totals.oreServizioFuoriSede} h
               </li>
-              <li>
-                <strong style={{ color: "var(--text)" }}>Giorni C.O.:</strong>{" "}
-                {totals.giorniCongedoOrdinario}
-              </li>
-              <li>
-                <strong style={{ color: "var(--text)" }}>Giorni C.S. malattia:</strong>{" "}
-                {totals.giorniCongedoStraordMalattia}
-              </li>
-              <li>
-                <strong style={{ color: "var(--text)" }}>Giorni C.S. famiglia:</strong>{" "}
-                {totals.giorniCongedoStraordFamiglia}
-              </li>
-              <li>
-                <strong style={{ color: "var(--text)" }}>Giorni PNL:</strong>{" "}
-                {totals.giorniPnl}
-              </li>
-              <li>
-                <strong style={{ color: "var(--text)" }}>Giorni C.P.:</strong>{" "}
-                {totals.giorniCongedoParentale}
-              </li>
-              <li>
-                <strong style={{ color: "var(--text)" }}>Buoni pasto:</strong>{" "}
-                {totals.buoniPasto}
+              <li style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
+                Giorni con annotazioni: {totals.giorniConAnnotazioni}
               </li>
             </ul>
           </div>
