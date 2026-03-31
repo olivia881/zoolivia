@@ -19,7 +19,7 @@ import {
   type DayServiceEntry,
 } from "./dayLogModel";
 import { getDayLog } from "./dayLogStorage";
-import { aggregateMonthTotals } from "./monthTotals";
+import { aggregateTotalsForDates } from "./monthTotals";
 import {
   mondayOfWeekContaining,
   plannedBandsForDayFields,
@@ -165,11 +165,10 @@ export function ShiftWeekGridView({
     setEditorDate(null);
   }
 
-  const monthTotals = useMemo(() => {
-    const y = monday.getFullYear();
-    const m = monday.getMonth();
-    return aggregateMonthTotals(y, m, dayLogs);
-  }, [monday, dayLogs]);
+  const weekTotals = useMemo(
+    () => aggregateTotalsForDates(weekDays, dayLogs),
+    [weekDays, dayLogs]
+  );
 
   const cycleHint = weekCycleSummary(monday, shiftSettings);
   const office1 = shiftSettings.officeLine1.trim();
@@ -602,8 +601,11 @@ export function ShiftWeekGridView({
         }}
       >
         <strong style={{ color: "var(--text)" }}>
-          Conteggi del mese ({monday.toLocaleString("it-IT", { month: "long" })})
+          Conteggi di questa settimana (lun–dom visibili)
         </strong>
+        <p style={{ margin: "0.35rem 0 0", fontSize: "0.72rem", color: "var(--muted)" }}>
+          I totali del <strong>mese intero</strong> sono nel calendario mensile (Conteggi del mese).
+        </p>
         <ul
           style={{
             margin: "0.45rem 0 0",
@@ -611,12 +613,12 @@ export function ShiftWeekGridView({
             lineHeight: 1.45,
           }}
         >
-          <li>Ore mattina+rientro: {monthTotals.oreDaFasceMattinaPomeriggio} h</li>
-          <li>Straord.: {monthTotals.oreStraordinario} h · Fuori sede: {monthTotals.oreServizioFuoriSede} h</li>
+          <li>Ore mattina+rientro: {weekTotals.oreDaFasceMattinaPomeriggio} h</li>
+          <li>Straord.: {weekTotals.oreStraordinario} h · Fuori sede: {weekTotals.oreServizioFuoriSede} h</li>
           <li>
-            Buoni pasto: {monthTotals.buoniPasto} · Festivi (flag):{" "}
-            {monthTotals.giorniFestivi} · Giorni annotati:{" "}
-            {monthTotals.giorniConAnnotazioni}
+            Buoni pasto: {weekTotals.buoniPasto} · Festivi (flag):{" "}
+            {weekTotals.giorniFestivi} · Giorni annotati:{" "}
+            {weekTotals.giorniConAnnotazioni}
           </li>
         </ul>
       </section>

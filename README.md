@@ -81,7 +81,7 @@ Poi apri `http://localhost:5173` (dal telefono sulla stessa rete: `http://IP_DEL
 
 - **Griglia settimanale**: sabato e domenica hanno **gli stessi campi turno** dei giorni feriali (puoi compilare se lavori in weekend). Flag **Fest.** e assenze (C.O., PNL, …) **sostituiscono** i campi orario come negli altri giorni.
 - **Calendario mensile**: in ogni giorno gli orari come **9.00/15.00** (e seconda riga **15.30/18.30** se prevista), da dati salvati o da turno teorico.
-- **Conteggi** del mese (anche dalla vista settimana): **buoni pasto** e **giorni con flag Fest.** sono sempre contati nel mese, anche come unica annotazione del giorno.
+- **Conteggi**: nel **calendario mensile** = tutto il mese. Nella **vista settimana** = solo i **7 giorni** della settimana a schermo (così sabato/domenica in fine mese non “sparivano” dal totale che prima era solo del mese del lunedì).
 - **Fasce in impostazioni**: oltre a 8–14 / 9–15, anche **7–13 + 13:30–16:30** e blocchi **13–19**, **14–20**, **15–21**. Nei campi si possono usare catene tipo `7:00-13:00-13:30-16:30` o `9.00/15.00` per il calcolo ore.
 - Scheda completa per giorno (corsi, servizi esterni, ecc.).
 - Sfondo interfaccia **blu** (tema coerente con l’icona).
