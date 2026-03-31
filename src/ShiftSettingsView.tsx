@@ -3,6 +3,7 @@ import {
   defaultAnchorMondayYmd,
   parseLocalYmd,
   type ShiftAppSettings,
+  type ShiftTimeVariant,
 } from "./shiftScheduleLogic";
 import { mondayFirstIndex } from "./weekdays";
 import type { ReminderState } from "./shiftVoiceReminder";
@@ -152,53 +153,54 @@ export function ShiftSettingsView({
           Orari
         </h2>
         <p style={{ margin: "0 0 1rem", fontSize: "0.88rem", color: "var(--muted)" }}>
-          Scegli la fascia: mattina e rientro pomeridiano sono sempre abbinati.
+          Scegli le fasce per «Applica turno a scalare». Per le varianti in un solo blocco
+          (13–19, 14–20, 15–21) il secondo campo resta vuoto se coincide con il primo.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-          <label
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "0.5rem",
-              cursor: "pointer",
-              fontSize: "0.95rem",
-            }}
-          >
-            <input
-              type="radio"
-              name="timeVariant"
-              checked={shiftSettings.timeVariant === "early"}
-              onChange={() =>
-                setShiftSettings((s) => ({ ...s, timeVariant: "early" }))
-              }
-            />
-            <span>
-              <strong>8:00 – 14:00</strong> e rientro{" "}
-              <strong>14:30 – 17:30</strong>
-            </span>
-          </label>
-          <label
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "0.5rem",
-              cursor: "pointer",
-              fontSize: "0.95rem",
-            }}
-          >
-            <input
-              type="radio"
-              name="timeVariant"
-              checked={shiftSettings.timeVariant === "late"}
-              onChange={() =>
-                setShiftSettings((s) => ({ ...s, timeVariant: "late" }))
-              }
-            />
-            <span>
-              <strong>9:00 – 15:00</strong> e rientro{" "}
-              <strong>15:30 – 18:30</strong>
-            </span>
-          </label>
+          {(
+            [
+              ["early", "8:00 – 14:00", "14:30 – 17:30"],
+              ["late", "9:00 – 15:00", "15:30 – 18:30"],
+              ["split7", "7:00 – 13:00", "13:30 – 16:30"],
+              ["13to19", "13:00 – 19:00", "—"],
+              ["14to20", "14:00 – 20:00", "—"],
+              ["15to21", "15:00 – 21:00", "—"],
+            ] as [ShiftTimeVariant, string, string][]
+          ).map(([id, a, b]) => (
+            <label
+              key={id}
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "0.5rem",
+                cursor: "pointer",
+                fontSize: "0.95rem",
+              }}
+            >
+              <input
+                type="radio"
+                name="timeVariant"
+                checked={shiftSettings.timeVariant === id}
+                onChange={() =>
+                  setShiftSettings((s) => ({ ...s, timeVariant: id }))
+                }
+              />
+              <span>
+                <strong>{a}</strong>
+                {b !== "—" ? (
+                  <>
+                    {" "}
+                    e rientro <strong>{b}</strong>
+                  </>
+                ) : (
+                  <span style={{ color: "var(--muted)", fontSize: "0.88rem" }}>
+                    {" "}
+                    (blocco unico)
+                  </span>
+                )}
+              </span>
+            </label>
+          ))}
         </div>
       </section>
 

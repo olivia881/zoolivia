@@ -53,6 +53,16 @@ export function aggregateMonthTotals(
     const key = ymd(year, month, d);
     const e = logs[key];
     if (!e) continue;
+
+    /* Contatori flag sempre, anche se il giorno ha solo una spunta salvata */
+    if (e.buonoPasto) t.buoniPasto += 1;
+    if (e.festivo) t.giorniFestivi += 1;
+    if (e.congedoOrdinario) t.giorniCongedoOrdinario += 1;
+    if (e.congedoStraordMalattia) t.giorniCongedoStraordMalattia += 1;
+    if (e.congedoStraordFamiglia) t.giorniCongedoStraordFamiglia += 1;
+    if (e.pnl) t.giorniPnl += 1;
+    if (e.congedoParentale) t.giorniCongedoParentale += 1;
+
     if (!hasDayEntryContent(e)) continue;
 
     t.giorniConAnnotazioni += 1;
@@ -71,13 +81,6 @@ export function aggregateMonthTotals(
     }
     t.oreServizioEsterno += parseDecimalHours(e.servizioEsternoOre);
     t.oreServizioFuoriSede += parseDecimalHours(e.servizioFuoriSedeOre);
-    if (e.congedoOrdinario) t.giorniCongedoOrdinario += 1;
-    if (e.congedoStraordMalattia) t.giorniCongedoStraordMalattia += 1;
-    if (e.congedoStraordFamiglia) t.giorniCongedoStraordFamiglia += 1;
-    if (e.pnl) t.giorniPnl += 1;
-    if (e.congedoParentale) t.giorniCongedoParentale += 1;
-    if (e.festivo) t.giorniFestivi += 1;
-    if (e.buonoPasto) t.buoniPasto += 1;
   }
 
   t.oreDaFasceMattinaPomeriggio =

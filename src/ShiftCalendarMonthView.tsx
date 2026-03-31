@@ -18,9 +18,9 @@ import { getDayLog } from "./dayLogStorage";
 import { aggregateMonthTotals } from "./monthTotals";
 import {
   formatTimeRangeForCalendar,
+  plannedBandsForDayFields,
   plannedShiftCalendarText,
   resolveDayShift,
-  shiftTimeLabels,
   type ShiftAppSettings,
 } from "./shiftScheduleLogic";
 
@@ -210,16 +210,14 @@ export function ShiftCalendarMonthView({
     if (!detailDate) return;
     const planned = resolveDayShift(detailDate, shiftSettings);
     if (!planned) return;
-    const lab = shiftTimeLabels(shiftSettings.timeVariant);
-    const norm = (s: string) =>
-      s.replace(/\s/g, "").replace(/–/g, "-").replace(/—/g, "-");
+    const bands = plannedBandsForDayFields(
+      planned,
+      shiftSettings.timeVariant
+    );
     setDraftEntry((e) => ({
       ...e,
-      mattina: norm(lab.morning),
-      pomeriggioRientro:
-        planned.afternoonWeekday !== null
-          ? norm(lab.afternoon)
-          : e.pomeriggioRientro,
+      mattina: bands.mattina,
+      pomeriggioRientro: bands.pomeriggioRientro,
     }));
   }
 

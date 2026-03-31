@@ -4,17 +4,11 @@ import {
   type DayServiceEntry,
 } from "./dayLogModel";
 import {
-  afternoonReturnWeekday,
   CYCLE_PAIR_LABELS,
+  plannedBandsForDayFields,
   resolveDayShift,
-  shiftTimeLabels,
   type ShiftAppSettings,
 } from "./shiftScheduleLogic";
-import type { WeekdayIndex } from "./weekdays";
-
-function normBand(s: string): string {
-  return s.replace(/\s/g, "").replace(/–/g, "-").replace(/—/g, "-");
-}
 
 /**
  * Per ogni lun–ven della settimana del `weekMonday`: mattina = fascia impostata;
@@ -25,9 +19,6 @@ export function applyScalingShiftToWeek(
   settings: ShiftAppSettings,
   existing: Record<string, DayServiceEntry>
 ): Record<string, DayServiceEntry> {
-  const labels = shiftTimeLabels(settings.timeVariant);
-  const m = normBand(labels.morning);
-  const p = normBand(labels.afternoon);
   const next = { ...existing };
 
   const mon = new Date(
@@ -45,22 +36,11 @@ export function applyScalingShiftToWeek(
 
     if (!info) continue;
 
-    const wdD = info.morningWeekday;
-    const wk = info.weekInCycle;
-
-    let pomeriggio = "";
-    for (let wdE = 0 as WeekdayIndex; wdE <= 4; wdE++) {
-      const dest = afternoonReturnWeekday(wk, wdE);
-      if (dest !== null && dest === wdD) {
-        pomeriggio = p;
-        break;
-      }
-    }
-
+    const bands = plannedBandsForDayFields(info, settings.timeVariant);
     next[ymd] = {
       ...prev,
-      mattina: m,
-      pomeriggioRientro: pomeriggio,
+      mattina: bands.mattina,
+      pomeriggioRientro: bands.pomeriggioRientro,
     };
   }
 

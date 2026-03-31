@@ -22,8 +22,8 @@ import { getDayLog } from "./dayLogStorage";
 import { aggregateMonthTotals } from "./monthTotals";
 import {
   mondayOfWeekContaining,
+  plannedBandsForDayFields,
   resolveDayShift,
-  shiftTimeLabels,
   type ShiftAppSettings,
 } from "./shiftScheduleLogic";
 import {
@@ -632,16 +632,14 @@ export function ShiftWeekGridView({
           onApplyPlanned={() => {
             const planned = resolveDayShift(editorDate, shiftSettings);
             if (!planned) return;
-            const lab = shiftTimeLabels(shiftSettings.timeVariant);
-            const norm = (s: string) =>
-              s.replace(/\s/g, "").replace(/–/g, "-").replace(/—/g, "-");
+            const bands = plannedBandsForDayFields(
+              planned,
+              shiftSettings.timeVariant
+            );
             setDraftEntry((x) => ({
               ...x,
-              mattina: norm(lab.morning),
-              pomeriggioRientro:
-                planned.afternoonWeekday !== null
-                  ? norm(lab.afternoon)
-                  : x.pomeriggioRientro,
+              mattina: bands.mattina,
+              pomeriggioRientro: bands.pomeriggioRientro,
             }));
           }}
           onClearDay={clearEditorDay}

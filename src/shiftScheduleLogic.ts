@@ -2,8 +2,17 @@ import { mondayFirstIndex, type WeekdayIndex } from "./weekdays";
 
 export type { WeekdayIndex };
 
-/** Fascia oraria: anticipata 8–14 / 14:30–17:30 o tardiva 9–15 / 15:30–18:30 */
-export type ShiftTimeVariant = "early" | "late";
+/**
+ * Fasce per turno a scalare e pulsante «Applica».
+ * `split7` = 7–13 e 13:30–16:30; `13to19` … `15to21` = un solo blocco (stesso su incrocio).
+ */
+export type ShiftTimeVariant =
+  | "early"
+  | "late"
+  | "split7"
+  | "13to19"
+  | "14to20"
+  | "15to21";
 
 export type ShiftAppSettings = {
   timeVariant: ShiftTimeVariant;
@@ -25,13 +34,25 @@ export const DEFAULT_SHIFT_SETTINGS: ShiftAppSettings = {
   officeLine2: "",
 };
 
+const ALLOWED_VARIANTS: ShiftTimeVariant[] = [
+  "early",
+  "late",
+  "split7",
+  "13to19",
+  "14to20",
+  "15to21",
+];
+
+export function parseTimeVariant(v: unknown): ShiftTimeVariant {
+  return ALLOWED_VARIANTS.includes(v as ShiftTimeVariant)
+    ? (v as ShiftTimeVariant)
+    : "early";
+}
+
 function migrateFromV1(raw: string): ShiftAppSettings | null {
   try {
     const p = JSON.parse(raw) as Partial<ShiftAppSettings>;
-    const timeVariant =
-      p.timeVariant === "late" || p.timeVariant === "early"
-        ? p.timeVariant
-        : "early";
+    const timeVariant = parseTimeVariant(p.timeVariant);
     let anchorMondayYmd =
       typeof p.anchorMondayYmd === "string" ? p.anchorMondayYmd : "";
     if (!anchorMondayYmd.trim()) anchorMondayYmd = defaultAnchorMondayYmd();
@@ -66,10 +87,7 @@ export function loadShiftSettings(): ShiftAppSettings {
       return s;
     }
     const p = JSON.parse(raw) as Partial<ShiftAppSettings>;
-    const timeVariant =
-      p.timeVariant === "late" || p.timeVariant === "early"
-        ? p.timeVariant
-        : "early";
+    const timeVariant = parseTimeVariant(p.timeVariant);
     let anchorMondayYmd =
       typeof p.anchorMondayYmd === "string" ? p.anchorMondayYmd : "";
     if (!anchorMondayYmd.trim()) {
@@ -181,10 +199,21 @@ export function shiftTimeLabels(variant: ShiftTimeVariant): {
   morning: string;
   afternoon: string;
 } {
-  if (variant === "late") {
-    return { morning: "9:00 – 15:00", afternoon: "15:30 – 18:30" };
+  switch (variant) {
+    case "late":
+      return { morning: "9:00 – 15:00", afternoon: "15:30 – 18:30" };
+    case "split7":
+      return { morning: "7:00 – 13:00", afternoon: "13:30 – 16:30" };
+    case "13to19":
+      return { morning: "13:00 – 19:00", afternoon: "13:00 – 19:00" };
+    case "14to20":
+      return { morning: "14:00 – 20:00", afternoon: "14:00 – 20:00" };
+    case "15to21":
+      return { morning: "15:00 – 21:00", afternoon: "15:00 – 21:00" };
+    case "early":
+    default:
+      return { morning: "8:00 – 14:00", afternoon: "14:30 – 17:30" };
   }
-  return { morning: "8:00 – 14:00", afternoon: "14:30 – 17:30" };
 }
 
 /** Es. 9:00-15:00 → 9.00/15.00 (anche più intervalli nella stringa). */
@@ -197,33 +226,6 @@ export function formatTimeRangeForCalendar(s: string): string {
   );
 }
 
-/**
- * Turno previsto per il calendario mese: stesse regole dell’applicazione settimanale.
- * Una o due righe (seconda fascia solo se prevista quel giorno, anche incrociata).
- */
-export function plannedShiftCalendarText(
-  date: Date,
-  settings: ShiftAppSettings
-): string {
-  const info = resolveDayShift(date, settings);
-  if (!info) return "";
-  const wk = info.weekInCycle;
-  const wd = info.morningWeekday;
-  const lab = shiftTimeLabels(settings.timeVariant);
-  const line1 = formatTimeRangeForCalendar(lab.morning);
-  let hasSecond = false;
-  for (let wdE = 0 as WeekdayIndex; wdE <= 4; wdE++) {
-    const dest = afternoonReturnWeekday(wk, wdE);
-    if (dest !== null && dest === wd) {
-      hasSecond = true;
-      break;
-    }
-  }
-  if (!hasSecond) return line1;
-  const line2 = formatTimeRangeForCalendar(lab.afternoon);
-  return line2 ? `${line1}\n${line2}` : line1;
-}
-
 export type DayShiftInfo = {
   isWorkday: boolean;
   morningWeekday: WeekdayIndex;
@@ -231,6 +233,45 @@ export type DayShiftInfo = {
   afternoonWeekday: WeekdayIndex | null;
   labels: { morning: string; afternoon: string };
 };
+
+/** Per compilazione manuale / scheda: stessa logica di applyScalingShiftToWeek. */
+export function plannedBandsForDayFields(
+  planned: DayShiftInfo,
+  variant: ShiftTimeVariant
+): { mattina: string; pomeriggioRientro: string } {
+  const lab = shiftTimeLabels(variant);
+  const norm = (s: string) =>
+    s.replace(/\s/g, "").replace(/–/g, "-").replace(/—/g, "-");
+  const m = norm(lab.morning);
+  const p = norm(lab.afternoon);
+  const wk = planned.weekInCycle;
+  const wd = planned.morningWeekday;
+  let hasSecond = false;
+  for (let wdE = 0 as WeekdayIndex; wdE <= 4; wdE++) {
+    if (afternoonReturnWeekday(wk, wdE) === wd) {
+      hasSecond = true;
+      break;
+    }
+  }
+  if (!hasSecond) return { mattina: m, pomeriggioRientro: "" };
+  return { mattina: m, pomeriggioRientro: m === p ? "" : p };
+}
+
+export function plannedShiftCalendarText(
+  date: Date,
+  settings: ShiftAppSettings
+): string {
+  const info = resolveDayShift(date, settings);
+  if (!info) return "";
+  const { mattina, pomeriggioRientro } = plannedBandsForDayFields(
+    info,
+    settings.timeVariant
+  );
+  const line1 = formatTimeRangeForCalendar(mattina);
+  const line2 = formatTimeRangeForCalendar(pomeriggioRientro);
+  if (!line2 || line2 === line1) return line1;
+  return `${line1}\n${line2}`;
+}
 
 export function resolveDayShift(
   date: Date,
