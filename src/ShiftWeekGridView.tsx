@@ -379,9 +379,17 @@ export function ShiftWeekGridView({
       <button
         type="button"
         onClick={() => {
-          void import("./exportServiceWeekPdf").then(({ exportServiceWeekPdf }) =>
-            exportServiceWeekPdf(weekDays, dayLogs, shiftSettings)
-          );
+          void import("./exportServiceWeekPdf")
+            .then(({ exportServiceWeekPdf }) =>
+              exportServiceWeekPdf(weekDays, dayLogs, shiftSettings)
+            )
+            .catch((err: unknown) => {
+              console.error(err);
+              window.alert(
+                "Impossibile creare il PDF. Riprova o aggiorna l'app.\n" +
+                  String(err instanceof Error ? err.message : err)
+              );
+            });
         }}
         style={{
           width: "100%",
@@ -399,6 +407,18 @@ export function ShiftWeekGridView({
       >
         Esporta PDF — servizio di questa settimana
       </button>
+      <p
+        style={{
+          margin: "-0.35rem 0 0.75rem",
+          fontSize: "0.68rem",
+          color: "var(--muted)",
+          lineHeight: 1.35,
+        }}
+      >
+        Sul telefono si apre il menu <strong>Condividi</strong>: scegli
+        «Salva su Drive», «Download» o un’app per archiviare il file. Dal PC il PDF
+        va in <strong>Download</strong>.
+      </p>
 
       <div
         style={{

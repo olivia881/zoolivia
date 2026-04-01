@@ -1,3 +1,6 @@
+import { Capacitor } from "@capacitor/core";
+import { Directory, Filesystem } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { DayServiceEntry } from "./dayLogModel";
@@ -34,15 +37,20 @@ function toYmd(d: Date): string {
   return `${y}-${mo}-${day}`;
 }
 
-/**
- * Genera PDF del servizio settimanale (7 giorni) con griglia e rettifiche.
- * Su mobile apre il download / condivisione del file.
- */
-export function exportServiceWeekPdf(
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]!);
+  }
+  return btoa(binary);
+}
+
+function buildPdfDoc(
   weekDays: Date[],
   dayLogs: Record<string, DayServiceEntry>,
   settings: ShiftAppSettings
-): void {
+): { doc: jsPDF; fileName: string } {
   const monday = weekDays[0];
   const sun = weekDays[6];
   const rangeLabel = `${formatDateIt(monday)} – ${formatDateIt(sun)}`;
@@ -110,6 +118,76 @@ export function exportServiceWeekPdf(
     margin: { left: 14, right: 14 },
   });
 
-  const fn = `servizio-settimanale-${toYmd(monday)}.pdf`;
-  doc.save(fn);
+  const fileName = `servizio-settimanale-${toYmd(monday)}.pdf`;
+  return { doc, fileName };
+}
+
+async function savePdfNative(doc: jsPDF, fileName: string): Promise<void> {
+  const buf = doc.output("arraybuffer") as ArrayBuffer;
+  const data = arrayBufferToBase64(buf);
+
+  await Filesystem.writeFile({
+    path: fileName,
+    data,
+    directory: Directory.Cache,
+  });
+
+  const { uri } = await Filesystem.getUri({
+    path: fileName,
+    directory: Directory.Cache,
+  });
+
+  const fileUrl = /^\w+:\/\//.test(uri) ? uri : `file://${uri}`;
+
+  try {
+    const can = await Share.canShare();
+    if (can.value) {
+      await Share.share({
+        title: "Servizio settimanale",
+        dialogTitle: "Salva o condividi il PDF",
+        files: [fileUrl],
+      });
+      return;
+    }
+  } catch {
+    /* fallback sotto */
+  }
+
+  await Share.share({
+    title: "Servizio settimanale",
+    text: `PDF: ${fileName}`,
+    url: fileUrl,
+  });
+}
+
+function savePdfWeb(doc: jsPDF, fileName: string): void {
+  const blob = doc.output("blob");
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Esporta il PDF. Su app Android/iOS apre il foglio Condividi (salva in Download, Drive, ecc.).
+ * Nel browser avvia il download nella cartella Download predefinita.
+ */
+export async function exportServiceWeekPdf(
+  weekDays: Date[],
+  dayLogs: Record<string, DayServiceEntry>,
+  settings: ShiftAppSettings
+): Promise<void> {
+  const { doc, fileName } = buildPdfDoc(weekDays, dayLogs, settings);
+
+  if (Capacitor.isNativePlatform()) {
+    await savePdfNative(doc, fileName);
+    return;
+  }
+
+  savePdfWeb(doc, fileName);
 }
