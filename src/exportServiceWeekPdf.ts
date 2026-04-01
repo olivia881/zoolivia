@@ -4,7 +4,7 @@ import { Share } from "@capacitor/share";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { DayServiceEntry } from "./dayLogModel";
-import { getDayLog } from "./dayLogStorage";
+import { getEffectiveDayLog } from "./dayLogModel";
 import type { ShiftAppSettings } from "./shiftScheduleLogic";
 import { weekCycleSummary } from "./weekShiftApply";
 import {
@@ -91,8 +91,7 @@ function buildPdfDoc(
 
   for (let i = 0; i < weekDays.length; i++) {
     const d = weekDays[i];
-    const ymd = toYmd(d);
-    const entry = getDayLog(dayLogs, ymd);
+    const entry = getEffectiveDayLog(dayLogs, d);
     const turno = effectiveWeekTurnText(d, settings, entry);
     const dettagli = weekDetailExtraText(entry);
     body.push([

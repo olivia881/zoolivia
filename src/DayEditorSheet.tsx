@@ -354,6 +354,20 @@ export function DayEditorSheet({
                 "Festivo (lun–ven)"
               )}
               {rowCheckbox(
+                entry.riposoSettimanale,
+                (v) =>
+                  setEntry((x) => {
+                    const next = { ...x, riposoSettimanale: v };
+                    if (v && absenceFlagClearsShifts("riposoSettimanale")) {
+                      next.mattina = "";
+                      next.pomeriggioRientro = "";
+                      next.straordinarioOre = "";
+                    }
+                    return next;
+                  }),
+                "Riposo settimanale (RS)"
+              )}
+              {rowCheckbox(
                 entry.congedoOrdinario,
                 (v) =>
                   setEntry((x) => {

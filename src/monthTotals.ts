@@ -1,8 +1,8 @@
 import {
+  getEffectiveDayLog,
   hasDayEntryContent,
   parseDecimalHours,
   parseHoursFromTimeRanges,
-  toYmd,
   type DayServiceEntry,
 } from "./dayLogModel";
 
@@ -17,15 +17,12 @@ export type MonthTotals = {
   giorniCongedoStraordFamiglia: number;
   giorniPnl: number;
   giorniCongedoParentale: number;
+  giorniRiposoSettimanale: number;
   buoniPasto: number;
 };
 
 function daysInMonth(y: number, m: number): number {
   return new Date(y, m + 1, 0).getDate();
-}
-
-function ymd(y: number, mo: number, day: number): string {
-  return `${y}-${String(mo + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 export function aggregateMonthTotals(
@@ -45,14 +42,14 @@ export function aggregateMonthTotals(
     giorniCongedoStraordFamiglia: 0,
     giorniPnl: 0,
     giorniCongedoParentale: 0,
+    giorniRiposoSettimanale: 0,
     buoniPasto: 0,
   };
 
   for (let d = 1; d <= dim; d++) {
-    const key = ymd(year, month, d);
-    const e = logs[key];
-    if (!e) continue;
-    accumulateDayIntoTotals(e, t);
+    const date = new Date(year, month, d);
+    const e = getEffectiveDayLog(logs, date);
+    accumulateDayIntoTotals(e, t, date);
   }
 
   t.oreDaFasceMattinaPomeriggio =
@@ -75,25 +72,29 @@ const emptyTotals = (): MonthTotals => ({
   giorniCongedoStraordFamiglia: 0,
   giorniPnl: 0,
   giorniCongedoParentale: 0,
+  giorniRiposoSettimanale: 0,
   buoniPasto: 0,
 });
 
 function accumulateDayIntoTotals(
   e: DayServiceEntry,
-  t: MonthTotals
+  t: MonthTotals,
+  forDate?: Date
 ): void {
   if (e.buonoPasto) t.buoniPasto += 1;
+  if (e.riposoSettimanale) t.giorniRiposoSettimanale += 1;
   if (e.congedoOrdinario) t.giorniCongedoOrdinario += 1;
   if (e.congedoStraordMalattia) t.giorniCongedoStraordMalattia += 1;
   if (e.congedoStraordFamiglia) t.giorniCongedoStraordFamiglia += 1;
   if (e.pnl) t.giorniPnl += 1;
   if (e.congedoParentale) t.giorniCongedoParentale += 1;
 
-  if (!hasDayEntryContent(e)) return;
+  if (!hasDayEntryContent(e, forDate)) return;
 
   t.giorniConAnnotazioni += 1;
   const noTurno =
     e.festivo ||
+    e.riposoSettimanale ||
     e.congedoOrdinario ||
     e.congedoStraordMalattia ||
     e.congedoStraordFamiglia ||
@@ -119,10 +120,8 @@ export function aggregateTotalsForDates(
 ): MonthTotals {
   const t = emptyTotals();
   for (const d of dates) {
-    const key = toYmd(d);
-    const e = logs[key];
-    if (!e) continue;
-    accumulateDayIntoTotals(e, t);
+    const e = getEffectiveDayLog(logs, d);
+    accumulateDayIntoTotals(e, t, d);
   }
   t.oreDaFasceMattinaPomeriggio =
     Math.round(t.oreDaFasceMattinaPomeriggio * 100) / 100;

@@ -13,12 +13,14 @@ import {
   shouldHideShiftInputs,
 } from "./dayAbsenceDisplay";
 import {
+  baseDayLogForPatch,
   emptyDayEntry,
+  getEffectiveDayLog,
   hasDayEntryContent,
+  parseYmdToDate,
   toYmd,
   type DayServiceEntry,
 } from "./dayLogModel";
-import { getDayLog } from "./dayLogStorage";
 import { aggregateTotalsForDates } from "./monthTotals";
 import {
   mondayOfWeekContaining,
@@ -117,12 +119,12 @@ export function ShiftWeekGridView({
 
   function openEditor(d: Date) {
     setEditorDate(d);
-    setDraftEntry({ ...getDayLog(dayLogs, toYmd(d)) });
+    setDraftEntry({ ...baseDayLogForPatch(dayLogs, toYmd(d)) });
   }
 
   function patchDay(ymd: string, patch: Partial<DayServiceEntry>) {
     setDayLogs((prev) => {
-      let cur = { ...(prev[ymd] ?? emptyDayEntry()), ...patch };
+      let cur = { ...baseDayLogForPatch(prev, ymd), ...patch };
       const turnedOnAbsence = Object.keys(patch).some(
         (k) =>
           absenceFlagClearsShifts(k) && Boolean(patch[k as keyof DayServiceEntry])
@@ -136,7 +138,8 @@ export function ShiftWeekGridView({
         };
       }
       const next = { ...prev };
-      if (hasDayEntryContent(cur)) next[ymd] = cur;
+      const d = parseYmdToDate(ymd);
+      if (hasDayEntryContent(cur, d ?? undefined)) next[ymd] = cur;
       else delete next[ymd];
       return next;
     });
@@ -147,7 +150,7 @@ export function ShiftWeekGridView({
     const ymd = toYmd(editorDate);
     setDayLogs((prev) => {
       const next = { ...prev };
-      if (hasDayEntryContent(draftEntry)) next[ymd] = { ...draftEntry };
+      if (hasDayEntryContent(draftEntry, editorDate)) next[ymd] = { ...draftEntry };
       else delete next[ymd];
       return next;
     });
@@ -437,7 +440,7 @@ export function ShiftWeekGridView({
         >
           {weekDays.map((date, idx) => {
             const ymd = toYmd(date);
-            const e = getDayLog(dayLogs, ymd);
+            const e = getEffectiveDayLog(dayLogs, date);
             const isToday =
               date.getDate() === today.getDate() &&
               date.getMonth() === today.getMonth() &&
@@ -569,6 +572,7 @@ export function ShiftWeekGridView({
                 >
                   {[
                     ["Fest.", e.festivo, "festivo"],
+                    ["RS", e.riposoSettimanale, "riposoSettimanale"],
                     ["C.O.", e.congedoOrdinario, "congedoOrdinario"],
                     ["C.S.m", e.congedoStraordMalattia, "congedoStraordMalattia"],
                     ["C.S.f", e.congedoStraordFamiglia, "congedoStraordFamiglia"],
@@ -593,6 +597,8 @@ export function ShiftWeekGridView({
                           const v = ev.target.checked;
                           const patch: Partial<DayServiceEntry> = {};
                           if (key === "festivo") patch.festivo = v;
+                          else if (key === "riposoSettimanale")
+                            patch.riposoSettimanale = v;
                           else if (key === "congedoOrdinario")
                             patch.congedoOrdinario = v;
                           else if (key === "congedoStraordMalattia")
@@ -666,6 +672,8 @@ export function ShiftWeekGridView({
             {weekTotals.giorniCongedoStraordMalattia}
           </li>
           <li>
+            <strong style={{ color: "var(--text)" }}>RS</strong>:{" "}
+            {weekTotals.giorniRiposoSettimanale} ·{" "}
             <strong style={{ color: "var(--text)" }}>PNL</strong>:{" "}
             {weekTotals.giorniPnl} ·{" "}
             <strong style={{ color: "var(--text)" }}>C.P.</strong>:{" "}

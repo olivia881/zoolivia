@@ -19,13 +19,8 @@ export function effectiveWeekTurnText(
   const p = entry.pomeriggioRientro.trim();
 
   if (shouldHideShiftInputs(entry)) {
-    const status = mainStatusLine(entry);
-    const lines: string[] = [];
-    if (m) lines.push(formatTimeRangeForCalendar(m));
-    if (p) lines.push(formatTimeRangeForCalendar(p));
-    const timeBlock = lines.filter(Boolean).join(" · ");
-    const parts = [status, timeBlock].filter(Boolean);
-    return parts.join(" — ") || "—";
+    /* Solo stato/permessi: niente orari (evita turno “fantasma” dopo sostituzione con C.O. ecc.) */
+    return mainStatusLine(entry) || "—";
   }
 
   if (m || p) {

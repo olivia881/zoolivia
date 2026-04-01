@@ -26,6 +26,7 @@ function normalizeEntry(raw: unknown): DayServiceEntry {
     congedoParentale: bool("congedoParentale"),
     buonoPasto: bool("buonoPasto"),
     festivo: bool("festivo"),
+    riposoSettimanale: bool("riposoSettimanale"),
     corsiFormazione: str("corsiFormazione"),
     altroNote: str("altroNote"),
   };

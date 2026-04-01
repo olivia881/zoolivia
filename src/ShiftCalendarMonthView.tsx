@@ -9,13 +9,14 @@ import {
 import { shouldHideShiftInputs } from "./dayAbsenceDisplay";
 import { DayEditorSheet } from "./DayEditorSheet";
 import {
+  baseDayLogForPatch,
   dayEntryCellTags,
   emptyDayEntry,
+  getEffectiveDayLog,
   hasDayEntryContent,
   toYmd,
   type DayServiceEntry,
 } from "./dayLogModel";
-import { getDayLog } from "./dayLogStorage";
 import { aggregateMonthTotals } from "./monthTotals";
 import {
   formatTimeRangeForCalendar,
@@ -141,7 +142,8 @@ export function ShiftCalendarMonthView({
 
   useEffect(() => {
     if (!detailDate) return;
-    setDraftEntry({ ...getDayLog(dayLogs, toYmd(detailDate)) });
+    const ymd = toYmd(detailDate);
+    setDraftEntry({ ...baseDayLogForPatch(dayLogs, ymd) });
   }, [detailDate, dayLogs]);
 
   useEffect(() => {
@@ -200,7 +202,7 @@ export function ShiftCalendarMonthView({
     const ymd = toYmd(detailDate);
     setDayLogs((prev) => {
       const next = { ...prev };
-      if (hasDayEntryContent(draftEntry)) {
+      if (hasDayEntryContent(draftEntry, detailDate)) {
         next[ymd] = { ...draftEntry };
       } else {
         delete next[ymd];
@@ -435,10 +437,9 @@ export function ShiftCalendarMonthView({
             date.getMonth() === today.getMonth() &&
             date.getFullYear() === today.getFullYear();
           const isSunday = date.getDay() === 0;
-          const ymd = toYmd(date);
-          const entry = getDayLog(dayLogs, ymd);
+          const entry = getEffectiveDayLog(dayLogs, date);
           const line = monthCellDisplayText(date, shiftSettings, entry);
-          const hasUser = hasDayEntryContent(entry);
+          const hasUser = hasDayEntryContent(entry, date);
 
           return (
             <button
@@ -566,6 +567,8 @@ export function ShiftCalendarMonthView({
                 {totals.giorniCongedoStraordMalattia}
               </li>
               <li>
+                <strong style={{ color: "var(--text)" }}>RS</strong> (riposo sett.):{" "}
+                {totals.giorniRiposoSettimanale} ·{" "}
                 <strong style={{ color: "var(--text)" }}>PNL</strong>: {totals.giorniPnl} ·{" "}
                 <strong style={{ color: "var(--text)" }}>C.P.</strong>:{" "}
                 {totals.giorniCongedoParentale} ·{" "}

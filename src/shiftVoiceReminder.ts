@@ -1,10 +1,11 @@
 import { Capacitor } from "@capacitor/core";
 import { TextToSpeech } from "@capacitor-community/text-to-speech";
 import {
+  getEffectiveDayLog,
   hasDayEntryContent,
-  toYmd,
   type DayServiceEntry,
 } from "./dayLogModel";
+import { shouldHideShiftInputs } from "./dayAbsenceDisplay";
 import { resolveDayShift, type ShiftAppSettings } from "./shiftScheduleLogic";
 import { WEEKDAYS } from "./weekdays";
 
@@ -103,10 +104,11 @@ function describeTomorrowShift(
       dayLog.mattina.trim() ||
       dayLog.pomeriggioRientro.trim() ||
       dayLog.straordinarioOre.trim();
-    if (isWe && !hasTurno) {
+    if (isWe && !hasTurno && !shouldHideShiftInputs(dayLog)) {
       parts.push("Sabato o domenica: compila i turni se lavori");
     }
     if (dayLog.festivo) parts.push("Festivo");
+    if (dayLog.riposoSettimanale) parts.push("Riposo settimanale");
     if (dayLog.congedoOrdinario) parts.push("C.O.");
     if (dayLog.congedoStraordMalattia) parts.push("C.S. malattia");
     if (dayLog.congedoStraordFamiglia) parts.push("C.S. famiglia");
@@ -172,11 +174,11 @@ export function buildTomorrowShiftReminderCopy(
   const weekdayLong = new Intl.DateTimeFormat("it-IT", {
     weekday: "long",
   }).format(tomorrow);
-  const ymd = toYmd(tomorrow);
+  const effective = getEffectiveDayLog(dayLogs, tomorrow);
   const { bodyLine, voiceText } = describeTomorrowShift(
     tomorrow,
     settings,
-    dayLogs[ymd]
+    effective
   );
   const title = "Turni di servizio";
   return {

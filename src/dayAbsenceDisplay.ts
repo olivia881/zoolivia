@@ -12,6 +12,7 @@ export function isWeekendIndex(dayIndexFromMonday: number): boolean {
 export function shouldHideShiftInputs(e: DayServiceEntry): boolean {
   return (
     e.festivo ||
+    e.riposoSettimanale ||
     e.congedoOrdinario ||
     e.congedoStraordMalattia ||
     e.congedoStraordFamiglia ||
@@ -31,12 +32,14 @@ export function mainStatusLine(e: DayServiceEntry): string {
   if (e.congedoStraordFamiglia) parts.push("C.S. famiglia");
   if (e.pnl) parts.push("PNL");
   if (e.congedoParentale) parts.push("C.P.");
+  if (e.riposoSettimanale) parts.push("RS");
   if (e.buonoPasto) parts.push("BP");
   return parts.join(" · ");
 }
 
 export type AbsenceFlagKey =
   | "festivo"
+  | "riposoSettimanale"
   | "congedoOrdinario"
   | "congedoStraordMalattia"
   | "congedoStraordFamiglia"
@@ -47,6 +50,7 @@ export type AbsenceFlagKey =
 export function absenceFlagClearsShifts(key: string): boolean {
   return (
     key === "festivo" ||
+    key === "riposoSettimanale" ||
     key === "congedoOrdinario" ||
     key === "congedoStraordMalattia" ||
     key === "congedoStraordFamiglia" ||

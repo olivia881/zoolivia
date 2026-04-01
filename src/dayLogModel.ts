@@ -16,6 +16,8 @@ export type DayServiceEntry = {
   buonoPasto: boolean;
   /** Festivo (lun–ven: es. chiusura; sab/dom usano anche “Weekend”) */
   festivo: boolean;
+  /** Riposo settimanale (RS) — default sab/dom se giorno non salvato */
+  riposoSettimanale: boolean;
   corsiFormazione: string;
   altroNote: string;
 };
@@ -36,9 +38,33 @@ export function emptyDayEntry(): DayServiceEntry {
     congedoParentale: false,
     buonoPasto: false,
     festivo: false,
+    riposoSettimanale: false,
     corsiFormazione: "",
     altroNote: "",
   };
+}
+
+/** Sabato o domenica (getDay JS: 0=dom, 6=sab). */
+export function isWeekendJsDate(date: Date): boolean {
+  const js = date.getDay();
+  return js === 0 || js === 6;
+}
+
+/** Voce predefinita per sab/dom quando non c’è ancora nulla salvato per quel giorno. */
+export function defaultEntryForWeekendIfUnset(date: Date): DayServiceEntry {
+  if (!isWeekendJsDate(date)) return emptyDayEntry();
+  return { ...emptyDayEntry(), riposoSettimanale: true };
+}
+
+/** Dati effettivi per calendario, PDF e conteggi: sab/dom senza riga salvata = RS predefinito. */
+export function getEffectiveDayLog(
+  map: Record<string, DayServiceEntry>,
+  date: Date
+): DayServiceEntry {
+  const key = toYmd(date);
+  const saved = map[key];
+  if (saved) return saved;
+  return defaultEntryForWeekendIfUnset(date);
 }
 
 export function toYmd(d: Date): string {
@@ -46,6 +72,30 @@ export function toYmd(d: Date): string {
   const mo = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${mo}-${day}`;
+}
+
+export function parseYmdToDate(ymd: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd.trim());
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const day = Number(m[3]);
+  const d = new Date(y, mo, day);
+  if (d.getFullYear() !== y || d.getMonth() !== mo || d.getDate() !== day)
+    return null;
+  return d;
+}
+
+/** Base per merge in patch: sab/dom senza riga salvata = RS predefinito. */
+export function baseDayLogForPatch(
+  map: Record<string, DayServiceEntry>,
+  ymd: string
+): DayServiceEntry {
+  const saved = map[ymd];
+  if (saved) return { ...saved };
+  const d = parseYmdToDate(ymd);
+  if (d && isWeekendJsDate(d)) return defaultEntryForWeekendIfUnset(d);
+  return { ...emptyDayEntry() };
 }
 
 function toMinutes(h: number, mi: number): number {
@@ -118,7 +168,7 @@ export function parseDecimalHours(s: string): number {
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : 0;
 }
 
-export function hasDayEntryContent(e: DayServiceEntry): boolean {
+function hasTextOrServiceFields(e: DayServiceEntry): boolean {
   if (e.mattina.trim()) return true;
   if (e.pomeriggioRientro.trim()) return true;
   if (e.straordinarioOre.trim()) return true;
@@ -126,9 +176,21 @@ export function hasDayEntryContent(e: DayServiceEntry): boolean {
   if (e.servizioFuoriSede.trim() || e.servizioFuoriSedeOre.trim()) return true;
   if (e.corsiFormazione.trim()) return true;
   if (e.altroNote.trim()) return true;
+  return false;
+}
+
+/**
+ * `forDate`: se è sab/dom e l’utente ha tolto il RS senza altri dati, resta “contenuto” da salvare.
+ */
+export function hasDayEntryContent(
+  e: DayServiceEntry,
+  forDate?: Date
+): boolean {
+  if (hasTextOrServiceFields(e)) return true;
   if (e.buonoPasto) return true;
   if (
     e.festivo ||
+    e.riposoSettimanale ||
     e.congedoOrdinario ||
     e.congedoStraordMalattia ||
     e.congedoStraordFamiglia ||
@@ -136,6 +198,20 @@ export function hasDayEntryContent(e: DayServiceEntry): boolean {
     e.congedoParentale
   )
     return true;
+  if (
+    forDate &&
+    isWeekendJsDate(forDate) &&
+    !e.riposoSettimanale &&
+    !e.festivo &&
+    !e.congedoOrdinario &&
+    !e.congedoStraordMalattia &&
+    !e.congedoStraordFamiglia &&
+    !e.pnl &&
+    !e.congedoParentale &&
+    !e.buonoPasto
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -148,6 +224,7 @@ export function dayEntryCellTags(e: DayServiceEntry): string[] {
   if (e.congedoStraordFamiglia) tags.push("C.S. fam.");
   if (e.pnl) tags.push("PNL");
   if (e.congedoParentale) tags.push("C.P.");
+  if (e.riposoSettimanale) tags.push("RS");
   if (e.buonoPasto) tags.push("BP");
   return tags;
 }
