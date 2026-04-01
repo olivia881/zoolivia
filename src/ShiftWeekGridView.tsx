@@ -376,6 +376,30 @@ export function ShiftWeekGridView({
         giorno, seconda sull’altro. Sab/dom invariati. Modificabile a mano.
       </p>
 
+      <button
+        type="button"
+        onClick={() => {
+          void import("./exportServiceWeekPdf").then(({ exportServiceWeekPdf }) =>
+            exportServiceWeekPdf(weekDays, dayLogs, shiftSettings)
+          );
+        }}
+        style={{
+          width: "100%",
+          marginBottom: "0.75rem",
+          padding: "0.55rem 0.75rem",
+          borderRadius: "12px",
+          border: "1px solid var(--border)",
+          background: "var(--surface)",
+          color: "var(--text)",
+          font: "inherit",
+          fontWeight: 600,
+          fontSize: "0.85rem",
+          cursor: "pointer",
+        }}
+      >
+        Esporta PDF — servizio di questa settimana
+      </button>
+
       <div
         style={{
           overflowX: "auto",
