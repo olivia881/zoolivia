@@ -79,7 +79,7 @@ Poi apri `http://localhost:5173` (dal telefono sulla stessa rete: `http://IP_DEL
 
 ## Funzioni
 
-- **Griglia settimanale**: sabato e domenica hanno **gli stessi campi turno** dei giorni feriali (puoi compilare se lavori in weekend). Flag **Fest.** e assenze (C.O., PNL, …) **sostituiscono** i campi orario come negli altri giorni. Pulsante **Esporta PDF** per la settimana a schermo (tabella giorno, data, turno/rettifiche, dettagli).
+- **Griglia settimanale**: sabato e domenica hanno **gli stessi campi turno** dei giorni feriali (puoi compilare se lavori in weekend). Flag **Fest.** e assenze (C.O., PNL, …) **sostituiscono** i campi orario come negli altri giorni. Pulsante **Esporta PDF** (settimana a schermo): su **Android** si apre **Condividi** per salvare il file (Download, Drive, …); dal **browser** il PDF va in **Download**.
 - **Calendario mensile**: in ogni giorno gli orari come **9.00/15.00** (e seconda riga **15.30/18.30** se prevista), da dati salvati o da turno teorico.
 - **Conteggi**: nel **calendario mensile** = tutto il mese; nella **vista settimana** = i **7 giorni** visibili. In evidenza: **BP**, **C.O.**, **C.S. mal.**, **PNL**, **C.P.** (e **C.S. fam.**); nessun conteggio sui festivi (flag Fest.).
 - **Fasce in impostazioni**: oltre a 8–14 / 9–15, anche **7–13 + 13:30–16:30** e blocchi **13–19**, **14–20**, **15–21**. Nei campi si possono usare catene tipo `7:00-13:00-13:30-16:30` o `9.00/15.00` per il calcolo ore.
