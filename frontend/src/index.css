@@ -254,6 +254,79 @@ body {
   line-height: 1.35;
 }
 
+/* Selettore più contratti */
+.contract-switcher-hint {
+  margin: -0.25rem 0 0.75rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.35;
+}
+
+.contract-switcher-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.contract-switcher-select {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.contract-switcher-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.contract-btn {
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+}
+
+.contract-btn.secondary {
+  background: #f9fafb;
+}
+
+.contract-btn.danger {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.contract-rename {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.contract-rename-input {
+  flex: 1;
+  min-width: 10rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.contract-link {
+  background: none;
+  border: none;
+  color: #1d4ed8;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
 .inline-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

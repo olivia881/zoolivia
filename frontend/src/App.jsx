@@ -3,6 +3,7 @@ import InputForm from "./components/InputForm";
 import ResultsPanel from "./components/ResultsPanel";
 import DocumentsPanel from "./components/DocumentsPanel";
 import HistoryPanel from "./components/HistoryPanel";
+import ContractSwitcher from "./components/ContractSwitcher";
 import { calculatePayroll } from "./utils/payrollCalculator";
 import { validateInput, validateProfile } from "./utils/validation";
 import {
@@ -11,12 +12,16 @@ import {
   removeFromPayrollHistory,
   resetPayrollHistory,
 } from "./utils/payrollStorage";
-import { loadProfile as loadProfileLocal, saveProfile as saveProfileLocal } from "./utils/profileStorage";
+import { bumpMonthYearIfNeeded } from "./utils/workflowStorage";
 import {
-  loadWorkflowInput,
-  saveWorkflowInput,
-  bumpMonthYearIfNeeded,
-} from "./utils/workflowStorage";
+  loadRegistry,
+  loadActiveContract,
+  saveActiveContract,
+  setActiveContractId,
+  addContract,
+  removeContract,
+  renameContract,
+} from "./utils/contractsRegistry";
 import { generatePDFClient, generateManualPdf } from "./lib/pdfGenerator";
 import { downloadOrOpenPdf } from "./utils/fileDownload";
 
@@ -48,8 +53,18 @@ const DEFAULT_INPUT = {
 };
 
 function App() {
-  const [profile, setProfile] = useState(DEFAULT_PROFILE);
-  const [input, setInput] = useState(DEFAULT_INPUT);
+  const [registryTick, setRegistryTick] = useState(0);
+  const contractsData = useMemo(() => loadRegistry(), [registryTick]);
+  const activeContractId = contractsData.activeContractId || contractsData.contracts[0]?.id;
+
+  const [profile, setProfile] = useState(() => {
+    const { contract } = loadActiveContract();
+    return { ...DEFAULT_PROFILE, ...contract?.profile };
+  });
+  const [input, setInput] = useState(() => {
+    const { contract } = loadActiveContract();
+    return bumpMonthYearIfNeeded({ ...DEFAULT_INPUT, ...contract?.input });
+  });
   const [loadingType, setLoadingType] = useState("");
   const [documents, setDocuments] = useState([]);
   const [statusMessage, setStatusMessage] = useState("");
@@ -80,9 +95,16 @@ function App() {
   useEffect(() => {
     setHistory(getPayrollHistory());
     async function initProfile() {
-      const applyWorkflow = (baseInput) => {
-        const stored = loadWorkflowInput();
-        const merged = { ...baseInput, ...(stored || {}) };
+      const applyWorkflow = (baseInput, data) => {
+        const merged = {
+          ...baseInput,
+          contractType: data.contractType ?? baseInput.contractType,
+          level: data.level ?? baseInput.level,
+          weeklyHours: data.weeklyHours ?? baseInput.weeklyHours,
+          hourlyRate: data.hourlyRate ?? baseInput.hourlyRate,
+          month: data.month ?? baseInput.month,
+          year: data.year ?? baseInput.year,
+        };
         return bumpMonthYearIfNeeded(merged);
       };
 
@@ -90,37 +112,71 @@ function App() {
         const res = await fetch(`${API_BASE}/profile`);
         if (res.ok) {
           const data = await res.json();
-          setProfile((p) => ({ ...p, ...data }));
-          setInput((prev) =>
-            applyWorkflow({
-              ...prev,
-              contractType: data.contractType ?? prev.contractType,
-              level: data.level ?? prev.level,
-              weeklyHours: data.weeklyHours ?? prev.weeklyHours,
-              hourlyRate: data.hourlyRate ?? prev.hourlyRate,
-              month: data.month ?? prev.month,
-              year: data.year ?? prev.year,
-            }),
-          );
+          setProfile((p) => ({
+            ...p,
+            employerName: data.employerName ?? p.employerName,
+            employerCf: data.employerCf ?? p.employerCf,
+            employerAddress: data.employerAddress ?? p.employerAddress,
+            workerName: data.workerName ?? p.workerName,
+            workerCf: data.workerCf ?? p.workerCf,
+          }));
+          setInput((prev) => applyWorkflow(prev, data));
           return;
         }
       } catch {
         /* backend non raggiungibile */
       }
-      const stored = loadProfileLocal();
-      if (stored) setProfile((p) => ({ ...p, ...stored }));
-      setInput((prev) => applyWorkflow(prev));
     }
     initProfile();
   }, []);
 
   useEffect(() => {
     const t = setTimeout(() => {
-      saveProfileLocal(profile);
-      saveWorkflowInput(input);
+      saveActiveContract(profile, input);
     }, 400);
     return () => clearTimeout(t);
   }, [profile, input]);
+
+  function handleSelectContract(id) {
+    setActiveContractId(id);
+    const r = loadRegistry();
+    const c = r.contracts.find((x) => x.id === id);
+    if (c) {
+      setProfile({ ...c.profile });
+      setInput(bumpMonthYearIfNeeded({ ...c.input }));
+    }
+    setRegistryTick((x) => x + 1);
+    setStatusMessage("");
+  }
+
+  function handleNewContract() {
+    const c = addContract({
+      profile: { ...DEFAULT_PROFILE },
+      input: { ...DEFAULT_INPUT, month: currentMonth(), year: currentYear() },
+    });
+    setProfile({ ...c.profile });
+    setInput(bumpMonthYearIfNeeded({ ...c.input }));
+    setRegistryTick((x) => x + 1);
+    setStatusMessage("Nuovo contratto creato. Compila anagrafica e parametri.");
+  }
+
+  function handleDeleteContract(id) {
+    if (!window.confirm("Eliminare questo contratto salvato? I dati non saranno recuperabili.")) return;
+    removeContract(id);
+    const r = loadRegistry();
+    const active = r.contracts.find((x) => x.id === r.activeContractId) ?? r.contracts[0];
+    if (active) {
+      setProfile({ ...active.profile });
+      setInput(bumpMonthYearIfNeeded({ ...active.input }));
+    }
+    setRegistryTick((x) => x + 1);
+    setStatusMessage("Contratto eliminato.");
+  }
+
+  function handleRenameContract(id, name) {
+    renameContract(id, name);
+    setRegistryTick((x) => x + 1);
+  }
 
   const profileErrors = useMemo(() => validateProfile(profile), [profile]);
   const inputErrors = useMemo(() => validateInput(input), [input]);
@@ -165,8 +221,7 @@ function App() {
     } catch {
       /* standalone mode */
     }
-    saveProfileLocal(profile);
-    saveWorkflowInput(input);
+    saveActiveContract(profile, input);
   }
 
 
@@ -323,6 +378,15 @@ function App() {
         <span className="layout-toggle-icon">⊞</span>
         <span>{forceDesktopLayout ? "Layout compatto" : "Layout desktop"}</span>
       </button>
+
+      <ContractSwitcher
+        contracts={contractsData.contracts}
+        activeId={activeContractId}
+        onSelect={handleSelectContract}
+        onNew={handleNewContract}
+        onDelete={handleDeleteContract}
+        onRename={handleRenameContract}
+      />
 
       <InputForm
         profile={profile}
