@@ -136,6 +136,21 @@ function App() {
     return () => clearTimeout(t);
   }, [profile, input]);
 
+  function clearGeneratedDocuments() {
+    setDocuments((prev) => {
+      prev.forEach((d) => {
+        if (d.url && String(d.url).startsWith("blob:")) {
+          try {
+            URL.revokeObjectURL(d.url);
+          } catch {
+            /* ignore */
+          }
+        }
+      });
+      return [];
+    });
+  }
+
   function handleSelectContract(id) {
     setActiveContractId(id);
     const r = loadRegistry();
@@ -145,7 +160,8 @@ function App() {
       setInput(bumpMonthYearIfNeeded({ ...c.input }));
     }
     setRegistryTick((x) => x + 1);
-    setStatusMessage("");
+    clearGeneratedDocuments();
+    setStatusMessage("Contratto selezionato. Rigenera i documenti per questo rapporto se serve.");
   }
 
   function handleNewContract() {
@@ -156,6 +172,7 @@ function App() {
     setProfile({ ...c.profile });
     setInput(bumpMonthYearIfNeeded({ ...c.input }));
     setRegistryTick((x) => x + 1);
+    clearGeneratedDocuments();
     setStatusMessage("Nuovo contratto creato. Compila anagrafica e parametri.");
   }
 
@@ -169,6 +186,7 @@ function App() {
       setInput(bumpMonthYearIfNeeded({ ...active.input }));
     }
     setRegistryTick((x) => x + 1);
+    clearGeneratedDocuments();
     setStatusMessage("Contratto eliminato.");
   }
 
