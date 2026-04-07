@@ -226,7 +226,7 @@ function drawPayslipSectionTitle(page, y, title, titleFont) {
   return y - height;
 }
 
-function drawPayslipTableHeader(page, y, bodyFont, rightHeader = "Importo") {
+function drawPayslipTableHeader(page, y, headerFont, rightHeader = "Importo") {
   const width = PAGE_WIDTH - MARGIN_X * 2;
   page.drawRectangle({
     x: MARGIN_X,
@@ -247,21 +247,21 @@ function drawPayslipTableHeader(page, y, bodyFont, rightHeader = "Importo") {
     x: MARGIN_X + 6,
     y: y - PAYSLIP_TEXT_BASELINE_OFFSET,
     size: PAYSLIP_TABLE_TEXT_SIZE,
-    font: bodyFont,
+    font: headerFont,
     color: rgb(0.14, 0.14, 0.14),
   });
   page.drawText(rightHeader, {
     x: MARGIN_X + PAYSLIP_TABLE_SPLIT_X + 6,
     y: y - PAYSLIP_TEXT_BASELINE_OFFSET,
     size: PAYSLIP_TABLE_TEXT_SIZE,
-    font: bodyFont,
+    font: headerFont,
     color: rgb(0.14, 0.14, 0.14),
   });
   return y - PAYSLIP_TABLE_ROW_HEIGHT;
 }
 
 function drawPayslipTableRows(page, y, rows, bodyFont, titleFont, { rightAlign = true, rightLabel = "Importo" } = {}) {
-  let cursorY = drawPayslipTableHeader(page, y, bodyFont, rightLabel);
+  let cursorY = drawPayslipTableHeader(page, y, titleFont, rightLabel);
   const width = PAGE_WIDTH - MARGIN_X * 2;
   const amountColumnWidth = width - PAYSLIP_TABLE_SPLIT_X;
 
