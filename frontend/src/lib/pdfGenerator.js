@@ -540,25 +540,26 @@ async function generateSinglePdf(documentType, data) {
   return { blob: new Blob([pdfBytes], { type: "application/pdf" }), fileName: meta.fileName };
 }
 
-const MANUAL_BODY = `## 1. Anagrafica
-Compila i dati del datore (nome, codice fiscale, indirizzo) e della lavoratrice (nome, codice fiscale). I campi obbligatori sono evidenziati in rosso.
+const MANUAL_BODY = `## 1. Contratto attivo
+Puoi salvare piu contratti (piu badanti o piu rapporti). Scegli il contratto dal menu, creane di nuovi o rinominali. I dati restano sul dispositivo (o sul server se usi il sito).
 
-## 2. Input mensile
-Seleziona tipo contratto (convivente/non convivente), livello CCNL, ore settimanali, mese e anno. Per non convivente puoi impostare la paga oraria. I minimi CCNL 2026 sono applicati automaticamente.
+## 2. Anagrafica
+Compila datore e lavoratrice. Su schermi larghi le due anagrafiche sono affiancate; su telefono sono in colonna. I campi obbligatori sono in rosso.
 
-## 3. Risultati
-I calcoli (lordo, contributi, netto, TFR, tredicesima, costo totale) compaiono automaticamente dopo aver compilato correttamente i dati.
+## 3. Input mensile
+Tre sezioni: Contratto e orario (tipo, livello CCNL, ore); Retribuzione (paga oraria se non convivente); Periodo di riferimento (mese e anno per la busta). I minimi CCNL 2026 sono applicati automaticamente. Anagrafica e parametri restano salvati: di solito aggiorni solo mese e anno.
 
-## 4. Documenti
-Genera contratto, busta paga e ricevuta. Su app mobile i PDF si aprono direttamente nel visualizzatore di sistema.
+## 4. Risultati
+Lordo, contributi, netto, TFR, tredicesima e costo totale si aggiornano in tempo reale.
 
-## 5. Layout e zoom
-- Layout desktop: campi in 2 colonne e pulsanti in una riga.
-- Layout compatto: vista verticale.
-- Pulsanti +/- in basso a destra: rimpicciolisci o ingrandisci la schermata (30%-150%).
+## 5. Documenti
+Tre pulsanti: contratto, busta paga, ricevuta. Su telefono i pulsanti sono in colonna per essere piu comodi; su schermo piu largo sono in riga. Su app i PDF si aprono nel visualizzatore di sistema.
 
-## 6. Storico
-Le buste paga generate vengono salvate nello storico. Puoi filtrare per anno, consultare i dettagli ed eliminare singole voci.`;
+## 6. Zoom
+Pulsanti +/- in basso a destra: riduci o ingrandisci la schermata (30%-150%) per vedere tutta la dashboard.
+
+## 7. Storico
+Le buste generate sono elencate per mese e CF lavoratrice. Filtro per anno, dettaglio ed eliminazione voci.`;
 
 /**
  * Genera il manuale di istruzioni in PDF.

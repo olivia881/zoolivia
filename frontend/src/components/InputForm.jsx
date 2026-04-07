@@ -94,95 +94,113 @@ export default function InputForm({
           Anagrafica e parametri contrattuali restano salvati. Per ogni busta paga aggiorna solo mese e anno (o
           variazioni).
         </p>
-        <div className="inline-grid">
-          <label className="field">
-            <span>Tipo contratto</span>
-            <select
-              name="contractType"
-              value={input.contractType}
-              onChange={(e) => {
-                onInputChange(e);
-                if (e.target.value === "non_convivente") {
-                  onInputChange({
-                    target: {
-                      name: "hourlyRate",
-                      value: String(getNonConviventeHourlyMinimum(input.level)),
-                    },
-                  });
-                }
-              }}
-            >
-              <option value="convivente">Convivente</option>
-              <option value="non_convivente">Non convivente</option>
-            </select>
-          </label>
+        <div className="input-monthly-groups">
+          <div className="input-group">
+            <h3 className="input-group-title">Contratto e orario</h3>
+            <div className="input-row input-row--cols-3">
+              <label className="field">
+                <span>Tipo contratto</span>
+                <select
+                  name="contractType"
+                  value={input.contractType}
+                  onChange={(e) => {
+                    onInputChange(e);
+                    if (e.target.value === "non_convivente") {
+                      onInputChange({
+                        target: {
+                          name: "hourlyRate",
+                          value: String(getNonConviventeHourlyMinimum(input.level)),
+                        },
+                      });
+                    }
+                  }}
+                >
+                  <option value="convivente">Convivente</option>
+                  <option value="non_convivente">Non convivente</option>
+                </select>
+              </label>
 
-          <label className="field">
-            <span>Livello</span>
-            <select
-              name="level"
-              value={input.level}
-              onChange={(e) => {
-                const newLevel = e.target.value;
-                onInputChange(e);
-                if (input.contractType === "non_convivente") {
-                  onInputChange({
-                    target: {
-                      name: "hourlyRate",
-                      value: String(getNonConviventeHourlyMinimum(newLevel)),
-                    },
-                  });
-                }
-              }}
-            >
-              {LEVEL_ORDER.map((lv) => (
-                <option key={lv} value={lv}>
-                  {LEVEL_LABELS[lv]}
-                </option>
-              ))}
-            </select>
-          </label>
+              <label className="field">
+                <span>Livello CCNL</span>
+                <select
+                  name="level"
+                  value={input.level}
+                  onChange={(e) => {
+                    const newLevel = e.target.value;
+                    onInputChange(e);
+                    if (input.contractType === "non_convivente") {
+                      onInputChange({
+                        target: {
+                          name: "hourlyRate",
+                          value: String(getNonConviventeHourlyMinimum(newLevel)),
+                        },
+                      });
+                    }
+                  }}
+                >
+                  {LEVEL_ORDER.map((lv) => (
+                    <option key={lv} value={lv}>
+                      {LEVEL_LABELS[lv]}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <InputField
-            label="Ore settimanali"
-            name="weeklyHours"
-            value={input.weeklyHours}
-            onChange={onInputChange}
-            error={inputErrors.weeklyHours}
-            type="number"
-          />
+              <InputField
+                label="Ore settimanali"
+                name="weeklyHours"
+                value={input.weeklyHours}
+                onChange={onInputChange}
+                error={inputErrors.weeklyHours}
+                type="number"
+              />
+            </div>
+          </div>
 
-          <InputField
-            label="Paga oraria (min. CCNL)"
-            name="hourlyRate"
-            value={input.hourlyRate}
-            onChange={onInputChange}
-            error={inputErrors.hourlyRate}
-            type="number"
-            disabled={input.contractType === "convivente"}
-            placeholder={input.contractType === "non_convivente" ? getNonConviventeHourlyMinimum(input.level).toString() : ""}
-          />
+          <div className="input-group">
+            <h3 className="input-group-title">Retribuzione</h3>
+            <div className="input-row input-row--single">
+              <InputField
+                label="Paga oraria (min. CCNL)"
+                name="hourlyRate"
+                value={input.hourlyRate}
+                onChange={onInputChange}
+                error={inputErrors.hourlyRate}
+                type="number"
+                disabled={input.contractType === "convivente"}
+                placeholder={input.contractType === "non_convivente" ? getNonConviventeHourlyMinimum(input.level).toString() : ""}
+              />
+            </div>
+            {input.contractType === "convivente" && (
+              <p className="input-group-note">Stipendio mensile minimo CCNL (convivente): non serve paga oraria.</p>
+            )}
+          </div>
 
-          <label className="field">
-            <span>Mese</span>
-            <select name="month" value={input.month} onChange={onInputChange}>
-              {MONTHS.map((month, index) => (
-                <option key={month} value={index + 1}>
-                  {month}
-                </option>
-              ))}
-            </select>
-            {inputErrors.month && <small>{inputErrors.month}</small>}
-          </label>
+          <div className="input-group">
+            <h3 className="input-group-title">Periodo di riferimento (busta paga)</h3>
+            <div className="input-row input-row--cols-2">
+              <label className="field">
+                <span>Mese</span>
+                <select name="month" value={input.month} onChange={onInputChange}>
+                  {MONTHS.map((month, index) => (
+                    <option key={month} value={index + 1}>
+                      {month}
+                    </option>
+                  ))}
+                </select>
+                {inputErrors.month && <small>{inputErrors.month}</small>}
+              </label>
 
-          <InputField
-            label="Anno"
-            name="year"
-            value={input.year}
-            onChange={onInputChange}
-            error={inputErrors.year}
-            type="number"
-          />
+              <InputField
+                label="Anno"
+                name="year"
+                value={input.year}
+                onChange={onInputChange}
+                error={inputErrors.year}
+                type="number"
+              />
+            </div>
+          </div>
         </div>
       </section>
     </div>

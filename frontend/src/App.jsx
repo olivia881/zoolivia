@@ -70,7 +70,6 @@ function App() {
   const [statusMessage, setStatusMessage] = useState("");
   const [history, setHistory] = useState([]);
   const [historyFilterYear, setHistoryFilterYear] = useState(null);
-  const [forceDesktopLayout, setForceDesktopLayout] = useState(false);
   const [manualLoading, setManualLoading] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(() => {
     try {
@@ -353,7 +352,7 @@ function App() {
         className="zoom-container"
         style={{ "--zoom": zoomLevel / 100 }}
       >
-        <main className={`layout ${forceDesktopLayout ? "layout-desktop" : ""}`}>
+        <main className="layout">
           <header className="hero">
         <h1>Gestionale Buste Paga Badante</h1>
         <p>Calcolo stipendio, contributi INPS e generazione PDF in un'unica schermata.</p>
@@ -366,18 +365,6 @@ function App() {
           {manualLoading ? "Generazione…" : "Scarica manuale PDF"}
         </button>
       </header>
-
-      <button
-        type="button"
-        className={`layout-toggle ${forceDesktopLayout ? "active" : ""}`}
-        onClick={() => setForceDesktopLayout((v) => !v)}
-        aria-pressed={forceDesktopLayout}
-        aria-label={forceDesktopLayout ? "Layout compatto" : "Layout desktop (2 colonne, pulsanti in riga)"}
-        title={forceDesktopLayout ? "Layout compatto" : "Layout desktop (2 colonne, pulsanti in riga)"}
-      >
-        <span className="layout-toggle-icon">⊞</span>
-        <span>{forceDesktopLayout ? "Layout compatto" : "Layout desktop"}</span>
-      </button>
 
       <ContractSwitcher
         contracts={contractsData.contracts}
