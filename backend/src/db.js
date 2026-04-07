@@ -37,5 +37,16 @@ export async function initDb() {
     `,
   );
 
+  const cols = await db.all("PRAGMA table_info(profile)");
+  const names = new Set(cols.map((c) => c.name));
+  if (!names.has("contract_type")) {
+    await db.run(`ALTER TABLE profile ADD COLUMN contract_type TEXT DEFAULT 'convivente'`);
+    await db.run(`ALTER TABLE profile ADD COLUMN level TEXT DEFAULT 'BS'`);
+    await db.run(`ALTER TABLE profile ADD COLUMN weekly_hours REAL DEFAULT 54`);
+    await db.run(`ALTER TABLE profile ADD COLUMN hourly_rate REAL DEFAULT 7.45`);
+    await db.run(`ALTER TABLE profile ADD COLUMN month INTEGER DEFAULT 1`);
+    await db.run(`ALTER TABLE profile ADD COLUMN year INTEGER DEFAULT 2026`);
+  }
+
   return db;
 }

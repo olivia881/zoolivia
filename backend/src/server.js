@@ -29,7 +29,8 @@ app.get("/api/health", (_req, res) => {
 app.get("/api/profile", async (_req, res) => {
   const row = await db.get(
     `
-      SELECT employer_name, employer_cf, employer_address, worker_name, worker_cf
+      SELECT employer_name, employer_cf, employer_address, worker_name, worker_cf,
+             contract_type, level, weekly_hours, hourly_rate, month, year
       FROM profile
       WHERE id = 1
     `,
@@ -41,14 +42,35 @@ app.get("/api/profile", async (_req, res) => {
     employerAddress: row?.employer_address ?? "",
     workerName: row?.worker_name ?? "",
     workerCf: row?.worker_cf ?? "",
+    contractType: row?.contract_type ?? "convivente",
+    level: row?.level ?? "BS",
+    weeklyHours: row?.weekly_hours ?? 54,
+    hourlyRate: row?.hourly_rate ?? 7.45,
+    month: row?.month ?? new Date().getMonth() + 1,
+    year: row?.year ?? new Date().getFullYear(),
   });
 });
 
 app.put("/api/profile", async (req, res) => {
-  const { isValid, errors, sanitized } = validateProfile(req.body ?? {});
+  const body = req.body ?? {};
+  const { isValid, errors, sanitized } = validateProfile(body);
+  const inputValidation = validateMonthlyInput({
+    contractType: body.contractType,
+    level: body.level,
+    weeklyHours: body.weeklyHours,
+    hourlyRate: body.hourlyRate,
+    month: body.month,
+    year: body.year,
+  });
+
   if (!isValid) {
     return res.status(400).json({ errors });
   }
+  if (!inputValidation.isValid) {
+    return res.status(400).json({ errors: inputValidation.errors });
+  }
+
+  const wi = inputValidation.sanitized;
 
   await db.run(
     `
@@ -58,6 +80,12 @@ app.put("/api/profile", async (req, res) => {
           employer_address = ?,
           worker_name = ?,
           worker_cf = ?,
+          contract_type = ?,
+          level = ?,
+          weekly_hours = ?,
+          hourly_rate = ?,
+          month = ?,
+          year = ?,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = 1
     `,
@@ -66,9 +94,18 @@ app.put("/api/profile", async (req, res) => {
     sanitized.employerAddress,
     sanitized.workerName,
     sanitized.workerCf,
+    wi.contractType,
+    wi.level,
+    wi.weeklyHours,
+    wi.hourlyRate,
+    wi.month,
+    wi.year,
   );
 
-  return res.json({ profile: sanitized });
+  return res.json({
+    profile: sanitized,
+    input: wi,
+  });
 });
 
 app.post("/api/payroll/calculate", (req, res) => {

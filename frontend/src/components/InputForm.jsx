@@ -90,6 +90,10 @@ export default function InputForm({
 
       <section className="card full-width">
         <h2>Input Mensile</h2>
+        <p className="form-persist-hint">
+          Anagrafica e parametri contrattuali restano salvati. Per ogni busta paga aggiorna solo mese e anno (o
+          variazioni).
+        </p>
         <div className="inline-grid">
           <label className="field">
             <span>Tipo contratto</span>

@@ -12,6 +12,11 @@ import {
   resetPayrollHistory,
 } from "./utils/payrollStorage";
 import { loadProfile as loadProfileLocal, saveProfile as saveProfileLocal } from "./utils/profileStorage";
+import {
+  loadWorkflowInput,
+  saveWorkflowInput,
+  bumpMonthYearIfNeeded,
+} from "./utils/workflowStorage";
 import { generatePDFClient, generateManualPdf } from "./lib/pdfGenerator";
 import { downloadOrOpenPdf } from "./utils/fileDownload";
 
@@ -75,11 +80,28 @@ function App() {
   useEffect(() => {
     setHistory(getPayrollHistory());
     async function initProfile() {
+      const applyWorkflow = (baseInput) => {
+        const stored = loadWorkflowInput();
+        const merged = { ...baseInput, ...(stored || {}) };
+        return bumpMonthYearIfNeeded(merged);
+      };
+
       try {
         const res = await fetch(`${API_BASE}/profile`);
         if (res.ok) {
           const data = await res.json();
           setProfile((p) => ({ ...p, ...data }));
+          setInput((prev) =>
+            applyWorkflow({
+              ...prev,
+              contractType: data.contractType ?? prev.contractType,
+              level: data.level ?? prev.level,
+              weeklyHours: data.weeklyHours ?? prev.weeklyHours,
+              hourlyRate: data.hourlyRate ?? prev.hourlyRate,
+              month: data.month ?? prev.month,
+              year: data.year ?? prev.year,
+            }),
+          );
           return;
         }
       } catch {
@@ -87,9 +109,18 @@ function App() {
       }
       const stored = loadProfileLocal();
       if (stored) setProfile((p) => ({ ...p, ...stored }));
+      setInput((prev) => applyWorkflow(prev));
     }
     initProfile();
   }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      saveProfileLocal(profile);
+      saveWorkflowInput(input);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [profile, input]);
 
   const profileErrors = useMemo(() => validateProfile(profile), [profile]);
   const inputErrors = useMemo(() => validateInput(input), [input]);
@@ -123,17 +154,19 @@ function App() {
   }
 
   async function saveProfile() {
+    const payload = { ...profile, ...input };
     try {
       const response = await fetch(`${API_BASE}/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
+        body: JSON.stringify(payload),
       });
       if (response.ok) return;
     } catch {
       /* standalone mode */
     }
     saveProfileLocal(profile);
+    saveWorkflowInput(input);
   }
 
 
