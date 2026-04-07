@@ -224,6 +224,23 @@ body {
   gap: 0.5rem;
 }
 
+.contract-switcher-actions--stack {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  min-width: 11rem;
+}
+
+.contract-switcher-actions--stack .contract-btn {
+  width: 100%;
+  text-align: center;
+}
+
+.contract-btn.danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .contract-btn {
   padding: 0.45rem 0.75rem;
   border-radius: 8px;

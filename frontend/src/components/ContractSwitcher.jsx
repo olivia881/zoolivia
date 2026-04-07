@@ -44,19 +44,23 @@ export default function ContractSwitcher({
             ))}
           </select>
         </label>
-        <div className="contract-switcher-actions">
+        <div className="contract-switcher-actions contract-switcher-actions--stack">
           <button type="button" className="contract-btn secondary" onClick={onNew}>
             Nuovo contratto
           </button>
-          {contracts.length > 1 && (
-            <button
-              type="button"
-              className="contract-btn danger"
-              onClick={() => onDelete(activeId)}
-            >
-              Elimina
-            </button>
-          )}
+          <button
+            type="button"
+            className="contract-btn danger"
+            disabled={!activeId || contracts.length <= 1}
+            title={
+              contracts.length <= 1
+                ? "Serve almeno un contratto salvato. Aggiungine un altro prima di eliminare questo."
+                : "Elimina il contratto selezionato"
+            }
+            onClick={() => activeId && onDelete(activeId)}
+          >
+            Elimina contratto
+          </button>
         </div>
       </div>
       {active && (
