@@ -22,7 +22,7 @@ Per **codice non trovato** l’API può restituire `{"non_trovato":true}` oppure
 
 Foreground adattivo: `app/src/main/res/drawable-nodpi/ic_launcher_foreground_prisma.png` (sostituibile con il tuo PNG ufficiale, stesso nome di file, oppure *Image Asset* in Android Studio).
 
-## Build (solo in locale)
+## Build in locale
 
 1. Installa **Android Studio** e l’**Android SDK**.  
 2. Nella cartella `magazzino-scanner/`, crea `local.properties` con una riga:  
@@ -30,6 +30,17 @@ Foreground adattivo: `app/src/main/res/drawable-nodpi/ic_launcher_foreground_pri
 3. Da terminale, nella cartella `magazzino-scanner/`:  
    `./gradlew assembleDebug`  
    L’APK sarà in `app/build/outputs/apk/debug/`.
+
+## Build con GitHub Actions
+
+Nel repository è definito il workflow **«Build PrismaScanner APK»** (file `.github/workflows/build-prisma-scanner-apk.yml`).
+
+1. Su GitHub apri il repo → tab **Azioni**.  
+2. Seleziona **«Build PrismaScanner APK»** → **Esegui workflow**.  
+3. Scegli il **branch** che contiene le modifiche (es. `main` o il branch della feature).  
+4. Al termine del run, nella pagina del job, sezione **Artifacts**: scarica **`prisma-scanner-apk-debug`** (contiene `prisma-scanner-debug.apk`).
+
+Il workflow parte anche automaticamente su **push** e **pull request** che toccano la cartella `magazzino-scanner/`.
 
 ## Rete
 
