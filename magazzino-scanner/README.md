@@ -20,7 +20,11 @@ Per **codice non trovato** l’API può restituire `{"non_trovato":true}` oppure
 
 ## Icona
 
-L’icona launcher è un **vettore adattivo** ispirata ai colori del brand (blu `#001035`, rosso `#8B0000`, bianco). Se hai il file **PNG/SVG** definitivo dell’icona, puoi sostituire `app/src/main/res/drawable/ic_launcher_foreground_prisma.xml` con le risorse generate da Android Studio (Image Asset).
+Il **foreground** dell’icona adattiva è il bitmap  
+`app/src/main/res/drawable-nodpi/ic_launcher_foreground_prisma.png` (1024×1024).  
+Sostituiscilo con il tuo PNG ufficiale **PrismaMobile** (stesso nome di file) oppure aggiorna i riferimenti in `app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml` e `ic_launcher_round.xml`.
+
+Con Android Studio: *File → New → Image Asset*.
 
 ## Build
 
