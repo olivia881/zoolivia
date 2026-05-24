@@ -1,4 +1,4 @@
-package it.magazzino.scanner.ui.scanner
+package it.prisma.mobile.ui.scanner
 
 import android.Manifest
 import androidx.camera.core.CameraSelector

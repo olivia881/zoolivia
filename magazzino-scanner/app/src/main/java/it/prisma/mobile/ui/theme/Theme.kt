@@ -1,4 +1,4 @@
-package it.magazzino.scanner.ui.theme
+package it.prisma.mobile.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -7,20 +7,25 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
+private val Navy = Color(0xFF001035)
+private val Red = Color(0xFF8B0000)
+
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF1565C0),
+    primary = Navy,
     onPrimary = Color.White,
-    secondary = Color(0xFF00695C),
+    secondary = Red,
+    onSecondary = Color.White,
 )
 
 private val DarkColors = darkColorScheme(
     primary = Color(0xFF90CAF9),
-    onPrimary = Color(0xFF0D47A1),
-    secondary = Color(0xFF80CBC4),
+    onPrimary = Navy,
+    secondary = Color(0xFFFF8A80),
+    onSecondary = Navy,
 )
 
 @Composable
-fun MagazzinoTheme(
+fun PrismaMobileTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {

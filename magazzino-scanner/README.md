@@ -1,10 +1,10 @@
-# Magazzino Scanner (Android)
+# PrismaMobile (Android)
 
-App Android per consultare la giacenza in magazzino: scansiona **EAN / CODE128 / QR**, sceglie **Synology** (squadre) o **QNAP** (personale) e interroga in LAN:
+App Android **PrismaMobile** per consultare la giacenza: scansiona **EAN / CODE128 / QR**, sceglie il **NAS Synology** o il **NAS QNAP** (ciascuno con il proprio database in LAN) e interroga:
 
-- `{baseUrl}/api/giacenza.php?codice=...`
+`{baseUrl}/api/giacenza.php?codice=...`
 
-La risposta attesa è JSON, ad esempio:
+Risposta JSON attesa, ad esempio:
 
 ```json
 {
@@ -18,20 +18,20 @@ La risposta attesa è JSON, ad esempio:
 
 Per **codice non trovato** l’API può restituire `{"non_trovato":true}` oppure `{"errore":"..."}` senza campi utili.
 
-## Configurazione
+## Icona
 
-1. Installa **Android Studio** e l’**Android SDK**.
-2. In `magazzino-scanner/`, crea `local.properties` con una riga del tipo:
-   `sdk.dir=/percorso/al/Android/sdk`
-3. Da terminale: `./gradlew assembleDebug`  
-   L’APK sarà in `app/build/outputs/apk/debug/`.
+L’icona launcher è un **vettore adattivo** ispirata ai colori del brand (blu `#001035`, rosso `#8B0000`, bianco). Se hai il file **PNG/SVG** definitivo dell’icona, puoi sostituire `app/src/main/res/drawable/ic_launcher_foreground_prisma.xml` con le risorse generate da Android Studio (Image Asset).
 
-Sull’app, icona **Impostazioni**: imposta l’URL base di ogni NAS (es. `http://192.168.1.10`). L’app aggiunge automaticamente `/api/giacenza.php`.
+## Build
+
+1. Android Studio + Android SDK.  
+2. In `magazzino-scanner/`, crea `local.properties` con `sdk.dir=...`  
+3. `./gradlew assembleDebug` → APK in `app/build/outputs/apk/debug/`.
 
 ## Rete
 
-È abilitato **HTTP in chiaro** (`usesCleartextTraffic`) solo per uso in LAN come da tuo scenario.
+È abilitato **HTTP in chiaro** (`usesCleartextTraffic`) per uso in LAN.
 
-## Licenza del codice
+## Esempio PHP
 
-Stesso repository del progetto principale.
+Vedi `docs/esempio-giacenza.php` (adatta percorso DB e query al tuo schema).

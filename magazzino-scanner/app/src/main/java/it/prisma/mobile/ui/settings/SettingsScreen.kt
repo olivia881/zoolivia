@@ -1,4 +1,4 @@
-package it.magazzino.scanner.ui.settings
+package it.prisma.mobile.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,7 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import it.magazzino.scanner.ui.home.HomeViewModel
+import it.prisma.mobile.ui.home.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +77,7 @@ fun SettingsScreen(
             OutlinedTextField(
                 value = synologyText,
                 onValueChange = { synologyText = it },
-                label = { Text("Synology (magazzino squadre)") },
+                label = { Text("Synology — URL base NAS") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 placeholder = { Text("http://192.168.1.10") },
@@ -85,7 +85,7 @@ fun SettingsScreen(
             OutlinedTextField(
                 value = qnapText,
                 onValueChange = { qnapText = it },
-                label = { Text("QNAP (magazzino personale)") },
+                label = { Text("QNAP — URL base NAS") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 placeholder = { Text("http://192.168.1.11") },

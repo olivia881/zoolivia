@@ -1,4 +1,4 @@
-package it.magazzino.scanner.ui.home
+package it.prisma.mobile.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,8 +36,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import it.magazzino.scanner.data.MagazzinoTipo
-import it.magazzino.scanner.ui.scanner.ScannerOverlay
+import it.prisma.mobile.data.NasDestinazione
+import it.prisma.mobile.ui.scanner.ScannerOverlay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +58,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Magazzino") },
+                title = { Text("PrismaMobile") },
                 actions = {
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Impostazioni")
@@ -88,7 +88,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text(
-                    text = "Magazzino attivo",
+                    text = "NAS attivo",
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Row(
@@ -96,15 +96,15 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     FilterChip(
-                        selected = warehouse == MagazzinoTipo.SQUADRE_SYNOLOGY,
-                        onClick = { viewModel.setWarehouse(MagazzinoTipo.SQUADRE_SYNOLOGY) },
-                        label = { Text("Squadre (Synology)") },
+                        selected = warehouse == NasDestinazione.SYNOLOGY,
+                        onClick = { viewModel.setWarehouse(NasDestinazione.SYNOLOGY) },
+                        label = { Text("Synology") },
                         modifier = Modifier.weight(1f),
                     )
                     FilterChip(
-                        selected = warehouse == MagazzinoTipo.PERSONALE_QNAP,
-                        onClick = { viewModel.setWarehouse(MagazzinoTipo.PERSONALE_QNAP) },
-                        label = { Text("Personale (QNAP)") },
+                        selected = warehouse == NasDestinazione.QNAP,
+                        onClick = { viewModel.setWarehouse(NasDestinazione.QNAP) },
+                        label = { Text("QNAP") },
                         modifier = Modifier.weight(1f),
                     )
                 }

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "it.magazzino.scanner"
+    namespace = "it.prisma.mobile"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "it.magazzino.scanner"
+        applicationId = "it.prisma.mobile"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

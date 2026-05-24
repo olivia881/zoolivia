@@ -1,8 +1,8 @@
-package it.magazzino.scanner.data
+package it.prisma.mobile.data
 
-enum class MagazzinoTipo {
-    SQUADRE_SYNOLOGY,
-    PERSONALE_QNAP,
+enum class NasDestinazione {
+    SYNOLOGY,
+    QNAP,
 }
 
 data class Giacenza(

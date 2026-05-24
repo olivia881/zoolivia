@@ -1,13 +1,13 @@
-package it.magazzino.scanner.ui.home
+package it.prisma.mobile.ui.home
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import it.magazzino.scanner.data.GiacenzaFetchResult
-import it.magazzino.scanner.data.MagazzinoTipo
-import it.magazzino.scanner.data.PrefsRepository
-import it.magazzino.scanner.data.Giacenza
-import it.magazzino.scanner.network.GiacenzaApi
+import it.prisma.mobile.data.GiacenzaFetchResult
+import it.prisma.mobile.data.NasDestinazione
+import it.prisma.mobile.data.PrefsRepository
+import it.prisma.mobile.data.Giacenza
+import it.prisma.mobile.network.GiacenzaApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,8 +29,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val prefs = PrefsRepository(application)
     private val api = GiacenzaApi()
 
-    private val _warehouse = MutableStateFlow(MagazzinoTipo.SQUADRE_SYNOLOGY)
-    val warehouse: StateFlow<MagazzinoTipo> = _warehouse.asStateFlow()
+    private val _warehouse = MutableStateFlow(NasDestinazione.SYNOLOGY)
+    val warehouse: StateFlow<NasDestinazione> = _warehouse.asStateFlow()
 
     private val _ui = MutableStateFlow(HomeUiState())
     val ui: StateFlow<HomeUiState> = _ui.asStateFlow()
@@ -54,7 +54,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             PrefsRepository.DEFAULT_SYNOLOGY to PrefsRepository.DEFAULT_QNAP,
         )
 
-    fun setWarehouse(tipo: MagazzinoTipo) {
+    fun setWarehouse(tipo: NasDestinazione) {
         _warehouse.value = tipo
     }
 
@@ -84,8 +84,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun fetchGiacenza(codice: String) {
         viewModelScope.launch {
             val base = when (_warehouse.value) {
-                MagazzinoTipo.SQUADRE_SYNOLOGY -> synologyBase.value
-                MagazzinoTipo.PERSONALE_QNAP -> qnapBase.value
+                NasDestinazione.SYNOLOGY -> synologyBase.value
+                NasDestinazione.QNAP -> qnapBase.value
             }
             _ui.update {
                 it.copy(loading = true, message = null, giacenza = null)
