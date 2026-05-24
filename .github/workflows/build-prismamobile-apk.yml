@@ -1,0 +1,51 @@
+# APK debug di PrismaMobile (modulo magazzino-scanner).
+# GitHub → Azioni → «Build PrismaMobile APK» → «Esegui workflow» (scegli il branch, es. quello della PR).
+
+name: Build PrismaMobile APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "cursor/**"
+    paths:
+      - "magazzino-scanner/**"
+      - ".github/workflows/build-prismamobile-apk.yml"
+  pull_request:
+    paths:
+      - "magazzino-scanner/**"
+      - ".github/workflows/build-prismamobile-apk.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prismamobile-apk-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Compila APK debug (PrismaMobile)
+        working-directory: magazzino-scanner
+        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+
+      - name: Prepara file per download
+        run: |
+          cp magazzino-scanner/app/build/outputs/apk/debug/app-debug.apk prisma-mobile-debug.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prisma-mobile-apk-debug
+          path: prisma-mobile-debug.apk
