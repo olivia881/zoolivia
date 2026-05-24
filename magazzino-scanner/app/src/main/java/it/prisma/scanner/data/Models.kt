@@ -1,4 +1,4 @@
-package it.prisma.mobile.data
+package it.prisma.scanner.data
 
 enum class NasDestinazione {
     SYNOLOGY,

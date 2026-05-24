@@ -1,13 +1,13 @@
-package it.prisma.mobile.ui.home
+package it.prisma.scanner.ui.home
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import it.prisma.mobile.data.GiacenzaFetchResult
-import it.prisma.mobile.data.NasDestinazione
-import it.prisma.mobile.data.PrefsRepository
-import it.prisma.mobile.data.Giacenza
-import it.prisma.mobile.network.GiacenzaApi
+import it.prisma.scanner.data.GiacenzaFetchResult
+import it.prisma.scanner.data.NasDestinazione
+import it.prisma.scanner.data.PrefsRepository
+import it.prisma.scanner.data.Giacenza
+import it.prisma.scanner.network.GiacenzaApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

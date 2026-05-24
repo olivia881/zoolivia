@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- PrismaMobile brand (icon + tema) -->
+    <!-- PrismaScanner brand (icon + tema) -->
     <color name="prisma_navy">#001035</color>
     <color name="prisma_red">#8B0000</color>
     <color name="ic_launcher_background">@color/prisma_navy</color>

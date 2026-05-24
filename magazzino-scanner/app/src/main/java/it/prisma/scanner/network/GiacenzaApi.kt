@@ -1,7 +1,7 @@
-package it.prisma.mobile.network
+package it.prisma.scanner.network
 
-import it.prisma.mobile.data.Giacenza
-import it.prisma.mobile.data.GiacenzaFetchResult
+import it.prisma.scanner.data.Giacenza
+import it.prisma.scanner.data.GiacenzaFetchResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient

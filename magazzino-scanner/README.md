@@ -1,6 +1,6 @@
-# PrismaMobile (Android)
+# PrismaScanner (Android)
 
-App Android **PrismaMobile** per consultare la giacenza: scansiona **EAN / CODE128 / QR**, sceglie il **NAS Synology** o il **NAS QNAP** (ciascuno con il proprio database in LAN) e interroga:
+App Android **PrismaScanner** per consultare la giacenza in LAN: scansiona **EAN / CODE128 / QR**, sceglie il **NAS Synology** o il **NAS QNAP** (ciascuno con il proprio database) e interroga:
 
 `{baseUrl}/api/giacenza.php?codice=...`
 
@@ -20,22 +20,21 @@ Per **codice non trovato** l’API può restituire `{"non_trovato":true}` oppure
 
 ## Icona
 
-Il **foreground** dell’icona adattiva è il bitmap  
-`app/src/main/res/drawable-nodpi/ic_launcher_foreground_prisma.png` (1024×1024).  
-Sostituiscilo con il tuo PNG ufficiale **PrismaMobile** (stesso nome di file) oppure aggiorna i riferimenti in `app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml` e `ic_launcher_round.xml`.
+Foreground adattivo: `app/src/main/res/drawable-nodpi/ic_launcher_foreground_prisma.png` (sostituibile con il tuo PNG ufficiale, stesso nome di file, oppure *Image Asset* in Android Studio).
 
-Con Android Studio: *File → New → Image Asset*.
+## Build (solo in locale)
 
-## Build
-
-1. Android Studio + Android SDK.  
-2. In `magazzino-scanner/`, crea `local.properties` con `sdk.dir=...`  
-3. `./gradlew assembleDebug` → APK in `app/build/outputs/apk/debug/`.
+1. Installa **Android Studio** e l’**Android SDK**.  
+2. Nella cartella `magazzino-scanner/`, crea `local.properties` con una riga:  
+   `sdk.dir=/percorso/al/Android/sdk`  
+3. Da terminale, nella cartella `magazzino-scanner/`:  
+   `./gradlew assembleDebug`  
+   L’APK sarà in `app/build/outputs/apk/debug/`.
 
 ## Rete
 
 È abilitato **HTTP in chiaro** (`usesCleartextTraffic`) per uso in LAN.
 
-## Esempio PHP
+## Esempio PHP sul NAS
 
-Vedi `docs/esempio-giacenza.php` (adatta percorso DB e query al tuo schema).
+Vedi `docs/esempio-giacenza.php` (adatta percorso database e query).

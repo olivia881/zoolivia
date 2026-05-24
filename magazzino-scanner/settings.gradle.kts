@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PrismaMobile"
+rootProject.name = "PrismaScanner"
 include(":app")

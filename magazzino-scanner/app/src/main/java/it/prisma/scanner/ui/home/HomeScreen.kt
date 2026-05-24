@@ -1,4 +1,4 @@
-package it.prisma.mobile.ui.home
+package it.prisma.scanner.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,8 +36,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import it.prisma.mobile.data.NasDestinazione
-import it.prisma.mobile.ui.scanner.ScannerOverlay
+import it.prisma.scanner.data.NasDestinazione
+import it.prisma.scanner.ui.scanner.ScannerOverlay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +58,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("PrismaMobile") },
+                title = { Text("PrismaScanner") },
                 actions = {
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Impostazioni")

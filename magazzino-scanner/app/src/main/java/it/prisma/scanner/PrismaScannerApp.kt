@@ -1,15 +1,15 @@
-package it.prisma.mobile
+package it.prisma.scanner
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import it.prisma.mobile.ui.home.HomeScreen
-import it.prisma.mobile.ui.home.HomeViewModel
-import it.prisma.mobile.ui.settings.SettingsScreen
+import it.prisma.scanner.ui.home.HomeScreen
+import it.prisma.scanner.ui.home.HomeViewModel
+import it.prisma.scanner.ui.settings.SettingsScreen
 
 @Composable
-fun PrismaMobileApp(viewModel: HomeViewModel) {
+fun PrismaScannerApp(viewModel: HomeViewModel) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
