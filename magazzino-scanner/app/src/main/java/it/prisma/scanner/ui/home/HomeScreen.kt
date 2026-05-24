@@ -1,5 +1,6 @@
 package it.prisma.scanner.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,11 +15,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,10 +37,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.prisma.scanner.data.NasDestinazione
 import it.prisma.scanner.ui.scanner.ScannerOverlay
+import it.prisma.scanner.ui.theme.PrismaBrand
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,17 +61,23 @@ fun HomeScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text("PrismaScanner") },
                 actions = {
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Impostazioni")
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = "Impostazioni",
+                            tint = Color.White,
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    containerColor = PrismaBrand.Navy,
+                    titleContentColor = Color.White,
+                    actionIconContentColor = Color.White,
                 ),
             )
         },
@@ -75,7 +86,8 @@ fun HomeScreen(
         BoxWithScanner(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding)
+                .background(MaterialTheme.colorScheme.background),
             showScanner = ui.showScanner,
             onBarcode = viewModel::onBarcodeScanned,
             onCloseScanner = viewModel::closeScanner,
@@ -90,28 +102,42 @@ fun HomeScreen(
                 Text(
                     text = "NAS attivo",
                     style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    val chipColors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
                     FilterChip(
                         selected = warehouse == NasDestinazione.SYNOLOGY,
                         onClick = { viewModel.setWarehouse(NasDestinazione.SYNOLOGY) },
                         label = { Text("Synology") },
                         modifier = Modifier.weight(1f),
+                        colors = chipColors,
                     )
                     FilterChip(
                         selected = warehouse == NasDestinazione.QNAP,
                         onClick = { viewModel.setWarehouse(NasDestinazione.QNAP) },
                         label = { Text("QNAP") },
                         modifier = Modifier.weight(1f),
+                        colors = chipColors,
                     )
                 }
 
                 Button(
                     onClick = { viewModel.openScanner() },
                     modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrismaBrand.ScanBlue,
+                        contentColor = Color.White,
+                    ),
                 ) {
                     Text("Scansiona codice / QR")
                 }
@@ -123,13 +149,17 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         CircularProgressIndicator(modifier = Modifier.padding(8.dp))
-                        Text("Consultazione in corso…")
+                        Text(
+                            "Consultazione in corso…",
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
                     }
                 }
 
                 ui.giacenza?.let { g ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
                         ),
@@ -138,7 +168,11 @@ fun HomeScreen(
                             Modifier.padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Text("Risultato", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Risultato",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
                             InfoRow("Codice", g.codice)
                             InfoRow("Descrizione", g.descrizione ?: "—")
                             InfoRow("Giacenza", g.giacenza?.toString() ?: "—")
@@ -160,9 +194,13 @@ private fun InfoRow(label: String, value: String) {
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = PrismaBrand.Navy,
         )
-        Text(value, style = MaterialTheme.typography.bodyLarge)
+        Text(
+            value,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 

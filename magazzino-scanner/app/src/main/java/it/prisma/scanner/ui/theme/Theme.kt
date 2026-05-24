@@ -1,36 +1,42 @@
 package it.prisma.scanner.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val Navy = Color(0xFF001035)
-private val Red = Color(0xFF8B0000)
+/** Colori brand PrismaScanner (icona / UI). */
+object PrismaBrand {
+    val Navy = Color(0xFF001035)
+    val Red = Color(0xFF8B0000)
+    /** Blu pulsante «Scansiona» (stile anteprima). */
+    val ScanBlue = Color(0xFF1E88E5)
+}
 
 private val LightColors = lightColorScheme(
-    primary = Navy,
+    primary = PrismaBrand.Navy,
     onPrimary = Color.White,
-    secondary = Red,
+    primaryContainer = Color(0xFFE3F2FD),
+    onPrimaryContainer = PrismaBrand.Navy,
+    secondary = PrismaBrand.Red,
     onSecondary = Color.White,
-)
-
-private val DarkColors = darkColorScheme(
-    primary = Color(0xFF90CAF9),
-    onPrimary = Navy,
-    secondary = Color(0xFFFF8A80),
-    onSecondary = Navy,
+    secondaryContainer = Color(0xFFFFEBEE),
+    onSecondaryContainer = PrismaBrand.Red,
+    background = Color(0xFFF8F9FC),
+    onBackground = Color(0xFF1C1B1F),
+    surface = Color.White,
+    onSurface = Color(0xFF1C1B1F),
+    surfaceVariant = Color(0xFFE7E8F0),
+    onSurfaceVariant = Color(0xFF44464F),
+    outline = Color(0xFF757780),
 )
 
 @Composable
 fun PrismaScannerTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
+        colorScheme = LightColors,
         content = content,
     )
 }
