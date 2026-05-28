@@ -19,8 +19,19 @@ class GiacenzaApi(
 ) {
 
     suspend fun getGiacenza(baseUrl: String, codice: String): GiacenzaFetchResult = withContext(Dispatchers.IO) {
-        val trimmed = baseUrl.trimEnd('/')
-        val encoded = URLEncoder.encode(codice, Charsets.UTF_8.name())
+        val id = ScanIdExtractor.extract(codice)
+        if (id.isBlank()) {
+            return@withContext GiacenzaFetchResult.ParseError("Codice QR vuoto o non valido")
+        }
+        val trimmed = baseUrl.trim().trimEnd('/')
+        if (!trimmed.startsWith("http://", ignoreCase = true) &&
+            !trimmed.startsWith("https://", ignoreCase = true)
+        ) {
+            return@withContext GiacenzaFetchResult.ParseError(
+                "URL base non valido: usa http://IP:porta (es. http://10.193.87.34:8081)",
+            )
+        }
+        val encoded = URLEncoder.encode(id, Charsets.UTF_8.name())
         val url = "$trimmed/giacenza.php?id=$encoded"
         val request = Request.Builder().url(url).get().build()
         try {
@@ -32,7 +43,7 @@ class GiacenzaApi(
                 if (body.isBlank()) {
                     return@withContext GiacenzaFetchResult.ParseError("Risposta vuota")
                 }
-                return@withContext parseJson(body, codice)
+                return@withContext parseJson(body, id)
             }
         } catch (_: java.io.IOException) {
             GiacenzaFetchResult.NetworkError
@@ -47,8 +58,14 @@ class GiacenzaApi(
             return GiacenzaFetchResult.NotFound
         }
         val errore = json.optString("errore", "").ifBlank { json.optString("error", "") }
-        if (errore.isNotBlank() && !json.has("giacenza") && !json.has("descrizione")) {
-            return GiacenzaFetchResult.NotFound
+        if (errore.isNotBlank()) {
+            val dettaglio = json.optString("dettaglio", "").ifBlank { null }
+            if (errore.contains("non trovato", ignoreCase = true) ||
+                errore.contains("mancante", ignoreCase = true)
+            ) {
+                return GiacenzaFetchResult.NotFound
+            }
+            return GiacenzaFetchResult.ApiError(errore, dettaglio)
         }
         val codice = if (json.has("codice") && !json.isNull("codice")) {
             json.get("codice").toString()
@@ -68,12 +85,14 @@ class GiacenzaApi(
         }
         val lotto = json.optString("lotto", "").ifBlank { null }
         val scadenza = json.optString("scadenza", "").ifBlank { null }
+        val marca = json.optString("marca", "").ifBlank { null }
         val g = Giacenza(
             codice = codice,
             descrizione = descrizione,
             giacenza = giacenza,
             lotto = lotto,
             scadenza = scadenza,
+            marca = marca,
         )
         return GiacenzaFetchResult.Success(g)
     }

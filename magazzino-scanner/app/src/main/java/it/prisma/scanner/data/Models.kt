@@ -11,6 +11,7 @@ data class Giacenza(
     val giacenza: Int?,
     val lotto: String?,
     val scadenza: String?,
+    val marca: String? = null,
 )
 
 sealed class GiacenzaFetchResult {
@@ -19,4 +20,5 @@ sealed class GiacenzaFetchResult {
     data object NetworkError : GiacenzaFetchResult()
     data class HttpError(val code: Int, val body: String?) : GiacenzaFetchResult()
     data class ParseError(val detail: String) : GiacenzaFetchResult()
+    data class ApiError(val message: String, val dettaglio: String?) : GiacenzaFetchResult()
 }

@@ -118,6 +118,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         giacenza = null,
                         message = "Risposta non valida: ${result.detail}",
                     )
+                    is GiacenzaFetchResult.ApiError -> state.copy(
+                        loading = false,
+                        giacenza = null,
+                        message = result.dettaglio?.let { "${result.message}: $it" }
+                            ?: result.message,
+                    )
                 }
             }
         }
