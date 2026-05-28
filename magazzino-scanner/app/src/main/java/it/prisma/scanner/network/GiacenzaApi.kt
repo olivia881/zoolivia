@@ -21,7 +21,7 @@ class GiacenzaApi(
     suspend fun getGiacenza(baseUrl: String, codice: String): GiacenzaFetchResult = withContext(Dispatchers.IO) {
         val trimmed = baseUrl.trimEnd('/')
         val encoded = URLEncoder.encode(codice, Charsets.UTF_8.name())
-        val url = "$trimmed/api/giacenza.php?codice=$encoded"
+        val url = "$trimmed/giacenza.php?id=$encoded"
         val request = Request.Builder().url(url).get().build()
         try {
             client.newCall(request).execute().use { response ->
@@ -50,7 +50,11 @@ class GiacenzaApi(
         if (errore.isNotBlank() && !json.has("giacenza") && !json.has("descrizione")) {
             return GiacenzaFetchResult.NotFound
         }
-        val codice = json.optString("codice", fallbackCodice).ifBlank { fallbackCodice }
+        val codice = if (json.has("codice") && !json.isNull("codice")) {
+            json.get("codice").toString()
+        } else {
+            fallbackCodice
+        }
         val descrizione = json.optString("descrizione", "").ifBlank { null }
         val giacenza = if (json.has("giacenza") && !json.isNull("giacenza")) {
             when (val v = json.get("giacenza")) {

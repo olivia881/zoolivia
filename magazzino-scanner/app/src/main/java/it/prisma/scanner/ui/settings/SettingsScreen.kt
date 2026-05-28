@@ -79,7 +79,7 @@ fun SettingsScreen(
         ) {
             Text(
                 text = "Inserisci l’URL base di ciascun NAS (senza barra finale). " +
-                    "L’app chiama automaticamente /api/giacenza.php?codice=…",
+                    "L’app chiama automaticamente /giacenza.php?id=…",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )

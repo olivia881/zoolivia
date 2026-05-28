@@ -2,7 +2,7 @@
 
 App Android **PrismaScanner** per consultare la giacenza in LAN: scansiona **EAN / CODE128 / QR**, sceglie il **NAS Synology** o il **NAS QNAP** (ciascuno con il proprio database) e interroga:
 
-`{baseUrl}/api/giacenza.php?codice=...`
+`{baseUrl}/giacenza.php?id=...`
 
 Risposta JSON attesa, ad esempio:
 
@@ -60,7 +60,7 @@ Il workflow parte anche automaticamente su **push** e **pull request** che tocca
 
 L’app **non** contiene l’API: è solo un client che chiama un URL sul NAS.
 
-- **Sì, lato server va preparato su ogni NAS** (Synology e QNAP), perché ciascuno ha il **proprio** database e deve rispondere allo stesso contratto (`/api/giacenza.php?codice=...` e JSON come sopra).
+- **Sì, lato server va preparato su ogni NAS** (Synology e QNAP), perché ciascuno ha il **proprio** database e deve rispondere allo stesso contratto (`/giacenza.php?id=...` e JSON come sopra).
 - **Non** è obbligatorio che sia PHP: può essere PHP (Web Station), Node, Python, Docker, ecc.; l’importante è che risponda in HTTP e JSON come si aspetta l’app.
 - In pratica: **installi/configuri** il servizio web su ogni NAS (cartella del sito, virtual host, permessi sul file SQLite in lettura), **carichi** gli script (o l’immagine Docker) e verifichi dal browser o da `curl` che l’URL risponda. Non c’è un “compilatore” unico obbligatorio: dipende da cosa scegli tu sul NAS.
 
