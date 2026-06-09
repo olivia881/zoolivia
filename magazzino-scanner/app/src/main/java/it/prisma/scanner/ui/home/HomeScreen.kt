@@ -175,9 +175,12 @@ fun HomeScreen(
                             )
                             InfoRow("Codice", g.codice)
                             InfoRow("Descrizione", g.descrizione ?: "—")
+                            g.marca?.let { InfoRow("Marca", it) }
                             InfoRow("Giacenza", g.giacenza?.toString() ?: "—")
+                            g.unitaMisura?.let { InfoRow("Unità di misura", it) }
                             InfoRow("Lotto", g.lotto ?: "—")
                             InfoRow("Scadenza", g.scadenza ?: "—")
+                            g.numeroSerie?.let { InfoRow("Numero serie", it) }
                         }
                     }
                 }

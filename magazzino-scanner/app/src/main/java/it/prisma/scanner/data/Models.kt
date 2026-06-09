@@ -12,6 +12,8 @@ data class Giacenza(
     val lotto: String?,
     val scadenza: String?,
     val marca: String? = null,
+    val numeroSerie: String? = null,
+    val unitaMisura: String? = null,
 )
 
 sealed class GiacenzaFetchResult {

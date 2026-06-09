@@ -85,7 +85,23 @@ class GiacenzaApi(
         }
         val lotto = json.optString("lotto", "").ifBlank { null }
         val scadenza = json.optString("scadenza", "").ifBlank { null }
-        val marca = json.optString("marca", "").ifBlank { null }
+        val marca = jsonStringOrNull(json, "marca")
+        val numeroSerie = jsonStringOrNull(
+            json,
+            "numero_serie",
+            "numeroSerie",
+            "NumeroSerie",
+            "nr_serie",
+            "NrSerie",
+        )
+        val unitaMisura = jsonStringOrNull(
+            json,
+            "unita_misura",
+            "unitaMisura",
+            "UnitaDiMisura",
+            "unita",
+            "um",
+        )
         val g = Giacenza(
             codice = codice,
             descrizione = descrizione,
@@ -93,7 +109,20 @@ class GiacenzaApi(
             lotto = lotto,
             scadenza = scadenza,
             marca = marca,
+            numeroSerie = numeroSerie,
+            unitaMisura = unitaMisura,
         )
         return GiacenzaFetchResult.Success(g)
+    }
+
+    /** Legge la prima chiave presente e non vuota nel JSON. */
+    private fun jsonStringOrNull(json: JSONObject, vararg keys: String): String? {
+        for (key in keys) {
+            if (json.has(key) && !json.isNull(key)) {
+                val value = json.optString(key, "").trim()
+                if (value.isNotEmpty()) return value
+            }
+        }
+        return null
     }
 }

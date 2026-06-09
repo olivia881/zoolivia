@@ -12,9 +12,16 @@ Risposta JSON attesa, ad esempio:
   "descrizione": "Guanti in lattice",
   "giacenza": 42,
   "lotto": "L2024-09",
-  "scadenza": "2026-03-15"
+  "scadenza": "2026-03-15",
+  "marca": "SIRCHIE",
+  "numero_serie": "SN-001",
+  "unita_misura": "pz"
 }
 ```
+
+Campi **obbligatori** per l’app: almeno `codice`/`descrizione`/`giacenza` (come restituiti dalla tua API).  
+Campi **opzionali** (mostrati solo se presenti nel JSON): `marca`, `numero_serie` (o `numeroSerie`), `unita_misura` (o `unitaMisura` / `UnitaDiMisura`).  
+Nel PHP aggiungili alla `SELECT` e a `json_encode` solo se esistono colonne nel DB.
 
 Per **codice non trovato** l’API può restituire `{"non_trovato":true}` oppure `{"errore":"..."}` senza campi utili.
 
