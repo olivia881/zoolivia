@@ -1,0 +1,2 @@
+Sostituisci ic_launcher_foreground_prisma.png con la tua icona (PNG quadrato, es. 1024×1024).
+Stesso nome file. Poi commit + push oppure Build PrismaScanner APK su GitHub Actions.
