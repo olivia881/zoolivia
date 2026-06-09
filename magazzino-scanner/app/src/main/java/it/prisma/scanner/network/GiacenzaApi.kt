@@ -53,13 +53,20 @@ class GiacenzaApi(
     }
 
     private fun parseJson(body: String, fallbackCodice: String): GiacenzaFetchResult {
-        val json = JSONObject(body)
-        if (json.optBoolean("non_trovato", false)) {
+        val root = JSONObject(body)
+        if (root.optBoolean("non_trovato", false)) {
             return GiacenzaFetchResult.NotFound
         }
-        val errore = json.optString("errore", "").ifBlank { json.optString("error", "") }
+        if (root.optBoolean("trovato", true) == false) {
+            return GiacenzaFetchResult.NotFound
+        }
+        val errore = root.optString("errore", "").ifBlank { root.optString("error", "") }
+        if (errore.isBlank() && root.optString("esito", "") == "errore") {
+            val msg = root.optString("messaggio", "").ifBlank { "Errore API" }
+            return GiacenzaFetchResult.ApiError(msg, null)
+        }
         if (errore.isNotBlank()) {
-            val dettaglio = json.optString("dettaglio", "").ifBlank { null }
+            val dettaglio = root.optString("dettaglio", "").ifBlank { null }
             if (errore.contains("non trovato", ignoreCase = true) ||
                 errore.contains("mancante", ignoreCase = true)
             ) {
@@ -67,14 +74,20 @@ class GiacenzaApi(
             }
             return GiacenzaFetchResult.ApiError(errore, dettaglio)
         }
-        val codice = if (json.has("codice") && !json.isNull("codice")) {
-            json.get("codice").toString()
+        // API annidata: { "esito":"ok", "prodotto": { "codice":..., ... } }
+        val data = if (root.has("prodotto") && !root.isNull("prodotto")) {
+            root.getJSONObject("prodotto")
+        } else {
+            root
+        }
+        val codice = if (data.has("codice") && !data.isNull("codice")) {
+            data.get("codice").toString()
         } else {
             fallbackCodice
         }
-        val descrizione = json.optString("descrizione", "").ifBlank { null }
-        val giacenza = if (json.has("giacenza") && !json.isNull("giacenza")) {
-            when (val v = json.get("giacenza")) {
+        val descrizione = data.optString("descrizione", "").ifBlank { null }
+        val giacenza = if (data.has("giacenza") && !data.isNull("giacenza")) {
+            when (val v = data.get("giacenza")) {
                 is Int -> v
                 is Number -> v.toInt()
                 is String -> v.toIntOrNull()
@@ -83,11 +96,11 @@ class GiacenzaApi(
         } else {
             null
         }
-        val lotto = json.optString("lotto", "").ifBlank { null }
-        val scadenza = json.optString("scadenza", "").ifBlank { null }
-        val marca = jsonStringOrNull(json, "marca")
+        val lotto = data.optString("lotto", "").ifBlank { null }
+        val scadenza = data.optString("scadenza", "").ifBlank { null }
+        val marca = jsonStringOrNull(data, "marca")
         val numeroSerie = jsonStringOrNull(
-            json,
+            data,
             "numero_serie",
             "numeroSerie",
             "NumeroSerie",
@@ -95,7 +108,7 @@ class GiacenzaApi(
             "NrSerie",
         )
         val unitaMisura = jsonStringOrNull(
-            json,
+            data,
             "unita_misura",
             "unitaMisura",
             "UnitaDiMisura",
