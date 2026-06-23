@@ -47,6 +47,10 @@ export async function initDb() {
     await db.run(`ALTER TABLE profile ADD COLUMN month INTEGER DEFAULT 1`);
     await db.run(`ALTER TABLE profile ADD COLUMN year INTEGER DEFAULT 2026`);
   }
+  if (!names.has("profile_json")) {
+    await db.run(`ALTER TABLE profile ADD COLUMN profile_json TEXT DEFAULT '{}'`);
+    await db.run(`ALTER TABLE profile ADD COLUMN input_json TEXT DEFAULT '{}'`);
+  }
 
   return db;
 }

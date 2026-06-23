@@ -30,24 +30,40 @@ app.get("/api/profile", async (_req, res) => {
   const row = await db.get(
     `
       SELECT employer_name, employer_cf, employer_address, worker_name, worker_cf,
-             contract_type, level, weekly_hours, hourly_rate, month, year
+             contract_type, level, weekly_hours, hourly_rate, month, year,
+             profile_json, input_json
       FROM profile
       WHERE id = 1
     `,
   );
 
+  let profileExtra = {};
+  let inputExtra = {};
+  try {
+    profileExtra = JSON.parse(row?.profile_json || "{}");
+  } catch {
+    profileExtra = {};
+  }
+  try {
+    inputExtra = JSON.parse(row?.input_json || "{}");
+  } catch {
+    inputExtra = {};
+  }
+
   res.json({
-    employerName: row?.employer_name ?? "",
-    employerCf: row?.employer_cf ?? "",
-    employerAddress: row?.employer_address ?? "",
-    workerName: row?.worker_name ?? "",
-    workerCf: row?.worker_cf ?? "",
-    contractType: row?.contract_type ?? "convivente",
-    level: row?.level ?? "BS",
-    weeklyHours: row?.weekly_hours ?? 54,
-    hourlyRate: row?.hourly_rate ?? 7.45,
-    month: row?.month ?? new Date().getMonth() + 1,
-    year: row?.year ?? new Date().getFullYear(),
+    ...profileExtra,
+    employerName: row?.employer_name ?? profileExtra.employerName ?? "",
+    employerCf: row?.employer_cf ?? profileExtra.employerCf ?? "",
+    employerAddress: row?.employer_address ?? profileExtra.employerAddress ?? "",
+    workerName: row?.worker_name ?? profileExtra.workerName ?? "",
+    workerCf: row?.worker_cf ?? profileExtra.workerCf ?? "",
+    ...inputExtra,
+    contractType: row?.contract_type ?? inputExtra.contractType ?? "convivente",
+    level: row?.level ?? inputExtra.level ?? "BS",
+    weeklyHours: row?.weekly_hours ?? inputExtra.weeklyHours ?? 54,
+    hourlyRate: row?.hourly_rate ?? inputExtra.hourlyRate ?? 7.45,
+    month: row?.month ?? inputExtra.month ?? new Date().getMonth() + 1,
+    year: row?.year ?? inputExtra.year ?? new Date().getFullYear(),
   });
 });
 
@@ -86,6 +102,8 @@ app.put("/api/profile", async (req, res) => {
           hourly_rate = ?,
           month = ?,
           year = ?,
+          profile_json = ?,
+          input_json = ?,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = 1
     `,
@@ -100,6 +118,8 @@ app.put("/api/profile", async (req, res) => {
     wi.hourlyRate,
     wi.month,
     wi.year,
+    JSON.stringify(sanitized),
+    JSON.stringify({ ...body, ...wi }),
   );
 
   return res.json({

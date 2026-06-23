@@ -24,6 +24,7 @@ import {
 } from "./utils/contractsRegistry";
 import { generatePDFClient, generateManualPdf } from "./lib/pdfGenerator";
 import { downloadOrOpenPdf } from "./utils/fileDownload";
+import { DEFAULT_PROFILE, DEFAULT_CONTRACT_INPUT } from "../../shared/profileFields.js";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
@@ -35,14 +36,6 @@ function currentYear() {
   return new Date().getFullYear();
 }
 
-const DEFAULT_PROFILE = {
-  employerName: "",
-  employerCf: "",
-  employerAddress: "",
-  workerName: "",
-  workerCf: "",
-};
-
 const DEFAULT_INPUT = {
   contractType: "convivente",
   level: "BS",
@@ -50,6 +43,9 @@ const DEFAULT_INPUT = {
   hourlyRate: 7.45,
   month: currentMonth(),
   year: currentYear(),
+  ...DEFAULT_CONTRACT_INPUT,
+  qBoardLodging: "SI",
+  qCohabitation: "SI",
 };
 
 function App() {

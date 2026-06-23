@@ -1,19 +1,40 @@
+import { formatStructuredAddress, migrateLegacyProfile } from "../../../shared/profileFields.js";
+
 export function validateProfile(profile) {
+  const p = migrateLegacyProfile(profile);
   const errors = {};
 
-  if (!profile.employerName?.trim()) {
-    errors.employerName = "Obbligatorio";
+  if (!p.employerSurname?.trim()) {
+    errors.employerSurname = "Obbligatorio";
   }
-  if (!profile.employerCf?.trim()) {
+  if (!p.employerFirstName?.trim()) {
+    errors.employerFirstName = "Obbligatorio";
+  }
+  if (!p.employerCf?.trim()) {
     errors.employerCf = "Obbligatorio";
   }
-  if (!profile.employerAddress?.trim()) {
-    errors.employerAddress = "Obbligatorio";
+  const employerAddr = formatStructuredAddress({
+    street: p.employerStreet,
+    fraction: p.employerFraction,
+    city: p.employerCity,
+    province: p.employerProvince,
+    cap: p.employerCap,
+    legacy: p.employerAddress,
+  });
+  if (!p.employerStreet?.trim() && !p.employerCity?.trim() && !employerAddr) {
+    errors.employerStreet = "Indirizzo obbligatorio";
+    errors.employerCity = "Comune obbligatorio";
+  } else if (!p.employerCity?.trim() && !employerAddr.includes(",")) {
+    errors.employerCity = "Comune obbligatorio";
   }
-  if (!profile.workerName?.trim()) {
-    errors.workerName = "Obbligatorio";
+
+  if (!p.workerSurname?.trim()) {
+    errors.workerSurname = "Obbligatorio";
   }
-  if (!profile.workerCf?.trim()) {
+  if (!p.workerFirstName?.trim()) {
+    errors.workerFirstName = "Obbligatorio";
+  }
+  if (!p.workerCf?.trim()) {
     errors.workerCf = "Obbligatorio";
   }
 

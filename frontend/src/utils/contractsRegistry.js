@@ -5,17 +5,15 @@
 
 import { loadProfile as loadLegacyProfile, saveProfile as saveLegacyProfile } from "./profileStorage";
 import { loadWorkflowInput, saveWorkflowInput } from "./workflowStorage";
+import {
+  DEFAULT_PROFILE,
+  DEFAULT_CONTRACT_INPUT,
+  migrateLegacyProfile,
+  formatPersonName,
+} from "../../../shared/profileFields.js";
 
 const REGISTRY_KEY = "badante-contracts-registry";
 const ACTIVE_KEY = "badante-active-contract-id";
-
-const DEFAULT_PROFILE = {
-  employerName: "",
-  employerCf: "",
-  employerAddress: "",
-  workerName: "",
-  workerCf: "",
-};
 
 const DEFAULT_INPUT = {
   contractType: "convivente",
@@ -24,6 +22,9 @@ const DEFAULT_INPUT = {
   hourlyRate: 7.45,
   month: new Date().getMonth() + 1,
   year: new Date().getFullYear(),
+  ...DEFAULT_CONTRACT_INPUT,
+  qBoardLodging: "SI",
+  qCohabitation: "SI",
 };
 
 function newId() {
@@ -31,8 +32,9 @@ function newId() {
 }
 
 function defaultContractName(profile) {
-  const w = String(profile?.workerName ?? "").trim();
-  const e = String(profile?.employerName ?? "").trim();
+  const p = migrateLegacyProfile(profile);
+  const w = formatPersonName(p.workerSurname, p.workerFirstName, p.workerName);
+  const e = formatPersonName(p.employerSurname, p.employerFirstName, p.employerName);
   if (w && e) return `${w} – ${e}`;
   if (w) return w;
   if (e) return e;
@@ -56,7 +58,7 @@ export function loadRegistry() {
 function migrateFromLegacy() {
   const legacyP = loadLegacyProfile();
   const legacyI = loadWorkflowInput();
-  const profile = { ...DEFAULT_PROFILE, ...(legacyP || {}) };
+  const profile = migrateLegacyProfile({ ...DEFAULT_PROFILE, ...(legacyP || {}) });
   const input = { ...DEFAULT_INPUT, ...(legacyI || {}) };
   const id = newId();
   const contracts = [
@@ -109,8 +111,9 @@ export function saveActiveContract(profile, input) {
   const data = loadRegistry();
   const id = data.activeContractId || data.contracts[0]?.id;
   if (!id) return;
+  const normalizedProfile = migrateLegacyProfile(profile);
   const contracts = data.contracts.map((c) =>
-    c.id === id ? { ...c, profile: { ...profile }, input: { ...input } } : c,
+    c.id === id ? { ...c, profile: { ...normalizedProfile }, input: { ...input } } : c,
   );
   persistRegistry({ contracts, activeContractId: id });
   saveLegacyProfile(profile);

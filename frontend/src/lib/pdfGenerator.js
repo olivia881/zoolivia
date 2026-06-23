@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { CONTRACT_TEMPLATE, CLAUSE_TEMPLATE, RECEIPT_TEMPLATE } from "./templates.js";
 import { buildDocumentData } from "./buildDocumentData.js";
+import { generateInpsStyleContractPdf } from "./contractPdfLayout.js";
 
 const PAGE_WIDTH = 595;
 const PAGE_HEIGHT = 842;
@@ -591,10 +592,13 @@ export async function generatePDFClient(documentType, data) {
   }
 
   if (documentType === "contract") {
-    const [contractResult, clauseResult] = await Promise.all([
-      generateSinglePdf("contract", builtData),
-      generateSinglePdf("clause", builtData),
-    ]);
+    const contractMeta = getDocumentMeta("contract", builtData);
+    const contractLayout = await generateInpsStyleContractPdf(builtData, contractMeta);
+    const contractResult = {
+      blob: new Blob([contractLayout.pdfBytes], { type: "application/pdf" }),
+      fileName: contractLayout.fileName,
+    };
+    const clauseResult = await generateSinglePdf("clause", builtData);
     return [contractResult, clauseResult];
   }
 

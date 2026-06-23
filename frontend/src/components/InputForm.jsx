@@ -1,5 +1,7 @@
 import { LEVEL_ORDER, LEVEL_LABELS } from "../utils/levelLabels";
 import { getNonConviventeHourlyMinimum } from "../utils/payrollCalculator";
+import { YES_NO_OPTIONS } from "../../../shared/profileFields.js";
+import PersonAnagraficaSection from "./PersonAnagraficaSection";
 
 const MONTHS = [
   "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -13,13 +15,28 @@ function InputField({ label, name, value, onChange, error, placeholder, type = "
       <input
         type={type}
         name={name}
-        value={value}
+        value={value ?? ""}
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
         className={error ? "error" : ""}
       />
       {error && <small>{error}</small>}
+    </label>
+  );
+}
+
+function YesNoField({ label, name, value, onChange }) {
+  return (
+    <label className="field">
+      <span>{label}</span>
+      <select name={name} value={value ?? ""} onChange={onChange}>
+        {YES_NO_OPTIONS.map((o) => (
+          <option key={o.value || "empty"} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
@@ -34,69 +51,33 @@ export default function InputForm({
 }) {
   return (
     <div className="form-grid">
-      <section className="card">
-        <h2>Anagrafica Datore</h2>
-        <div className="card-fields-grid">
-          <InputField
-            label="Nome"
-            name="employerName"
-            value={profile.employerName}
-            onChange={onProfileChange}
-            error={profileErrors.employerName}
-            placeholder="Mario Rossi"
-          />
-          <InputField
-            label="Codice fiscale"
-            name="employerCf"
-            value={profile.employerCf}
-            onChange={onProfileChange}
-            error={profileErrors.employerCf}
-            placeholder="RSSMRA..."
-          />
-          <div className="field-full-width">
-            <InputField
-              label="Indirizzo"
-              name="employerAddress"
-              value={profile.employerAddress}
-              onChange={onProfileChange}
-              error={profileErrors.employerAddress}
-              placeholder="Via Roma 1, Milano"
-            />
-          </div>
-        </div>
-      </section>
+      <PersonAnagraficaSection
+        title="Datore di lavoro"
+        prefix="employer"
+        profile={profile}
+        onChange={onProfileChange}
+        errors={profileErrors}
+      />
 
-      <section className="card">
-        <h2>Anagrafica Lavoratrice</h2>
-        <div className="card-fields-grid">
-          <InputField
-            label="Nome"
-            name="workerName"
-            value={profile.workerName}
-            onChange={onProfileChange}
-            error={profileErrors.workerName}
-            placeholder="Anna Bianchi"
-          />
-          <InputField
-            label="Codice fiscale"
-            name="workerCf"
-            value={profile.workerCf}
-            onChange={onProfileChange}
-            error={profileErrors.workerCf}
-            placeholder="BNCNNA..."
-          />
-        </div>
-      </section>
+      <PersonAnagraficaSection
+        title="Lavoratrice"
+        prefix="worker"
+        profile={profile}
+        onChange={onProfileChange}
+        errors={profileErrors}
+        showSpouse
+        showPermit
+      />
 
       <section className="card full-width">
-        <h2>Input Mensile</h2>
+        <h2>Dati contratto e questionario</h2>
         <p className="form-persist-hint">
-          Anagrafica e parametri contrattuali restano salvati. Per ogni busta paga aggiorna solo mese e anno (o
-          variazioni).
+          Schema allineato alla denuncia INPS: compila i campi utili al rapporto; nel PDF contratto appariranno in
+          schede come nel modulo ufficiale.
         </p>
         <div className="input-monthly-groups">
           <div className="input-group">
-            <h3 className="input-group-title">Contratto e orario</h3>
+            <h3 className="input-group-title">Rapporto di lavoro</h3>
             <div className="input-row input-row--cols-3">
               <label className="field">
                 <span>Tipo contratto</span>
@@ -112,6 +93,11 @@ export default function InputForm({
                           value: String(getNonConviventeHourlyMinimum(input.level)),
                         },
                       });
+                      onInputChange({ target: { name: "qBoardLodging", value: "NO" } });
+                      onInputChange({ target: { name: "qCohabitation", value: "NO" } });
+                    } else {
+                      onInputChange({ target: { name: "qBoardLodging", value: "SI" } });
+                      onInputChange({ target: { name: "qCohabitation", value: "SI" } });
                     }
                   }}
                 >
@@ -155,6 +141,81 @@ export default function InputForm({
                 type="number"
               />
             </div>
+            <div className="input-row input-row--cols-3">
+              <InputField
+                label="Data assunzione"
+                name="startDate"
+                value={input.startDate}
+                onChange={onInputChange}
+                type="date"
+              />
+              <InputField
+                label="Data fine rapporto"
+                name="endDate"
+                value={input.endDate}
+                onChange={onInputChange}
+                type="date"
+              />
+              <InputField
+                label="In sostituzione di"
+                name="replacementOf"
+                value={input.replacementOf}
+                onChange={onInputChange}
+                placeholder="Nome lavoratrice sostituita"
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <h3 className="input-group-title">Questionario (come da denuncia INPS)</h3>
+            <div className="inps-grid inps-grid--2">
+              <YesNoField
+                label="Servizio continuativo con vitto e alloggio"
+                name="qBoardLodging"
+                value={input.qBoardLodging}
+                onChange={onInputChange}
+              />
+              <YesNoField
+                label="Il datore è il coniuge della lavoratrice?"
+                name="qEmployerSpouse"
+                value={input.qEmployerSpouse}
+                onChange={onInputChange}
+              />
+              <YesNoField
+                label="Parentela o affinità entro il 3° grado?"
+                name="qKinship"
+                value={input.qKinship}
+                onChange={onInputChange}
+              />
+              <YesNoField
+                label="Convivenza tra datore e lavoratrice?"
+                name="qCohabitation"
+                value={input.qCohabitation}
+                onChange={onInputChange}
+              />
+              <YesNoField
+                label="Datore invalido di guerra, disabile o cieco?"
+                name="qWarInvalid"
+                value={input.qWarInvalid}
+                onChange={onInputChange}
+              />
+              <YesNoField
+                label="Datore prete secolare cattolico?"
+                name="qSecularPriest"
+                value={input.qSecularPriest}
+                onChange={onInputChange}
+              />
+            </div>
+            {input.qKinship === "SI" && (
+              <div className="input-row input-row--single">
+                <InputField
+                  label="Specificare parentela o affinità"
+                  name="qKinshipDetail"
+                  value={input.qKinshipDetail}
+                  onChange={onInputChange}
+                />
+              </div>
+            )}
           </div>
 
           <div className="input-group">
@@ -168,7 +229,11 @@ export default function InputForm({
                 error={inputErrors.hourlyRate}
                 type="number"
                 disabled={input.contractType === "convivente"}
-                placeholder={input.contractType === "non_convivente" ? getNonConviventeHourlyMinimum(input.level).toString() : ""}
+                placeholder={
+                  input.contractType === "non_convivente"
+                    ? getNonConviventeHourlyMinimum(input.level).toString()
+                    : ""
+                }
               />
             </div>
             {input.contractType === "convivente" && (

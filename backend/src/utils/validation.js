@@ -1,3 +1,5 @@
+import { migrateLegacyProfile, formatStructuredAddress } from "../../../shared/profileFields.js";
+
 const CONTRACT_TYPES = new Set(["convivente", "non_convivente"]);
 const LEVELS = new Set(["A", "AS", "B", "BS", "C", "CS", "D", "DS"]);
 
@@ -19,38 +21,50 @@ function normalizeNumber(value) {
 }
 
 export function validateProfile(profile) {
+  const p = migrateLegacyProfile(profile);
   const errors = {};
 
-  if (!isNotEmpty(profile.employerName)) {
-    errors.employerName = "Inserire il nome del datore di lavoro.";
+  if (!isNotEmpty(p.employerSurname) && !isNotEmpty(p.employerFirstName) && !isNotEmpty(p.employerName)) {
+    errors.employerName = "Inserire cognome e nome del datore di lavoro.";
   }
 
-  if (!isNotEmpty(profile.employerCf)) {
+  if (!isNotEmpty(p.employerCf)) {
     errors.employerCf = "Inserire il codice fiscale del datore.";
   }
 
-  if (!isNotEmpty(profile.employerAddress)) {
+  const employerAddress = formatStructuredAddress({
+    street: p.employerStreet,
+    fraction: p.employerFraction,
+    city: p.employerCity,
+    province: p.employerProvince,
+    cap: p.employerCap,
+    legacy: p.employerAddress,
+  });
+  if (!isNotEmpty(employerAddress)) {
     errors.employerAddress = "Inserire l'indirizzo del datore.";
   }
 
-  if (!isNotEmpty(profile.workerName)) {
-    errors.workerName = "Inserire il nome della lavoratrice.";
+  if (!isNotEmpty(p.workerSurname) && !isNotEmpty(p.workerFirstName) && !isNotEmpty(p.workerName)) {
+    errors.workerName = "Inserire cognome e nome della lavoratrice.";
   }
 
-  if (!isNotEmpty(profile.workerCf)) {
+  if (!isNotEmpty(p.workerCf)) {
     errors.workerCf = "Inserire il codice fiscale della lavoratrice.";
   }
+
+  const sanitized = {
+    ...p,
+    employerName: p.employerName,
+    employerCf: normalizeText(p.employerCf).toUpperCase(),
+    employerAddress,
+    workerName: p.workerName,
+    workerCf: normalizeText(p.workerCf).toUpperCase(),
+  };
 
   return {
     isValid: Object.keys(errors).length === 0,
     errors,
-    sanitized: {
-      employerName: normalizeText(profile.employerName),
-      employerCf: normalizeText(profile.employerCf).toUpperCase(),
-      employerAddress: normalizeText(profile.employerAddress),
-      workerName: normalizeText(profile.workerName),
-      workerCf: normalizeText(profile.workerCf).toUpperCase(),
-    },
+    sanitized,
   };
 }
 

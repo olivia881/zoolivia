@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { CONTRACT_TEMPLATE, CLAUSE_TEMPLATE } from "../templates/contractTemplate.js";
+import { generateInpsStyleContractPdf } from "../lib/contractPdfLayout.js";
 import { RECEIPT_TEMPLATE } from "../templates/receiptTemplate.js";
 import { buildDocumentData } from "../models/entities.js";
 
@@ -543,6 +544,19 @@ export async function generatePDF(documentType, data) {
   const meta = getDocumentMeta(documentType, data);
   if (documentType === "payslip") {
     return generateProfessionalPayslipPdf(data, meta);
+  }
+
+  if (documentType === "contract") {
+    const { pdfBytes } = await generateInpsStyleContractPdf(data, meta);
+    const yearDir = path.join(ARCHIVE_ROOT, meta.year);
+    await mkdir(yearDir, { recursive: true });
+    const absolutePath = path.join(yearDir, meta.fileName);
+    await writeFile(absolutePath, pdfBytes);
+    return {
+      fileName: meta.fileName,
+      absolutePath,
+      relativePath: `/documenti/${meta.year}/${meta.fileName}`,
+    };
   }
 
   const bodyText = buildBodyText(documentType, data);

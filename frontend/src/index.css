@@ -288,6 +288,44 @@ body {
   padding: 0;
 }
 
+/* Schede anagrafica stile INPS */
+.inps-subsection-title {
+  margin: 0.85rem 0 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.25rem;
+}
+
+.inps-grid {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 0.35rem;
+}
+
+.inps-grid--2 {
+  grid-template-columns: 1fr;
+}
+
+.inps-grid--3 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .inps-grid--2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 900px) {
+  .inps-grid--3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
 /* Input mensile: gruppi in colonna su mobile, più ordinato */
 .input-monthly-groups {
   display: flex;

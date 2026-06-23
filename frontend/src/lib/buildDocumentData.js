@@ -1,4 +1,12 @@
 import { getMansioniForContract, getInquadramentoText } from "./ccnlLevels";
+import {
+  displayValue,
+  formatPersonName,
+  formatStructuredAddress,
+  migrateLegacyProfile,
+  defaultBoardLodging,
+  defaultCohabitation,
+} from "../../../shared/profileFields.js";
 
 const MONTH_NAMES = [
   "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -16,7 +24,13 @@ function contractLabel(type) {
   return type === "convivente" ? "Convivente" : "Non convivente";
 }
 
-export function buildDocumentData({ profile, input, calculation }) {
+function formatStartDate(input, payroll) {
+  if (input.startDate?.trim()) return input.startDate.trim();
+  return `1 ${payroll.monthName} ${payroll.year}`;
+}
+
+export function buildDocumentData({ profile: rawProfile, input, calculation }) {
+  const profile = migrateLegacyProfile(rawProfile);
   const employer = {
     name: profile.employerName,
     taxCode: profile.employerCf,
@@ -52,7 +66,7 @@ export function buildDocumentData({ profile, input, calculation }) {
     "- L'eventuale residenza presso il datore non costituisce titolo di possesso o diritto di permanenza nell'immobile.",
   ].join("\n");
 
-  const startDate = `1 ${payroll.monthName} ${payroll.year}`;
+  const startDate = formatStartDate(input, payroll);
   const salaryFormatted = new Intl.NumberFormat("it-IT", { minimumFractionDigits: 2 }).format(
     Number(payroll.grossSalary) || 0,
   );
@@ -61,10 +75,104 @@ export function buildDocumentData({ profile, input, calculation }) {
   const { intro: mansioniIntro, mansioni: mansioniList, esclusioni: esclusioniList } = getMansioniForContract(level);
   const levelInquadramento = getInquadramentoText(level);
 
+  const boardLodging = input.qBoardLodging || defaultBoardLodging(input.contractType);
+  const cohabitation = input.qCohabitation || defaultCohabitation(input.contractType);
+
+  const contractForm = {
+    employer: {
+      surname: profile.employerSurname,
+      firstName: profile.employerFirstName,
+      profession: profile.employerProfession,
+      citizenship: profile.employerCitizenship,
+      birthPlace: profile.employerBirthPlace,
+      birthProvince: profile.employerBirthProvince,
+      birthDate: profile.employerBirthDate,
+      gender: profile.employerGender,
+      cf: profile.employerCf,
+      street: profile.employerStreet,
+      fraction: profile.employerFraction,
+      city: profile.employerCity,
+      province: profile.employerProvince,
+      cap: profile.employerCap,
+      idDocType: profile.employerIdDocType,
+      idDocNumber: profile.employerIdDocNumber,
+      idDocExpiry: profile.employerIdDocExpiry,
+    },
+    worker: {
+      surname: profile.workerSurname,
+      firstName: profile.workerFirstName,
+      spouseSurname: profile.workerSpouseSurname,
+      profession: profile.workerProfession,
+      citizenship: profile.workerCitizenship,
+      birthPlace: profile.workerBirthPlace,
+      birthProvince: profile.workerBirthProvince,
+      birthDate: profile.workerBirthDate,
+      gender: profile.workerGender,
+      cf: profile.workerCf,
+      street: profile.workerStreet,
+      fraction: profile.workerFraction,
+      city: profile.workerCity,
+      province: profile.workerProvince,
+      cap: profile.workerCap,
+      idDocType: profile.workerIdDocType,
+      idDocNumber: profile.workerIdDocNumber,
+      idDocExpiry: profile.workerIdDocExpiry,
+      permitType: profile.workerPermitType,
+      permitRequestDate: profile.workerPermitRequestDate,
+      permitReason: profile.workerPermitReason,
+      permitNumber: profile.workerPermitNumber,
+      permitExpiry: profile.workerPermitExpiry,
+      permitPoliceHQ: profile.workerPermitPoliceHQ,
+    },
+    contract: {
+      typeLabel: employee.contractTypeLabel,
+      level: employee.level,
+      replacementOf: input.replacementOf,
+      startDate,
+      endDate: input.endDate,
+      weeklyHours: String(employee.weeklyHours),
+      grossSalary: euro(payroll.grossSalary),
+    },
+    questionnaire: [
+      {
+        question:
+          "La lavoratrice presta servizio continuativo e percepisce vitto e alloggio?",
+        answer: boardLodging,
+      },
+      {
+        question: "Il datore di lavoro è il coniuge della lavoratrice?",
+        answer: input.qEmployerSpouse || "NO",
+      },
+      {
+        question:
+          "Il datore è parente o affine entro il 3° grado della lavoratrice?",
+        answer: input.qKinship || "NO",
+      },
+      ...(input.qKinship === "SI"
+        ? [{ question: "Parentela o affinità", answer: input.qKinshipDetail }]
+        : []),
+      {
+        question: "Esiste convivenza tra datore e lavoratrice?",
+        answer: cohabitation,
+      },
+      {
+        question:
+          "Il datore è invalido di guerra, disabile o cieco?",
+        answer: input.qWarInvalid || "NO",
+      },
+      {
+        question:
+          "Il datore è prete secolare di religione cattolica?",
+        answer: input.qSecularPriest || "NO",
+      },
+    ],
+  };
+
   return {
     employer,
     employee,
     payroll,
+    contractForm,
     placeholders: {
       employerName: employer.name,
       employerCF: employer.taxCode,
@@ -78,6 +186,8 @@ export function buildDocumentData({ profile, input, calculation }) {
       monthName: payroll.monthName,
       year: String(payroll.year),
       startDate,
+      endDate: displayValue(input.endDate),
+      replacementOf: displayValue(input.replacementOf),
       salary: salaryFormatted,
       grossSalary: euro(payroll.grossSalary),
       netSalary: euro(payroll.netSalary),
