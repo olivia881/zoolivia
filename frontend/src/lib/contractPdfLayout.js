@@ -3,28 +3,28 @@ import { displayValue } from "../../../shared/profileFields.js";
 
 const PAGE_WIDTH = 595;
 const PAGE_HEIGHT = 842;
-const MARGIN_X = 36;
-const MARGIN_TOP = 38;
-const MARGIN_BOTTOM = 40;
+const MARGIN_X = 34;
+const MARGIN_TOP = 36;
+const MARGIN_BOTTOM = 38;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_X * 2;
-const COL_GAP = 6;
 
-const SECTION_TITLE_H = 11;
-const CELL_PAD = 3;
-const LABEL_SIZE = 5.8;
-const VALUE_SIZE = 7.2;
+const BOX_HEADER_H = 10;
+const CELL_PAD = 4;
+const LABEL_SIZE = 6;
+const VALUE_SIZE = 7.4;
 const BODY_SIZE = 7;
 const LINE_GAP = 2;
-const MIN_CELL_H = 19;
-const LABEL_TOP = 7;
-const Q_SIZE = 6.8;
-const Q_ROW_MIN = 15;
+const MIN_CELL_H = 18;
+const LABEL_TOP = 8;
+const Q_SIZE = 6.6;
+const Q_ROW_MIN = 14;
+const BOX_GAP = 3;
 
 const SECTION_BG = rgb(0.86, 0.89, 0.93);
-const BORDER = rgb(0.55, 0.57, 0.6);
-const LABEL_COLOR = rgb(0.4, 0.42, 0.46);
-const VALUE_COLOR = rgb(0.06, 0.06, 0.06);
-const HEADING_COLOR = rgb(0.1, 0.18, 0.36);
+const BORDER = rgb(0.35, 0.38, 0.42);
+const LABEL_COLOR = rgb(0.38, 0.4, 0.44);
+const VALUE_COLOR = rgb(0.05, 0.05, 0.05);
+const HEADING_COLOR = rgb(0.08, 0.16, 0.34);
 
 function toWinAnsi(text) {
   return String(text ?? "")
@@ -93,31 +93,24 @@ function measureCellH(label, value, width, bodyFont, titleFont) {
   const inner = width - CELL_PAD * 2;
   const vLines = wrapText(displayValue(value), titleFont, VALUE_SIZE, inner);
   const lLines = wrapLine(label, bodyFont, LABEL_SIZE, inner);
-  const vCount = Math.max(1, vLines.length);
-  const lCount = Math.max(1, lLines.length);
-  return Math.max(MIN_CELL_H, LABEL_TOP + lineBlockHeight(lCount, LABEL_SIZE) + lineBlockHeight(vCount, VALUE_SIZE) + 5);
+  return Math.max(
+    MIN_CELL_H,
+    LABEL_TOP + lineBlockHeight(Math.max(1, lLines.length), LABEL_SIZE) + lineBlockHeight(Math.max(1, vLines.length), VALUE_SIZE) + 4,
+  );
 }
 
-function drawSectionHeaderAt(ctx, x, width, title) {
-  const { state } = ctx;
-  const top = state.y;
-  state.page.drawRectangle({
-    x,
-    y: top - SECTION_TITLE_H,
-    width,
-    height: SECTION_TITLE_H,
-    color: SECTION_BG,
-    borderWidth: 0.5,
-    borderColor: BORDER,
-  });
-  state.page.drawText(toWinAnsi(title), {
-    x: x + CELL_PAD,
-    y: top - SECTION_TITLE_H + 3,
-    size: 6.8,
-    font: state.titleFont,
-    color: VALUE_COLOR,
-  });
-  return top - SECTION_TITLE_H;
+function measureRowsHeight(rows, width, bodyFont, titleFont) {
+  let h = 0;
+  for (const cells of rows) {
+    const totalW = cells.reduce((s, c) => s + (c.weight || 1), 0);
+    let rowH = MIN_CELL_H;
+    for (const cell of cells) {
+      const cw = (width * (cell.weight || 1)) / totalW;
+      rowH = Math.max(rowH, measureCellH(cell.label, cell.value, cw, bodyFont, titleFont));
+    }
+    h += rowH;
+  }
+  return h;
 }
 
 function drawFieldCellAt(ctx, x, topY, width, rowH, label, value) {
@@ -135,7 +128,7 @@ function drawFieldCellAt(ctx, x, topY, width, rowH, label, value) {
       x: x + CELL_PAD,
       y: ly,
       size: LABEL_SIZE,
-      font: state.bodyFont,
+      font: state.titleFont,
       color: LABEL_COLOR,
       maxWidth: inner,
     });
@@ -148,7 +141,7 @@ function drawFieldCellAt(ctx, x, topY, width, rowH, label, value) {
       x: x + CELL_PAD,
       y: vy,
       size: VALUE_SIZE,
-      font: state.titleFont,
+      font: state.bodyFont,
       color: VALUE_COLOR,
       maxWidth: inner,
     });
@@ -173,126 +166,242 @@ function drawFieldRowAt(ctx, x, width, topY, cells) {
   return topY - rowH;
 }
 
-function personFieldRows(person, { worker = false } = {}) {
+function drawInpsBox(ctx, boxTitle, rows) {
+  if (!rows.length) return;
+  const { state } = ctx;
+  const x = MARGIN_X;
+  const width = CONTENT_WIDTH;
+  const rowsH = measureRowsHeight(rows, width, state.bodyFont, state.titleFont);
+  const totalH = BOX_HEADER_H + rowsH;
+
+  ctx.ensureSpace(totalH + BOX_GAP);
+  const topY = state.y;
+  const bottomY = topY - totalH;
+
+  state.page.drawRectangle({
+    x,
+    y: bottomY,
+    width,
+    height: totalH,
+    borderWidth: 0.65,
+    borderColor: BORDER,
+  });
+  state.page.drawRectangle({
+    x,
+    y: topY - BOX_HEADER_H,
+    width,
+    height: BOX_HEADER_H,
+    color: SECTION_BG,
+    borderWidth: 0.45,
+    borderColor: BORDER,
+  });
+  state.page.drawLine({
+    start: { x, y: topY - BOX_HEADER_H },
+    end: { x: x + width, y: topY - BOX_HEADER_H },
+    thickness: 0.45,
+    color: BORDER,
+  });
+  state.page.drawText(toWinAnsi(boxTitle), {
+    x: x + CELL_PAD,
+    y: topY - BOX_HEADER_H + 2.5,
+    size: 6.8,
+    font: state.titleFont,
+    color: VALUE_COLOR,
+  });
+
+  let ry = topY - BOX_HEADER_H;
+  for (const cells of rows) {
+    ry = drawFieldRowAt(ctx, x, width, ry, cells);
+  }
+
+  state.y = bottomY - BOX_GAP;
+}
+
+function generalitaRows(person, { worker = false } = {}) {
   const rows = [
     [
       { label: "Cognome", value: person.surname, weight: 1 },
       { label: "Nome", value: person.firstName, weight: 1 },
     ],
-    [{ label: "Codice fiscale", value: person.cf, weight: 1 }],
     [
-      ...(worker ? [{ label: "Cognome coniuge", value: person.spouseSurname, weight: 1 }] : []),
       { label: "Professione", value: person.profession, weight: 1 },
       { label: "Cittadinanza", value: person.citizenship, weight: 1 },
-    ].filter((c) => worker || c.label !== "Cognome coniuge"),
-    [
-      { label: "Luogo nascita", value: person.birthPlace, weight: 1.1 },
-      { label: "Prov.", value: person.birthProvince, weight: 0.5 },
-      { label: "Data nasc.", value: person.birthDate, weight: 0.9 },
-      { label: "Sesso", value: person.gender, weight: 0.5 },
+      { label: "Sesso", value: person.gender, weight: 0.6 },
     ],
     [
-      { label: "Indirizzo", value: person.street, weight: 1.4 },
-      { label: "Frazione", value: person.fraction, weight: 0.6 },
-    ],
-    [
-      { label: "Comune", value: person.city, weight: 1 },
-      { label: "Prov.", value: person.province, weight: 0.45 },
-      { label: "CAP", value: person.cap, weight: 0.55 },
-    ],
-    [
-      { label: "Doc. identita", value: person.idDocType, weight: 0.9 },
-      { label: "N.", value: person.idDocNumber, weight: 0.8 },
-      { label: "Scad.", value: person.idDocExpiry, weight: 0.8 },
+      { label: "Luogo di nascita", value: person.birthPlace, weight: 1.2 },
+      { label: "Provincia di nascita", value: person.birthProvince, weight: 0.7 },
+      { label: "Data di nascita", value: person.birthDate, weight: 1 },
     ],
   ];
-
   if (worker) {
-    const hasPermit = ![
-      person.permitType,
-      person.permitRequestDate,
-      person.permitReason,
-      person.permitNumber,
-      person.permitExpiry,
-      person.permitPoliceHQ,
-    ].every(isEmpty);
-    if (hasPermit) {
-      rows.push(
-        [
-          { label: "Permesso", value: person.permitType, weight: 1 },
-          { label: "Richiesta", value: person.permitRequestDate, weight: 0.8 },
-        ],
-        [
-          { label: "N. permesso", value: person.permitNumber, weight: 0.8 },
-          { label: "Scad.", value: person.permitExpiry, weight: 0.8 },
-          { label: "Questura", value: person.permitPoliceHQ, weight: 1 },
-        ],
-      );
-    }
+    rows[1].unshift({ label: "Cognome coniuge", value: person.spouseSurname, weight: 1 });
   }
-
   return rows;
 }
 
-function drawPersonColumn(ctx, x, width, title, person, options) {
-  const { state } = ctx;
-  let y = state.y;
-  ctx.ensureSpace(SECTION_TITLE_H + MIN_CELL_H);
-  y = drawSectionHeaderAt(ctx, x, width, title);
-  for (const cells of personFieldRows(person, options)) {
-    ctx.ensureSpace(MIN_CELL_H + 2);
-    y = drawFieldRowAt(ctx, x, width, y, cells);
-  }
-  return y;
+function indirizzoRows(person) {
+  return [
+    [
+      { label: "Indirizzo", value: person.street, weight: 1.6 },
+      { label: "Frazione", value: person.fraction, weight: 0.8 },
+    ],
+    [
+      { label: "Comune", value: person.city, weight: 1.2 },
+      { label: "Provincia", value: person.province, weight: 0.6 },
+      { label: "CAP", value: person.cap, weight: 0.7 },
+    ],
+  ];
 }
 
-function drawDualPersonSection(ctx, employer, worker) {
-  const colW = (CONTENT_WIDTH - COL_GAP) / 2;
-  const leftX = MARGIN_X;
-  const rightX = MARGIN_X + colW + COL_GAP;
-  const startY = ctx.state.y;
-  ctx.state.y = startY;
-
-  const leftEnd = drawPersonColumn(ctx, leftX, colW, "DATORE DI LAVORO", employer, { worker: false });
-  ctx.state.y = startY;
-  const rightEnd = drawPersonColumn(ctx, rightX, colW, "LAVORATRICE", worker, { worker: true });
-  ctx.state.y = Math.min(leftEnd, rightEnd) - 3;
+function documentoRows(person) {
+  return [
+    [
+      { label: "Tipo documento", value: person.idDocType, weight: 1 },
+      { label: "Numero", value: person.idDocNumber, weight: 1 },
+      { label: "Scadenza", value: person.idDocExpiry, weight: 1 },
+    ],
+  ];
 }
 
-function drawFullWidthRow(ctx, cells) {
+function permessoRows(person) {
+  return [
+    [
+      { label: "Tipo di permesso", value: person.permitType, weight: 1.1 },
+      { label: "Data della richiesta", value: person.permitRequestDate, weight: 1 },
+      { label: "Motivo del permesso", value: person.permitReason, weight: 1.2 },
+    ],
+    [
+      { label: "Numero", value: person.permitNumber, weight: 1 },
+      { label: "Scadenza", value: person.permitExpiry, weight: 1 },
+      { label: "Questura", value: person.permitPoliceHQ, weight: 1.2 },
+    ],
+  ];
+}
+
+function hasPermitData(person) {
+  return ![
+    person.permitType,
+    person.permitRequestDate,
+    person.permitReason,
+    person.permitNumber,
+    person.permitExpiry,
+    person.permitPoliceHQ,
+  ].every(isEmpty);
+}
+
+function drawEntityHeading(ctx, title, cf) {
   const { state } = ctx;
-  const totalW = cells.reduce((s, c) => s + (c.weight || 1), 0);
-  let rowH = MIN_CELL_H;
-  for (const cell of cells) {
-    const cw = (CONTENT_WIDTH * (cell.weight || 1)) / totalW;
-    rowH = Math.max(rowH, measureCellH(cell.label, cell.value, cw, state.bodyFont, state.titleFont));
+  ctx.ensureSpace(13);
+  state.page.drawText(toWinAnsi(title), {
+    x: MARGIN_X,
+    y: state.y,
+    size: 8.2,
+    font: state.titleFont,
+    color: HEADING_COLOR,
+  });
+  if (!isEmpty(cf)) {
+    const cfLabel = `Codice fiscale: ${displayValue(cf)}`;
+    const w = state.bodyFont.widthOfTextAtSize(cfLabel, 7.2);
+    state.page.drawText(toWinAnsi(cfLabel), {
+      x: MARGIN_X + CONTENT_WIDTH - w,
+      y: state.y,
+      size: 7.2,
+      font: state.bodyFont,
+      color: VALUE_COLOR,
+    });
   }
-  ctx.ensureSpace(rowH + 2);
+  state.y -= 12;
+}
+
+function drawPersonVertical(ctx, heading, generalitaTitle, person, { worker = false } = {}) {
+  drawEntityHeading(ctx, heading, person.cf);
+  drawInpsBox(ctx, generalitaTitle, generalitaRows(person, { worker }));
+  drawInpsBox(
+    ctx,
+    worker ? "INDIRIZZO DEL LAVORATORE" : "INDIRIZZO DEL DATORE DI LAVORO",
+    indirizzoRows(person),
+  );
+  drawInpsBox(
+    ctx,
+    worker ? "ESTREMI DEL DOCUMENTO DI IDENTITA' (lavoratrice)" : "ESTREMI DEL DOCUMENTO DI IDENTITA' (datore)",
+    documentoRows(person),
+  );
+  if (worker && hasPermitData(person)) {
+    drawInpsBox(ctx, "ESTREMI DEL TITOLO DI SOGGIORNO", permessoRows(person));
+  }
+}
+
+function drawQuestionnaireBox(ctx, contract, questions) {
+  const { state } = ctx;
+  const x = MARGIN_X;
+  const width = CONTENT_WIDTH;
+  const qW = width * 0.84;
+  const aW = width - qW;
+
+  const contractRows = [
+    [
+      { label: "Tipo contratto", value: contract.typeLabel, weight: 1 },
+      { label: "Livello CCNL", value: contract.level, weight: 0.7 },
+      { label: "In sostituzione del", value: contract.replacementOf, weight: 1.1 },
+    ],
+    [
+      { label: "Data assunzione", value: contract.startDate, weight: 1 },
+      { label: "Data fine rapporto", value: contract.endDate, weight: 1 },
+      { label: "Ore settimanali", value: contract.weeklyHours, weight: 0.8 },
+      { label: "Retribuzione mensile", value: contract.grossSalary, weight: 1.2 },
+    ],
+  ];
+
+  let qRowsH = 0;
+  for (const { question } of questions) {
+    const lines = wrapText(question, state.bodyFont, Q_SIZE, qW - CELL_PAD * 2);
+    qRowsH += Math.max(Q_ROW_MIN, lineBlockHeight(Math.max(1, lines.length), Q_SIZE) + 5);
+  }
+
+  const rowsH = measureRowsHeight(contractRows, width, state.bodyFont, state.titleFont);
+  const totalH = BOX_HEADER_H + rowsH + qRowsH;
+
+  ctx.ensureSpace(totalH + BOX_GAP);
   const topY = state.y;
-  state.y = drawFieldRowAt(ctx, MARGIN_X, CONTENT_WIDTH, topY, cells);
-}
+  const bottomY = topY - totalH;
 
-function drawQuestionTable(ctx, questions) {
-  const { state } = ctx;
-  ctx.ensureSpace(SECTION_TITLE_H + Q_ROW_MIN);
-  state.y = drawSectionHeaderAt(ctx, MARGIN_X, CONTENT_WIDTH, "Questionario INPS");
-  const qW = CONTENT_WIDTH * 0.86;
-  const aW = CONTENT_WIDTH - qW;
+  state.page.drawRectangle({ x, y: bottomY, width, height: totalH, borderWidth: 0.65, borderColor: BORDER });
+  state.page.drawRectangle({
+    x,
+    y: topY - BOX_HEADER_H,
+    width,
+    height: BOX_HEADER_H,
+    color: SECTION_BG,
+    borderWidth: 0.45,
+    borderColor: BORDER,
+  });
+  state.page.drawText(toWinAnsi("QUESTIONARIO"), {
+    x: x + CELL_PAD,
+    y: topY - BOX_HEADER_H + 2.5,
+    size: 6.8,
+    font: state.titleFont,
+    color: VALUE_COLOR,
+  });
+
+  let ry = topY - BOX_HEADER_H;
+  for (const cells of contractRows) {
+    ry = drawFieldRowAt(ctx, x, width, ry, cells);
+  }
 
   for (const { question, answer } of questions) {
     const qLines = wrapText(question, state.bodyFont, Q_SIZE, qW - CELL_PAD * 2);
-    const rowH = Math.max(Q_ROW_MIN, lineBlockHeight(Math.max(1, qLines.length), Q_SIZE) + 6);
-    ctx.ensureSpace(rowH + 1);
-    const topY = state.y;
-    const bottomY = topY - rowH;
+    const rowH = Math.max(Q_ROW_MIN, lineBlockHeight(Math.max(1, qLines.length), Q_SIZE) + 5);
+    const rowTop = ry;
+    const rowBottom = rowTop - rowH;
 
-    state.page.drawRectangle({ x: MARGIN_X, y: bottomY, width: qW, height: rowH, borderWidth: 0.45, borderColor: BORDER });
-    state.page.drawRectangle({ x: MARGIN_X + qW, y: bottomY, width: aW, height: rowH, borderWidth: 0.45, borderColor: BORDER });
+    state.page.drawRectangle({ x, y: rowBottom, width: qW, height: rowH, borderWidth: 0.45, borderColor: BORDER });
+    state.page.drawRectangle({ x: x + qW, y: rowBottom, width: aW, height: rowH, borderWidth: 0.45, borderColor: BORDER });
 
-    let qy = topY - 8;
+    let qy = rowTop - 8;
     for (const line of qLines.length ? qLines : [question]) {
       state.page.drawText(toWinAnsi(line), {
-        x: MARGIN_X + CELL_PAD,
+        x: x + CELL_PAD,
         y: qy,
         size: Q_SIZE,
         font: state.bodyFont,
@@ -305,78 +414,103 @@ function drawQuestionTable(ctx, questions) {
     const ans = displayValue(answer);
     const aw = state.titleFont.widthOfTextAtSize(ans, 7.5);
     state.page.drawText(toWinAnsi(ans), {
-      x: MARGIN_X + qW + (aW - aw) / 2,
-      y: bottomY + (rowH - 7.5) / 2,
+      x: x + qW + aW - aw - CELL_PAD,
+      y: rowBottom + (rowH - 7.5) / 2,
       size: 7.5,
       font: state.titleFont,
       color: VALUE_COLOR,
     });
-    state.y = bottomY;
+    ry = rowBottom;
   }
+
+  state.y = bottomY - BOX_GAP;
 }
 
-function drawCompactClause(ctx, title, text) {
+function drawClausesBox(ctx, ph) {
+  const mansioni = [ph.mansioniIntro, ph.mansioniList, "Attivita escluse: " + ph.esclusioniList.replace(/\n/g, " ")].join(" ");
+  const text = [
+    `INQUADRAMENTO - Livello ${ph.level}: ${ph.levelInquadramento}`,
+    `TIPOLOGIA - ${ph.contractTypeLabel}, ${ph.weeklyHours} ore settimanali.`,
+    `RETRIBUZIONE - Lordo mensile ${ph.grossSalary}. TFR e 13a maturano mensilmente; pagamento netto con ricevuta.`,
+    `MANSIONI - ${mansioni}`,
+    "RESIDENZA - Non costituisce titolo di possesso. Cessazione: lasciare l'alloggio senza ritardi.",
+  ].join("\n");
+
   const { state } = ctx;
-  ctx.ensureSpace(14);
-  state.page.drawText(toWinAnsi(title), {
+  const lines = wrapText(text, state.bodyFont, BODY_SIZE, CONTENT_WIDTH - CELL_PAD * 2);
+  const bodyH = lineBlockHeight(lines.length, BODY_SIZE) + 8;
+  const totalH = BOX_HEADER_H + bodyH;
+
+  ctx.ensureSpace(totalH + BOX_GAP);
+  const topY = state.y;
+  const bottomY = topY - totalH;
+
+  state.page.drawRectangle({ x: MARGIN_X, y: bottomY, width: CONTENT_WIDTH, height: totalH, borderWidth: 0.65, borderColor: BORDER });
+  state.page.drawRectangle({
     x: MARGIN_X,
-    y: state.y,
-    size: 7.5,
-    font: state.titleFont,
-    color: HEADING_COLOR,
+    y: topY - BOX_HEADER_H,
+    width: CONTENT_WIDTH,
+    height: BOX_HEADER_H,
+    color: SECTION_BG,
   });
-  state.y -= 9;
-  const lines = wrapText(text, state.bodyFont, BODY_SIZE, CONTENT_WIDTH);
+  state.page.drawText(toWinAnsi("CLAUSOLE CONTRATTUALI (CCNL Lavoro Domestico)"), {
+    x: MARGIN_X + CELL_PAD,
+    y: topY - BOX_HEADER_H + 2.5,
+    size: 6.8,
+    font: state.titleFont,
+    color: VALUE_COLOR,
+  });
+
+  let ty = topY - BOX_HEADER_H - 10;
   for (const line of lines) {
-    ctx.ensureSpace(BODY_SIZE + LINE_GAP);
     state.page.drawText(toWinAnsi(line), {
-      x: MARGIN_X,
-      y: state.y,
+      x: MARGIN_X + CELL_PAD,
+      y: ty,
       size: BODY_SIZE,
       font: state.bodyFont,
       color: VALUE_COLOR,
-      maxWidth: CONTENT_WIDTH,
+      maxWidth: CONTENT_WIDTH - CELL_PAD * 2,
     });
-    state.y -= BODY_SIZE + LINE_GAP;
+    ty -= BODY_SIZE + LINE_GAP;
   }
-  state.y -= 2;
+
+  state.y = bottomY - BOX_GAP;
 }
 
-function drawTitle(ctx) {
+function drawDocumentHeader(ctx) {
   const { state } = ctx;
   const title = "CONTRATTO DI LAVORO DOMESTICO";
-  const tw = state.titleFont.widthOfTextAtSize(title, 11);
+  const tw = state.titleFont.widthOfTextAtSize(title, 11.5);
   state.page.drawText(toWinAnsi(title), {
     x: (PAGE_WIDTH - tw) / 2,
     y: state.y,
-    size: 11,
+    size: 11.5,
     font: state.titleFont,
     color: HEADING_COLOR,
   });
-  state.y -= 13;
-  const sub = "Lettera di assunzione - CCNL Lavoro Domestico";
-  const sw = state.bodyFont.widthOfTextAtSize(sub, 6.5);
+  state.y -= 14;
+
+  const sub = "Lettera di assunzione - schema informativo (stile denuncia INPS)";
+  const sw = state.bodyFont.widthOfTextAtSize(sub, 6.8);
   state.page.drawText(toWinAnsi(sub), {
     x: (PAGE_WIDTH - sw) / 2,
     y: state.y,
-    size: 6.5,
+    size: 6.8,
     font: state.bodyFont,
     color: LABEL_COLOR,
   });
-  state.y -= 12;
+  state.y -= 14;
 }
 
 function drawSignatures(ctx) {
   const { state } = ctx;
-  ctx.ensureSpace(48);
-  state.y -= 6;
-  const boxY = state.y - 26;
-  const labelY = state.y;
-
-  state.page.drawText("Firma datore", { x: MARGIN_X, y: labelY, size: 7, font: state.bodyFont, color: VALUE_COLOR });
-  state.page.drawText("Firma lavoratrice", { x: MARGIN_X + 268, y: labelY, size: 7, font: state.bodyFont, color: VALUE_COLOR });
-  state.page.drawRectangle({ x: MARGIN_X, y: boxY, width: 200, height: 22, borderWidth: 0.5, borderColor: BORDER });
-  state.page.drawRectangle({ x: MARGIN_X + 268, y: boxY, width: 200, height: 22, borderWidth: 0.5, borderColor: BORDER });
+  ctx.ensureSpace(44);
+  state.y -= 4;
+  const boxY = state.y - 24;
+  state.page.drawText("Firma datore di lavoro", { x: MARGIN_X, y: state.y, size: 7, font: state.bodyFont, color: VALUE_COLOR });
+  state.page.drawText("Firma lavoratrice", { x: MARGIN_X + 270, y: state.y, size: 7, font: state.bodyFont, color: VALUE_COLOR });
+  state.page.drawRectangle({ x: MARGIN_X, y: boxY, width: 210, height: 22, borderWidth: 0.55, borderColor: BORDER });
+  state.page.drawRectangle({ x: MARGIN_X + 270, y: boxY, width: 210, height: 22, borderWidth: 0.55, borderColor: BORDER });
   state.y = boxY - 4;
 }
 
@@ -390,41 +524,14 @@ export async function generateInpsStyleContractPdf(data, meta) {
   const bodyFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const ctx = createContext(pdfDoc, titleFont, bodyFont);
   const form = data.contractForm;
-  const ph = data.placeholders;
 
-  drawTitle(ctx);
-  drawDualPersonSection(ctx, form.employer, form.worker);
+  drawDocumentHeader(ctx);
 
-  ctx.ensureSpace(SECTION_TITLE_H + MIN_CELL_H);
-  ctx.state.y = drawSectionHeaderAt(ctx, MARGIN_X, CONTENT_WIDTH, "DATI CONTRATTUALI");
-  drawFullWidthRow(ctx, [
-    { label: "Tipo", value: form.contract.typeLabel, weight: 0.8 },
-    { label: "Livello", value: form.contract.level, weight: 0.5 },
-    { label: "Assunzione", value: form.contract.startDate, weight: 0.9 },
-    { label: "Fine", value: form.contract.endDate, weight: 0.7 },
-    { label: "Ore/sett.", value: form.contract.weeklyHours, weight: 0.6 },
-    { label: "Lordo mensile", value: form.contract.grossSalary, weight: 1 },
-  ]);
-  if (!isEmpty(form.contract.replacementOf)) {
-    drawFullWidthRow(ctx, [{ label: "In sostituzione di", value: form.contract.replacementOf, weight: 1 }]);
-  }
+  drawPersonVertical(ctx, "Datore di lavoro / Rappresentante legale", "PERSONA FISICA / RAPPRESENTANTE LEGALE", form.employer);
+  drawPersonVertical(ctx, "Lavoratrice", "GENERALITA' DELLA LAVORATRICE", form.worker, { worker: true });
 
-  drawQuestionTable(ctx, form.questionnaire);
-
-  const mansioni = [ph.mansioniIntro, ph.mansioniList, "Escluse: " + ph.esclusioniList.replace(/\n/g, "; ")].join(" ");
-  drawCompactClause(ctx, "INQUADRAMENTO", `Livello ${ph.level}: ${ph.levelInquadramento}`);
-  drawCompactClause(
-    ctx,
-    "ORARIO E RETRIBUZIONE",
-    `${ph.contractTypeLabel}, ${ph.weeklyHours} ore/sett. Lordo ${ph.grossSalary}. TFR e 13a maturano mensilmente; pagamento netto con ricevuta.`,
-  );
-  drawCompactClause(ctx, "MANSIONI", mansioni);
-  drawCompactClause(
-    ctx,
-    "RESIDENZA E CESSAZIONE",
-    "La residenza non costituisce titolo di possesso. Alla cessazione la lavoratrice lascia l'alloggio senza ritardi.",
-  );
-
+  drawQuestionnaireBox(ctx, form.contract, form.questionnaire);
+  drawClausesBox(ctx, data.placeholders);
   drawSignatures(ctx);
 
   const pdfBytes = await pdfDoc.save();
